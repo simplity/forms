@@ -37,7 +37,7 @@ import java.sql.SQLException;
  *
  */
 @FunctionalInterface
-public interface DbTransacter {
+public interface IDbTransacter {
 
 	/**
 	 * function that manages its own transactions, like commit and roll-back. It
