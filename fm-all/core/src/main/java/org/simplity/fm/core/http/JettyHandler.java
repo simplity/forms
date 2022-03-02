@@ -43,6 +43,10 @@ import org.slf4j.LoggerFactory;
 public class JettyHandler extends AbstractHandler {
 	private static final Logger logger = LoggerFactory.getLogger(JettyHandler.class);
 	private static final int STATUS_METHOD_NOT_ALLOWED = 405;
+	/**
+	 * resource name for the mapping of url paths to service
+	 */
+	private static final String URL_PATH_MAPPING_RES_NAME = "/paths.json";
 
 	@Override
 	public void handle(final String target, final Request baseRequest, final HttpServletRequest request,
@@ -79,6 +83,15 @@ public class JettyHandler extends AbstractHandler {
 	public static void main(final String[] args) throws Exception {
 		App.bootstrap();
 
+		//REST client capability is added here.
+		//TODO: this should be delegated to config
+		IUrlPathParser parser = Paths.fromJsonResource(URL_PATH_MAPPING_RES_NAME);
+		if(parser == null) {
+			logger.info("Resource {} not found or has errors. URLPaths will no tbe parsed for REST features.", URL_PATH_MAPPING_RES_NAME);
+		}else {
+			logger.info("URL Paths will be parsed for parameters and service names");
+			Agent.setUrlPathParser(parser);
+		}
 		final Server server = new Server(8080);
 		server.setHandler(new JettyHandler());
 

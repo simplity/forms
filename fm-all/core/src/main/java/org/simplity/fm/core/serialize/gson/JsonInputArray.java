@@ -89,7 +89,7 @@ public class JsonInputArray implements IInputArray {
 	@Override
 	public Iterator<IInputObject> iterator() {
 		final JsonArray arr = this.array;
-		return new Iterator<IInputObject>() {
+		return new Iterator<>() {
 			private int idx = 0;
 
 			@Override

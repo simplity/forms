@@ -25,7 +25,6 @@ package org.simplity.fm.core.app;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
-import org.simplity.fm.core.conf.CompProvider;
 import org.simplity.fm.core.conf.IAccessController;
 import org.simplity.fm.core.conf.ICompProvider;
 import org.simplity.fm.core.conf.IDbConnectionFactory;
@@ -44,6 +43,8 @@ import org.simplity.fm.core.conf.defalt.DefaultExceptionListener;
 import org.simplity.fm.core.conf.defalt.DefaultRequestLogger;
 import org.simplity.fm.core.conf.defalt.DefaultSessionCacher;
 import org.simplity.fm.core.conf.defalt.DefaultTexter;
+import org.simplity.fm.core.conf.impl.CompProvider;
+import org.simplity.fm.core.data.IDbDriver;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,7 @@ public class App implements IApp {
 	private String appName = UNKNOWN;
 	private ICompProvider compProvider = new DefaultCompProvider();
 	private IAccessController guard = new DefaultAccessController();
-	private RdbDriver rdbDriver = new RdbDriver(new DefaultDbConFactory());
+	private IDbDriver rdbDriver = new RdbDriver(new DefaultDbConFactory());
 	private IExceptionListener listener = new DefaultExceptionListener();
 	private ISessionCache cache = new DefaultSessionCacher();
 	private IRequestLogger reqLogger = new DefaultRequestLogger();
@@ -205,7 +206,7 @@ public class App implements IApp {
 	}
 
 	@Override
-	public RdbDriver getDbDriver() {
+	public IDbDriver getDbDriver() {
 		return this.rdbDriver;
 	}
 

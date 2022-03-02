@@ -45,14 +45,17 @@ public class Conventions {
 		/**
 		 * various headers that we respond back with
 		 */
-		public static final String[] HDR_NAMES = { "Access-Control-Allow-Methods", "Access-Control-Allow-Headers",
-				"Access-Control-Max-Age", "Connection", "Cache-Control", "Expires", "Accept" };
+		public static final String[] HDR_NAMES = {
+				"Access-Control-Allow-Methods", "Access-Control-Allow-Headers",
+				"Access-Control-Max-Age", "Connection", "Cache-Control",
+				"Expires", "Accept" };
 		/**
 		 * values for the headers
 		 */
 		public static final String[] HDR_TEXTS = { "POST, GET, OPTIONS",
-				"content-type, " + HEADER_SERVICE + ", " + HEADER_AUTH, "1728", "Keep-Alive",
-				"no-cache, no-store, must-revalidate", "11111110", "application/json" };
+				"content-type, " + HEADER_SERVICE + ", " + HEADER_AUTH, "1728",
+				"Keep-Alive", "no-cache, no-store, must-revalidate", "11111110",
+				"application/json" };
 		/**
 		 * http status
 		 */
@@ -245,6 +248,11 @@ public class Conventions {
 		 */
 		public static final String SERVICE_LIST = "list";
 
+		/**
+		 * predefined name for the service to get the output of an
+		 * asynch-service requested earlier
+		 */
+		public static final String SERVICE_GET_RESPONSE = "_getResponse";
 		/**
 		 * name with which the user data is saved in the context
 		 */

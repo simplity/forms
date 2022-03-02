@@ -49,6 +49,7 @@ import org.simplity.fm.core.Conventions;
  *
  */
 
+@SuppressWarnings("resource")
 public class ValueTypeTest {
 	protected ResultSet rs = Mockito.mock(ResultSet.class);
 	protected PreparedStatement ps = Mockito.mock(PreparedStatement.class);

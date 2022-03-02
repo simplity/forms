@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf;
+package org.simplity.fm.core.conf.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +29,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.IDataTypes;
 import org.simplity.fm.core.IMessages;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.conf.ICompProvider;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
@@ -78,7 +79,7 @@ public class CompProvider implements ICompProvider {
 
 	/**
 	 * @param rootPackageName
-	 * @return instance, or null in case of any errors in creating one for teh
+	 * @return instance, or null in case of any errors in creating one for the
 	 *         root package
 	 */
 	public static CompProvider getPrivider(final String rootPackageName) {

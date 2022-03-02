@@ -89,7 +89,7 @@ public class OverrideUtil {
 	 * @return overrides, or null if no overrides defined for this id
 	 */
 	public static Overrides getOverides(final String id) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { id };
 		final Overrides[] overs = new Overrides[1];
 
@@ -118,7 +118,7 @@ public class OverrideUtil {
 	 * @param overs
 	 */
 	public static void saveOverides(final String id, final Overrides overs) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { String.join(COMMA, overs.forms), String.join(COMMA, overs.records), id };
 
 		try {
@@ -155,7 +155,7 @@ public class OverrideUtil {
 	 * @param id
 	 */
 	public static void deleteOverides(final String id) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { id };
 
 		try {
@@ -183,7 +183,7 @@ public class OverrideUtil {
 	 * @param recordJson
 	 */
 	public static void saveRecord(final String id, final String recordName, final String recordJson) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { recordJson, id, recordName };
 
 		try {
@@ -225,7 +225,7 @@ public class OverrideUtil {
 	 * @param recordName
 	 */
 	public static void deleteRecord(final String id, final String recordName) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { id, recordName };
 
 		try {
@@ -250,7 +250,7 @@ public class OverrideUtil {
 	 * @return instance of record override. null if this is not found.
 	 */
 	public static RecordOverride getRecord(final String id, final String recordName) {
-		final RdbDriver driver = App.getApp().getDbDriver();
+		final IDbDriver driver = App.getApp().getDbDriver();
 		final Object[] values = { id, recordName };
 		final String[] texts = new String[1];
 

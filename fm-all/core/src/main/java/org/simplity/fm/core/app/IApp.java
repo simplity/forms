@@ -29,8 +29,8 @@ import org.simplity.fm.core.conf.IRequestLogger;
 import org.simplity.fm.core.conf.IServiceContextFactory;
 import org.simplity.fm.core.conf.ISessionCache;
 import org.simplity.fm.core.conf.ITexter;
+import org.simplity.fm.core.data.IDbDriver;
 import org.simplity.fm.core.conf.IEmailer;
-import org.simplity.fm.core.rdb.RdbDriver;
 
 /**
  * Represents an application. Configuration details are loaded at boot time.
@@ -71,7 +71,7 @@ public interface IApp {
 	 * @return non-null driver. throws ApplicationError if DBDriver is not set
 	 *         for this app.
 	 */
-	RdbDriver getDbDriver();
+	IDbDriver getDbDriver();
 
 	/**
 	 *

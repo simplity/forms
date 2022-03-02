@@ -60,6 +60,7 @@ import com.google.gson.JsonParser;
  */
 public class Agent {
 	private static final Logger logger = LoggerFactory.getLogger(Agent.class);
+	private static IUrlPathParser pathParser = null;
 	/**
 	 * various headers that we respond back with
 	 */
@@ -72,6 +73,13 @@ public class Agent {
 			"content-type, authorization, " + Conventions.Http.HEADER_SERVICE, "1728000", "Keep-Alive",
 			"no-cache, no-store, must-revalidate", "application/json" };
 
+	/**
+	 * set the parser to process REST requests
+	 * @param parser
+	 */
+	public static void setUrlPathParser(IUrlPathParser parser) {
+		pathParser = parser;
+	}
 	/**
 	 *
 	 * @return an instance of the agent
@@ -99,13 +107,14 @@ public class Agent {
 	 *
 	 * @param resp
 	 */
+	@SuppressWarnings("static-method") //we will have some instance specific thing..
 	public void setOptions(final HttpServletRequest req, final HttpServletResponse resp) {
 		for (int i = 0; i < Conventions.Http.HDR_NAMES.length; i++) {
 			resp.setHeader(Conventions.Http.HDR_NAMES[i], Conventions.Http.HDR_TEXTS[i]);
 		}
 		/*
 		 * we have no issue with CORS. We are ready to respond to any client so
-		 * long the auth is taken care of
+		 * long as the auth is taken care of
 		 */
 		resp.setHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
 	}
@@ -128,6 +137,11 @@ public class Agent {
 		this.processHeader();
 		if (this.serviceName == null) {
 			logger.error("requested service {} is not served on this app.", this.serviceName);
+			return;
+		}
+		if (this.inputData == null) {
+			logger.info("Invalid JSON recd from client ");
+			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}
 
@@ -157,12 +171,6 @@ public class Agent {
 			}
 		}
 
-		this.readInput();
-		if (this.inputData == null) {
-			logger.info("Invalid JSON recd from client ");
-			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
-			return;
-		}
 
 		/*
 		 * we are ready to execute this service.
@@ -202,7 +210,6 @@ public class Agent {
 				logger.error("Invalid data recd from client {}", e.getMessage());
 			}
 		}
-		this.readQueryString();
 	}
 
 	private void respond(final String payload) {
@@ -286,9 +293,37 @@ public class Agent {
 	}
 
 	private void processHeader() {
-		this.serviceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
+		this.readInput();
+		this.readQueryString();
+		String hdrServiceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
+		
+		if (hdrServiceName == null) {
+			logger.info("header directive {} not received. No explicit service name requested by the client.", Conventions.Http.HEADER_SERVICE);
+		}
+		
+		String urlServiceName = null;
+		if(pathParser != null) {
+			String path = this.req.getPathInfo();
+			urlServiceName = pathParser.parsePath(path, this.req.getMethod(), inputData);
+			if (urlServiceName == null) {
+				logger.info("path {} is not mapped to any service", path);
+			}
+		}
+		
+		if(urlServiceName == null) {
+			if(hdrServiceName == null) {
+				logger.error("No serviceName specified, or mapped for this request");
+				return;
+			}
+			this.serviceName = hdrServiceName;
+		}else {
+			if(hdrServiceName != null && urlServiceName.equals(hdrServiceName) == false) {
+				logger.info("Request specified {} as service in the header, but the path {} is mapped to service {}. mapped service is used.");
+			}
+			this.serviceName = urlServiceName;
+		}			
+		
 		if (this.serviceName == null) {
-			logger.error("header {} not received. No service", Conventions.Http.HEADER_SERVICE);
 			return;
 		}
 
@@ -306,6 +341,7 @@ public class Agent {
 				logger.info("Request from authuenticated user {} ", this.userId);
 			}
 		}
+		//we are not 
 	}
 
 	private void readQueryString() {
