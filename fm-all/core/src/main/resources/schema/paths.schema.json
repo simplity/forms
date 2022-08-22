@@ -1,83 +1,39 @@
 {
-    "description": "Schema for form.json",
-    "required": [
-        "name",
-        "recordName"
-    ],
-    "properties": {
-        "description": {
-            "type": "string"
-        },
-        "name": {
-            "type": "string"
-        },
-        "recordName": {
-            "type": "string"
-        },
-        "serveGuests":{
-            "type": "boolean"
-        },
-        "operations": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "get",
-                    "create",
-                    "update",
-                    "filter",
-
-                    "delete"
-                ]
-            }
-        },
-        "linkedForms": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "name",
-                    "formName",
-                    "isTabular"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "formName": {
-                        "type": "string"
-                    },
-                    "isEditable": {
-                        "type": "boolean"
-                    },
-                    "isTabular": {
-                        "type": "boolean"
-                    },
-                    "minRows": {
-                        "type": "integer"
-                    },
-                    "maxRows": {
-                        "type": "integer"
-                    },
-                    "errorId": {
-                        "type": "string"
-                    },
-                    "parentLinkFields": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "childLinkFields": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "additionalProperties": false
-            }
-        }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/paths",
+  "title": "Path to Service Mapping",
+  "description": "Map a REST request to a service and identify accompanying data",
+  "required": ["basePath", "paths"],
+  "properties": {
+    "basePath": {
+      "description": "common path prefix that is expected for all paths in this map. Path-mapping is for the rest of teh string in the received path",
+      "type": "string"
     },
-    "additionalProperties": false
+    "serviceNamePrefix": {
+      "description": "prefix for the mapped service name. A mapped service name is prefixed with this before returning",
+      "type": "string"
+    },
+    "paths": {
+      "type": "object",
+      "description": "list of paths mapped to service name",
+      "minProperties": 1,
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "description": "",
+          "minProperties": 1,
+          "patternProperties": {
+            "^(\\*|get|post|put|patch|delete)$": {
+              "description": "* means any method. vale is the service name without the common prefix",
+              "type": "string"
+            }
+          },
+          "additionlProperties": false
+        },
+        "additionlProperties": false
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
 }

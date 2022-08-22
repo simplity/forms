@@ -1,236 +1,238 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "Schema for application.json",
-    "required": [
-        "name",
-        "dataTypes"
-    ],
-    "additionalProperties": false,
-    "properties": {
-        "name": {
-            "type": "string"
-        },
-        "tenantFieldName": {
-            "type": "string"
-        },
-        "tenantDbName": {
-            "type": "string"
-        },
-        "dataTypes": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "textTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                            "maxLength"
-                        ],
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            },
-                            "regex": {
-                                "type": "string"
-                            },
-                            "mnLength": {
-                                "type": "integer"
-                            },
-                            "maxLength": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                },
-                "integerTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                            "maxValue"
-                        ],
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            },
-                            "mnValue": {
-                                "type": "integer"
-                            },
-                            "maxValue": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                },
-                "decimalTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                            "maxValue",
-                            "nbrFractions"
-                        ],
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            },
-                            "mnValue": {
-                                "type": "integer"
-                            },
-                            "maxValue": {
-                                "type": "integer"
-                            },
-                            "nbrFractions": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                },
-                "booleanTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "dateTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                            "maxPastDays",
-                            "maxFutureDays"
-                        ],
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            },
-                            "maxPastDays": {
-                                "type": "integer"
-                            },
-                            "maxFutureDays": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                },
-                "timestampTypes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                            "errorId": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "valueLists": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "required": [
-                        "value",
-                        "label"
-                    ],
-                    "properties": {
-                        "value": {
-                            "type": [
-                                "string",
-                                "integer"
-                            ]
-                        },
-                        "label": {
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false
-                }
-            }
-        },
-        "keyedLists": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "value",
-                            "label"
-                        ],
-                        "properties": {
-                            "value": {
-                                "type": [
-                                    "string",
-                                    "integer"
-                                ]
-                            },
-                            "label": {
-                                "type": "string"
-                            }
-                        },
-                        "additionalProperties": false
-                    }
-                }
-            }
-        },
-        "runtimeLists": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "object",
-                "required": [
-                    "dbTableName",
-                    "dbColumn1",
-                    "dbColumn2"
-                ],
-                "properties": {
-                    "dbTableName": {
-                        "type": "string"
-                    },
-                    "dbColumn1": {
-                        "type": "string"
-                    },
-                    "dbColumn2": {
-                        "type": "string"
-                    },
-                    "keyColumn": {
-                        "type": "string"
-                    },
-                    "tenantColumn": {
-                        "type": "string"
-                    },
-                    "activeColumn": {
-                        "type": "string"
-                    },
-                    "keyIsNumeric": {
-                        "type": "boolean"
-                    },
-                    "valueIsNumeric": {
-                        "type": "boolean"
-                    },
-                    "parentTable": {
-                        "type": "string"
-                    },
-                    "parentIdColumnName": {
-                        "type": "string"
-                    },
-                    "parentNameColumnName": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            }
-        }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/app",
+  "title": "Application Configuration Parameters",
+  "description": "Schema for app.json",
+  "required": ["name", "valueSchemas"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "title": "App Name",
+      "description": "Name of the App",
+      "$ref": "#/$defs/name"
+    },
+    "tenantFieldName": {
+      "title": "Tenant Field Name",
+      "description": "Required in a multi-tenant app. Name of the field that has the tenant-id",
+      "$ref": "#/$defs/name"
+    },
+    "tenantDbName": {
+      "title": "Tenant Db Column Name",
+      "description": "Required in a multi-tenant app. Standard column name used in every tenant-specific table.",
+      "$ref": "#/$defs/name"
+    },
+    "valueSchemas": {
+      "title": "Value Schemas",
+      "description": "Schmeas used for validating input values for fields. Used for automatically validating values entered by the user, or input values for a service",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/defs/valueSchema" }
+    },
+    "valueLists": {
+      "title": "List of Valid Values for a field",
+      "description": "Used for validating input values for a service, as well as providing list for drop-downs",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/defs/valueList" }
     }
+  },
+  "$defs": {
+    "name": { "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$" },
+
+    "valueSchema": {
+      "type": "object",
+      "properties": {
+        "valueType": {
+          "title": "Value Type",
+          "description": "text, integer, decimal, boolean, date and instance are the supported value types",
+          "enum": ["text", "integer", "decimal", "boolean", "date"]
+        },
+        "errorId": {
+          "title": "Message Id",
+          "description": "id using which an end-user-friendly description/message can be retrieved for this schema",
+          "$ref": "#/$defs/name"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "valueType": { "constant": "text" } } },
+          "then": {
+            "properties": {
+              "pattern": {
+                "title": "Pattern",
+                "description": "Pattern the value should conform to. Must be a sommon subset of patterns supported by most languages, specifically java and javascript",
+                "type": "string"
+              },
+              "minLength": {
+                "type": "integer",
+                "default": 1
+              },
+              "maxLength": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "constant": "integer" } } },
+          "then": {
+            "properties": {
+              "minValue": {
+                "type": "integer",
+                "default": 1
+              },
+              "maxValue": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "constant": "decimal" } } },
+          "then": {
+            "properties": {
+              "minValue": {
+                "type": "integer",
+                "default": 1
+              },
+              "maxValue": {
+                "type": "integer"
+              },
+              "nbrFractions": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "constant": "date" } } },
+          "then": {
+            "properties": {
+              "maxPastDays": {
+                "type": "integer",
+                "default": 0
+              },
+              "maxFutureDays": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "valueList": {
+      "type": "object",
+      "properties": {
+        "listType": { "enum": ["simple", "dependent", "runtime"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "listType": { "constant": "simple" } } },
+          "then": {
+            "properties": {
+              "list": {
+                "$ref": "#/$defs/simpleList"
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "listType": { "constant": "dependant" } } },
+          "then": {
+            "properties": {
+              "list": {
+                "$ref": "#/$defs/keyedList"
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "listType": { "constant": "runtime" } } },
+          "then": {
+            "title": "Runtime List",
+            "description": "List is fetched at run time Table/View",
+            "required": ["dbTableName", "dbColumn1", "dbColumn2"],
+            "properties": {
+              "dbTableName": {
+                "title": "Table Name",
+                "description": "Table or View that has the required data for this list",
+                "$ref": "#/$defs/name"
+              },
+              "dbColumn1": {
+                "title": "Column Name for Value",
+                "description": "Column Name for Value",
+                "$ref": "#/$defs/name"
+              },
+              "dbColumn2": {
+                "title": "Column Name for Label",
+                "description": "Column Name for Value",
+                "$ref": "#/$defs/name"
+              },
+              "keyColumn": {
+                "title": "Column Name for Key",
+                "description": "Required if this is a keyed-list.",
+                "$ref": "#/$defs/name"
+              },
+              "tenantColumn": {
+                "title": "Tenant Column Name",
+                "description": "Relevant if the table is multi-tenant",
+                "$ref": "#/$defs/name"
+              },
+              "activeColumn": {
+                "title": "Active Column Name",
+                "description": "Relevant if the table has a boolean field for active rows",
+                "$ref": "#/$defs/name"
+              },
+              "keyIsNumeric": {
+                "title": "Is Key Numeric?",
+                "description": "Key field value type could be numeric or text",
+                "type": "boolean"
+              },
+              "valueIsNumeric": {
+                "title": "Is Value Numeric?",
+                "description": "Value could be numeric or text",
+                "type": "boolean"
+              },
+              "parentTable": {
+                "title": "Parent Table Name",
+                "description": "This is specified if all keys are to be extracted, and list for each key is to be extracted. This is similar to keyed-list except that it is extracted once at run time",
+                "$ref": "#/$defs/name"
+              },
+              "parentIdColumnName": {
+                "title": "Parent id/value column name",
+                "description": "Parent id/value column name",
+                "$ref": "#/$defs/name"
+              },
+              "parentNameColumnName": {
+                "title": "Parent name/label column name",
+                "description": "Parent name/label column name",
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "simpleList": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["value", "label"],
+      "properties": {
+        "value": {
+          "type": ["string", "integer"]
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "keyedList": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/$defs/simpleList"
+    }
+  }
 }

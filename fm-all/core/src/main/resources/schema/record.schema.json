@@ -1,219 +1,192 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "Schema for record. file type *.rec.json",
-    "required": [
-        "name",
-        "fields"
-    ],
-    "additionalProperties": false,
-    "properties": {
-        "name": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/record",
+  "title": "Record Schema",
+  "description": "Schema for record. file type *.rec.json",
+  "required": ["name", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "description": "Code may be generated with this name.",
+      "$ref": "#/$defs/name"
+    },
+    "description": {
+      "type": "string"
+    },
+    "nameInDb": {
+      "description": "View?table name, if this record defines such an entity",
+      "$ref": "#/$defs/name"
+    },
+    "customValidation": {
+      "description": "Used for validating data input. Refers to a custom function written for this purpose.",
+      "$ref": "#/$defs/name"
+    },
+    "useTimestampCheck": {
+      "description": "True if this table has a timestamp field, and it is to be used for managing concurrency",
+      "type": "boolean"
+    },
+    "operations": {
+      "description": "List of db operations that are valid for this table/view.",
+      "type": "array",
+      "items": {
+        "uniqueItems": true,
+        "enum": ["get", "create", "update", "filter", "delete"]
+      }
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "valueSchema"],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/name"
+          },
+          "valueSchema": {
+            "description": "All value schemas defined for the app",
+            "$ref": "#/$defs/allValueSchemas"
+          },
+          "defaultValue": {
+            "description": "Used while inserting/new operations",
             "type": "string"
-        },
-        "description": {
+          },
+          "dbColumnName": {
+            "$ref": "#/$defs/name"
+          },
+          "fieldType": {
+            "enum": [
+              "generatedPrimaryKey",
+              "primaryKey",
+              "tenantKey",
+              "createdBy",
+              "createdAt",
+              "modifiedBy",
+              "modifiedAt",
+              "requiredData",
+              "optionalData"
+            ]
+          },
+          "label": {
             "type": "string"
-        },
-        "nameInDb": {
+          },
+          "icon": {
+            "description": "like a telephone icon for telephone number. should be a reference url to the image file",
             "type": "string"
-        },
-        "customValidation": {
+          },
+          "fieldPrefix": {
+            "description": "If provided, this is rendered in the form after the label, and before the field value. Like $, INR etc..",
+            "$ref": "#/$defs/name"
+          },
+          "fieldSuffix": {
+            "description": "If provided, this is rendered in the form after the field value. For example units of measure or the field- Kg etc..",
+            "$ref": "#/$defs/name"
+          },
+          "hint": {
+            "description": "used for form rendering",
             "type": "string"
-        },
-        "useTimestampCheck": {
+          },
+          "placeHolder": {
+            "description": "used for form rendering",
+            "type": "string"
+          },
+          "listName": {
+            "description": "The list name that provides the list of valid values. Used for validation by the server, and to provide drop-down values bythe client",
+            "$ref": "#/$defs/name"
+          },
+          "listKey": {
+            "description": "If teh list is a keyedList",
+            "$ref": "#/$defs/name"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          },
+          "renderInList": {
+            "description": "True if this field is shown when the rows are shown in a list. Only important fields may be shown in a tabular view.",
             "type": "boolean"
+          },
+          "renderInSave": {
+            "description": "True if this field is meant for user user input.",
+            "type": "boolean"
+          }
         },
-        "operations": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "get",
-                    "create",
-                    "update",
-                    "filter",
-                    "delete"
-                ]
-            }
+        "additionalProperties": false
+      }
+    },
+    "ranges": {
+      "description": "used for validating ranges.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fromField", "toField"],
+        "properties": {
+          "fromField": {
+            "$ref": "#/$defs/name"
+          },
+          "toField": {
+            "$ref": "#/$defs/name"
+          },
+          "equalOk": {
+            "type": "boolean"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
         },
-        "fields": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "name",
-                    "dataType"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "dataType": {
-                        "type": "string",
-                        "enum": [
-                            "accountStatus",
-                            "bool",
-                            "code",
-                            "country",
-                            "date",
-                            "desc",
-                            "email",
-                            "flexibleId",
-                            "govtCode",
-                            "id",
-                            "ip",
-                            "json",
-                            "loginId",
-                            "money",
-                            "name",
-                            "integer",
-                            "phone",
-                            "pin",
-                            "state",
-                            "tenantKey",
-                            "text",
-                            "timestamp",
-                            "uniqueId",
-                            "url",
-                            "userType",
-                            "gender",
-                            "income",
-                            "marks",
-                            "marksOrAb",
-                            "valuationType",
-                            "internalMarks"
-                        ]
-                    },
-                    "defaultValue": {
-                        "type": "string"
-                    },
-                    "dbColumnName": {
-                        "type": "string"
-                    },
-                    "fieldType": {
-                        "type": "string",
-                        "enum": [
-                            "generatedPrimaryKey",
-                            "primaryKey",
-                            "tenantKey",
-                            "createdBy",
-                            "createdAt",
-                            "modifiedBy",
-                            "modifiedAt",
-                            "requiredData",
-                            "optionalData"
-                        ]
-                    },
-                    "label": {
-                        "type": "string"
-                    },
-                    "icon": {
-                        "type": "string"
-                    },
-                    "fieldPrefix": {
-                        "type": "string"
-                    },
-                    "fieldSuffix": {
-                        "type": "string"
-                    },
-                    "hint": {
-                        "type": "string"
-                    },
-                    "placeHolder": {
-                        "type": "string"
-                    },
-                    "listName": {
-                        "type": "string"
-                    },
-                    "listKey": {
-                        "type": "string"
-                    },
-                    "errorId":{
-                        "type": "string"
-                    },
-                    "renderInList":{
-                        "type": "boolean"
-                    },
-                    "renderInSave":{
-                        "type": "boolean"
-                    }
-                },
-                "additionalProperties": false
-            }
+        "additionalProperties": false
+      }
+    },
+    "inclusivePairs": {
+      "description": "Pairs of fields that are specified together. Like billing address is required if credit card number is specified.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field1", "field2"],
+        "properties": {
+          "field1": {
+            "$ref": "#/$defs/name"
+          },
+          "field2": {
+            "$ref": "#/$defs/name"
+          },
+          "value1": {
+            "type": "string"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
         },
-        "fromToPairs": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "field1",
-                    "field2"
-                ],
-                "properties": {
-                    "field1": {
-                        "type": "string"
-                    },
-                    "field2": {
-                        "type": "string"
-                    },
-                    "equalOk": {
-                        "type": "boolean"
-                    },
-                    "errorId": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            }
+        "additionalProperties": false
+      }
+    },
+    "exclusivePairs": {
+      "description": "Pairs of fields from which only one is expected",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field1", "field2"],
+        "properties": {
+          "field1": {
+            "$ref": "#/$defs/name"
+          },
+          "field2": {
+            "$ref": "#/$defs/name"
+          },
+          "isRequired": {
+            "description": "True if at least one field must have valid value",
+            "type": "boolean"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
         },
-        "inclusivePairs": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "field1",
-                    "field2"
-                ],
-                "properties": {
-                    "field1": {
-                        "type": "string"
-                    },
-                    "field2": {
-                        "type": "string"
-                    },
-                    "value1": {
-                        "type": "string"
-                    },
-                    "errorId": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            }
-        },
-        "exclusivePairs": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "field1",
-                    "field2"
-                ],
-                "properties": {
-                    "field1": {
-                        "type": "string"
-                    },
-                    "field2": {
-                        "type": "string"
-                    },
-                    "isRequired": {
-                        "type": "boolean"
-                    },
-                    "errorId": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            }
-        }
+        "additionalProperties": false
+      }
     }
+  },
+  "$defs": {
+    "name": { "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$" },
+    "allValueSchemas": {
+      "$ref": "https://simplity.org/schemas/exampleValueSchemaList"
+    }
+  }
 }

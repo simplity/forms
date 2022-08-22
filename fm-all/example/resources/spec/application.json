@@ -1,8 +1,9 @@
 {
+"$schema": "https://simplity.org/schemas/app",
   "name": "banyaanTree",
   "tenantFieldName": "instituteId",
   "tenantDbName": "institute_id",
-  "runtimeLists": {
+  "valueLists": {
     "instituteList": {
       "dbTableName": "institutes",
       "dbColumn1": "institute_id",
@@ -310,7 +311,7 @@
       }
     }
   },
-  "valueLists": {
+  "valueListssssss": {
     "accountStatus": [
       {
         "value": "Active",

@@ -324,6 +324,7 @@ public class Paths implements IUrlPathParser{
 */
 class Node {
 	private static final String DUPLICATE = "Duplicate path-service mapping detected at path-part {} and ignored";
+	private static final String DEFAULT_METHOD = "*";
 	/**
 	 * path-part or field name.
 	 */
@@ -480,30 +481,9 @@ class Node {
 			return false;
 		}
 		Set<String> methods = services.keySet();
-		// a default service is specified with "" as method
-		JsonElement ele = services.get("");
-		
-		if (ele != null && ele.isJsonNull() == false) {
-			String defService = ele.getAsString();
-			if (servicePrefix != null) {
-				defService = servicePrefix + defService;
-			}
-			this.defaultService = defService;
-			Paths.logger.info("Default service {} set for node {}", defService, this.name);
-			if (methods.size() == 1) {
-				//only default service. No method-specific service
-				return true;
-			}
-		}
-		
-		// we have to add method specific services
 		this.services = new HashMap<>();
 		for (String method : methods) {
-			if (method.isEmpty()) {
-				// we have already processed this defaultService
-				continue;
-			}
-			ele = services.get(method);
+			JsonElement ele = services.get(method);
 			String service = null;
 			if(ele.isJsonPrimitive()) {
 				JsonPrimitive p = ele.getAsJsonPrimitive();
@@ -518,7 +498,14 @@ class Node {
 			if (servicePrefix != null) {
 				service = servicePrefix + service;
 			}
-			this.services.put(method.toLowerCase(), service);
+			if(method.equals(DEFAULT_METHOD)) {
+				this.defaultService = service;
+			}else {
+				if(this.services == null) {
+					this.services = new HashMap<>();
+				}
+				this.services.put(method.toLowerCase(), service);
+			}
 		}
 		return true;
 	}
