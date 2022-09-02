@@ -7,39 +7,39 @@
         "update",
         "filter"
     ],
-    "controls": [
+    "controls": {
+            "studentId":
         {
-            "name": "studentId",
             "controlType": "hidden"
         },
+            "instituteId":
         {
-            "name": "instituteId",
             "controlType": "hidden"
         },
+            "departmentId":
         {
-            "name": "departmentId",
             "controlType": "dropDown",
             "label": "Department"
         },
+            "departmentName":
         {
-            "name": "departmentName",
             "controlType": "input",
             "label": "Department Name"
         },
+            "name":
         {
-            "name": "name",
             "controlType": "input",
             "label": "Level"
         },
+            "usn":
         {
-            "name": "usn",
             "controlType": "input",
             "label": "USN"
         },
+            "phoneNumber":
         {
-            "name": "phoneNumber",
             "controlType": "input",
             "label": "Phone"
         }
-    ]
+    }
 }

@@ -6,71 +6,60 @@
         "get"
     ],
     "fields": [
-        {
-            "name": "studentAssessmentId",
-            "dataType": "id",
+        {"name": "studentAssessmentId",
+            "valueSchema": "id",
             "dbColumnName": "student_assessment_id",
-            "columnType": "generatedPrimaryKey"
+           "fieldType": "generatedPrimaryKey"
         },
-        {
-            "name": "instituteId",
-            "dataType": "tenantKey",
+        {"name": "instituteId",
+            "valueSchema": "tenantKey",
             "dbColumnName": "institute_id",
-            "columnType": "tenantKey"
+           "fieldType": "tenantKey"
         },
-        {
-            "name": "subjectSectionId",
-            "dataType": "id",
+        {"name": "subjectSectionId",
+            "valueSchema": "id",
             "dbColumnName": "subject_section_id",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "assessmentSchemeId",
-            "dataType": "id",
+        {"name": "assessmentSchemeId",
+            "valueSchema": "id",
             "dbColumnName": "assessment_scheme_id",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "assessmentSeqNo",
-            "dataType": "integer",
+        {"name": "assessmentSeqNo",
+            "valueSchema": "integer",
             "dbColumnName": "assessment_seq_no",
-            "columnType": "requiredData"
+           "fieldType": "requiredData"
         },
-        {
-            "name": "studentId",
-            "dataType": "id",
+        {"name": "studentId",
+            "valueSchema": "id",
             "dbColumnName": "student_id",
-            "columnType": "requiredData"
+           "fieldType": "requiredData"
         },
-        {
-            "name": "name",
-            "dataType": "name",
+        {"name": "name",
+            "valueSchema": "name",
             "dbColumnName": "name",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "usn",
-            "dataType": "text",
+        {"name": "usn",
+            "valueSchema": "text",
             "dbColumnName": "usn",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "hasAttended",
-            "dataType": "bool",
+        {"name": "hasAttended",
+            "valueSchema": "bool",
             "dbColumnName": "has_attended",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue": "false"
         },
-        {
-            "name": "marksScored",
-            "dataType": "integer",
+        {"name": "marksScored",
+            "valueSchema": "integer",
             "dbColumnName": "marks_scored",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue": "0"
         },
-        {
-            "name": "marks",
-            "dataType": "text",
+        {"name": "marks",
+            "valueSchema": "text",
             "defaultValue": ""
         }
     ]

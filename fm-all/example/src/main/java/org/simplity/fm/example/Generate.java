@@ -29,10 +29,10 @@ import org.simplity.fm.gen.Generator;
  *
  */
 public class Generate {
-	private static final String SPEC_ROOT = "c:/repos/fm-all/example/resources/spec/";
-	private static final String JAVA_ROOT = "c:/repos/fm-all/example/src/main/java/";
+	private static final String SPEC_ROOT = "c:/work/fm-all/example/resources/spec/";
+	private static final String JAVA_ROOT = "c:/work/fm-all/example/src/main/java/";
 	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";
-	private static final String TS_ROOT = "c:/repos/fm-all/example/ts/";
+	private static final String TS_ROOT = "c:/temp/ts/";
 	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
 
 	/**
@@ -42,12 +42,15 @@ public class Generate {
 	public static void main(final String[] args) {
 		final long start = System.currentTimeMillis();
 		if (args.length == 0) {
-			Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX);
+			Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT,
+					TS_FORM_IMPORT_PREFIX);
 		} else if (args.length == 5) {
 			Generator.generate(args[0], args[1], args[2], args[3], args[4]);
 		} else {
-			System.err.print("Usage: Gen spec_root java_root java_package_name ts_root ts_form_import_prefix ");
+			System.err.print(
+					"Usage: Gen spec_root java_root java_package_name ts_root ts_form_import_prefix ");
 		}
-		System.out.println("generated sources in " + (System.currentTimeMillis() - start) + "ms");
+		System.out.println("generated sources in "
+				+ (System.currentTimeMillis() - start) + "ms");
 	}
 }

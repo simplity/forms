@@ -5,87 +5,87 @@
         "get",
         "filter"
     ],
-    "controls": [
+    "controls": {
+            "userId":
         {
-            "name": "userId",
             "controlType": "hidden"
         },
+            "instituteId":
         {
-            "name": "instituteId",
             "controlType": "hidden"
         },
+            "trustId":
         {
-            "name": "trustId",
             "controlType": "hidden"
         },
+            "userType":
          {
-            "name": "userType",
             "controlType": "dropDown",
             "label": "User Type"
         },
+            "loginId":
         {
-            "name": "loginId",
             "controlType": "input",
             "label": "Login Id"
         },
+            "loginToken":
         {
-            "name": "loginToken",
             "controlType": "output",
             "label": "Login Token"
         },
+            "loginEnabled":
         {
-            "name": "loginEnabled",
             "controlType": "checkBox",
             "label": "Login Enabled"
         },
+            "resetPasswordCount":
         {
-            "name": "resetPasswordCount",
             "controlType": "output",
             "label": "Reset Password Count"
         },
+            "loginCount":
         {
-            "name": "loginCount",
             "controlType": "output",
             "label": "Login Count"
         },
+            "confirmationToken":
         {
-            "name": "confirmationToken",
             "controlType": "output",
             "label": "Confirmation Token"
         },
+            "currentLoginIp":
         {
-            "name": "currentLoginIp",
             "controlType": "output",
             "label": "Current Login IP"
         },
+            "previousLoginIp":
         {
-            "name": "previousLoginIp",
             "controlType": "output",
             "label": "Previous Login IP"
         },
+            "currentLoginAt":
         {
-            "name": "currentLoginAt",
             "controlType": "output",
             "label": "CurrentLogin At"
         },
+            "previousLoginAt":
         {
-            "name": "previousLoginAt",
             "controlType": "output",
             "label": "Previous Login At"
         },
+            "resetPasswordSentAt":
         {
-            "name": "resetPasswordSentAt",
             "controlType": "output",
             "label": "Reset Password Sent At"
         },
+            "createdAt":
         {
-            "name": "createdAt",
             "controlType": "hidden"
         },
+            "updatedAt":
         {
-            "name": "updatedAt",
             "controlType": "hidden"
         }
          
-    ]
+    }
 }

@@ -215,7 +215,7 @@ public class CompProvider implements ICompProvider {
 	}
 
 	private IService tryFormIo(final String serviceName, final IServiceContext ctx) {
-		final int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
+		final int idx = serviceName.indexOf(Conventions.Request.SERVICE_OPER_SEPARATOR);
 		if (idx <= 0) {
 			logger.info("Service name {} is not of the form operation_name. Service is not generated");
 			return null;

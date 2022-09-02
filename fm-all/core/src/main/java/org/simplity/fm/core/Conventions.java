@@ -57,30 +57,42 @@ public class Conventions {
 				"Keep-Alive", "no-cache, no-store, must-revalidate", "11111110",
 				"application/json" };
 		/**
-		 * http status
+		 * all Ok
 		 */
 		public static final int STATUS_ALL_OK = 200;
 		/**
-		 * http status
+		 * input data is malformed
+		 */
+		public static final int STATUS_INVALID_DATA = 400;
+		/**
+		 * user has to be authenticated for this request
 		 */
 		public static final int STATUS_AUTH_REQUIRED = 401;
 		/**
-		 * http status
+		 * requested service not served by this server
 		 */
-		public static final int STATUS_INVALID_SERVICE = 404;
+		public static final int STATUS_INVALID_SERVICE = 406;
 		/**
-		 * http status
+		 * this method is not allowed
 		 */
 		public static final int STATUS_METHOD_NOT_ALLOWED = 405;
 		/**
-		 * http status
-		 */
-		public static final int STATUS_INVALID_DATA = 406;
-		/**
-		 * http status
+		 * server had an internal error
 		 */
 		public static final int STATUS_INTERNAL_ERROR = 500;
 
+		/**
+		 * service has generated an error. We do not have the exact code.
+		 * 409 is the closest!!
+		 */
+		public static final int STATUS_SERVICE_FAILED = 409;
+	}
+	/**
+	 * 
+	 * COnventions for request-response paradigm
+	 *
+	 */
+	public static class Request {
 		/**
 		 * tag/name of form data in the request/response pay load
 		 */
@@ -137,6 +149,32 @@ public class Conventions {
 		 * formName + sep + operation is treated as a service name
 		 */
 		public static final char SERVICE_OPER_SEPARATOR = '_';
+		/**
+		 * service was executed successfully, but it returned with error message/s
+		 */
+		public static final String ERROR_SERVICE_FAILED = "serviceFailed";
+		
+		/**
+		 * request has not specified any service
+		 */
+		public static final String ERROR_NO_SERVICE = "noService";
+		
+		/**
+		 * request has errors in its data-structure.
+		 */
+		public static final String ERROR_INVALID_DATA = "invalidData";
+		
+		/**
+		 * requested service is either not served at all, or not served for this user
+		 */
+		public static final String ERROR_INVALID_SERVICE = "invalidService";
+		
+		/**
+		 * User has to be authenticated before requesting this service
+		 */
+		public static final String ERROR_AUTH_REQUIRED = "authRequired";
+		
+		
 
 	}
 

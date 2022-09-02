@@ -22,10 +22,8 @@
 
 package org.simplity.fm.gen;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +33,9 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class Control {
-	private static final Map<String, ControlType> controlTypes = createType();
-	protected static final Logger logger = LoggerFactory.getLogger(Control.class);
+class Control implements Util.IInitializer {
+	protected static final Logger logger = LoggerFactory
+			.getLogger(Control.class);
 	protected static final String C = ", ";
 
 	String controlType;
@@ -49,24 +47,26 @@ class Control {
 	String placeHolder;
 	int width;
 	int columnUnits;
+	int idx;
 
-	void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, Field> fields,
-			final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
-			final Map<String, KeyedList> keyedLists) {
-		def.append("\n\t").append(this.name).append(":Field = {\n\t\tname:'").append(this.name).append("'");
+	void emitTs(final StringBuilder def, final Map<String, Field> fields) {
+		def.append("\n\t").append(this.name).append(":Field = {\n\t\tname:'")
+				.append(this.name).append("'");
 
 		final String b = "\n\t\t,";
-		def.append(b).append("controlType: '").append(this.getControlType().name()).append('\'');
+		def.append(b).append("controlType: '").append(this.controlType)
+				.append('\'');
 
 		def.append(b).append("label: ");
 		if (this.label == null) {
-			def.append(Util.escapeTs(this.name));
+			def.append(Util.singleQuotedString(this.name));
 		} else {
-			def.append(Util.escapeTs(this.label));
+			def.append(Util.singleQuotedString(this.label));
 		}
 
 		if (this.placeHolder != null) {
-			def.append(b).append("placeHolder: ").append(Util.escapeTs(this.placeHolder));
+			def.append(b).append("placeHolder: ")
+					.append(Util.singleQuotedString(this.placeHolder));
 		}
 
 		if (this.width != 0) {
@@ -85,32 +85,17 @@ class Control {
 				def.append(msg);
 				logger.error(msg);
 			} else {
-				field.emitTs(def, controls, dataTypes, b, lists, keyedLists);
+				field.emitTs(def, b);
 			}
 		}
 
 		def.append("\n\t};");
 	}
 
-	/**
-	 * @return
-	 */
-	private static Map<String, ControlType> createType() {
-		final Map<String, ControlType> map = new HashMap<>();
-		for (final ControlType ct : ControlType.values()) {
-			map.put(ct.name().toLowerCase(), ct);
-		}
-		return map;
+	@Override
+	public void initialize(String nam, int controlIdx) {
+		this.name = nam;
+		this.idx = controlIdx;
 	}
 
-	/**
-	 *
-	 * @return control type, possibly null
-	 */
-	public ControlType getControlType() {
-		if (this.controlType == null) {
-			return null;
-		}
-		return controlTypes.get(this.controlType.toLowerCase());
-	}
 }

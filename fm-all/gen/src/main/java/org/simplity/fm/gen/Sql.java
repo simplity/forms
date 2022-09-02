@@ -32,7 +32,6 @@ import org.simplity.fm.core.rdb.FilterWithRecordSql;
 import org.simplity.fm.core.rdb.ReadSql;
 import org.simplity.fm.core.rdb.ReadWithRecordSql;
 import org.simplity.fm.core.rdb.WriteSql;
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,43 +54,42 @@ public class Sql {
 	private boolean hasDate = false;
 	private boolean hasTime = false;
 
-
-	void init(Map<String, DataType> dataTypes) {
+	void init(Map<String, ValueSchema> schemas) {
 		/*
 		 * see if we have any date /time fields
 		 */
-		if(this.sqlParams != null) {
-			for(Field f : this.sqlParams) {
-				f.init(dataTypes);
-				if(f.valueType == ValueType.Date) {
-					this.hasDate = true;
-				}else if(f.valueType == ValueType.Timestamp) {
-					this.hasTime = true;
-				}
-			}
+		if (this.sqlParams != null) {
+			this.initArr(this.sqlParams, schemas);
 		}
-		
-		if(this.outputFields != null) {
-			for(Field f : this.outputFields) {
-				f.init(dataTypes);
-				if(f.valueType == ValueType.Date) {
-					this.hasDate = true;
-				}else if(f.valueType == ValueType.Timestamp) {
-					this.hasTime = true;
-				}
-			}
+
+		if (this.outputFields != null) {
+			this.initArr(this.outputFields, schemas);
 		}
 	}
 
-	void emitJava(final StringBuilder sbf, final String packageName, final String className, final String dataTypesName,
-			final Map<String, DataType> dataTypes) {
+	private void initArr(Field[] fields, Map<String, ValueSchema> schemas) {
+		for (int idx = 0; idx < fields.length; idx++) {
+			Field f = fields[idx];
+			f.init(idx, schemas);
+			ValueType vt = f.schemaInstance.valueTypeEnum;
+			if (vt == ValueType.Date) {
+				this.hasDate = true;
+			} else if (vt == ValueType.Timestamp) {
+				this.hasTime = true;
+			}
+		}
+	}
+	void emitJava(final StringBuilder sbf, final String packageName,
+			final String className, final String schemasName) {
 
-		final boolean hasRecord = this.recordName != null && this.recordName.isEmpty() == false;
-		final boolean hasOutFields = this.outputFields != null && this.outputFields.length > 0;
-		final boolean hasParams = this.sqlParams != null && this.sqlParams.length > 0;
+		final boolean hasRecord = this.recordName != null
+				&& this.recordName.isEmpty() == false;
+		final boolean hasOutFields = this.outputFields != null
+				&& this.outputFields.length > 0;
+		final boolean hasParams = this.sqlParams != null
+				&& this.sqlParams.length > 0;
 		boolean isWrite = false;
 
-		
 		String msg = null;
 		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
 			isWrite = true;
@@ -101,7 +99,8 @@ public class Sql {
 			if (!hasParams) {
 				msg = "Write sql MUST have sql parameters. Unconditional update to database is not allowed";
 			}
-		} else if (this.sqlType.equals(SQL_TYPE_READ) || this.sqlType.equals(SQL_TYPE_FILTER)) {
+		} else if (this.sqlType.equals(SQL_TYPE_READ)
+				|| this.sqlType.equals(SQL_TYPE_FILTER)) {
 			if ((hasRecord && hasOutFields) || (!hasRecord && !hasOutFields)) {
 				msg = "read/filter sql should have either recordName or outputFields";
 			} else {
@@ -126,95 +125,105 @@ public class Sql {
 			return;
 		}
 
-		emitImports(sbf, packageName, dataTypesName);
-		if(this.hasDate) {
+		emitImports(sbf, packageName, schemasName);
+		if (this.hasDate) {
 			Util.emitImport(sbf, LocalDate.class);
 		}
-		if(this.hasTime) {
+		if (this.hasTime) {
 			Util.emitImport(sbf, Instant.class);
 		}
 
 		if (isWrite) {
-			this.emitWriteSql(sbf, className, dataTypesName, dataTypes);
+			this.emitWriteSql(sbf, className, schemasName);
 			return;
 		}
 
 		if (this.sqlType.equals(SQL_TYPE_READ)) {
 			if (hasRecord) {
-				this.emitReadWithRecord(sbf, packageName, className, dataTypesName, dataTypes);
+				this.emitReadWithRecord(sbf, packageName, className,
+						schemasName);
 				return;
 			}
-			this.emitRead(sbf, className, dataTypesName, dataTypes);
+			this.emitRead(sbf, className, schemasName);
 			return;
 		}
 
 		if (hasRecord) {
-			this.emitFilterWithRecord(sbf, packageName, className, dataTypesName, dataTypes);
+			this.emitFilterWithRecord(sbf, packageName, className, schemasName);
 			return;
 		}
-		this.emitFilter(sbf, className, dataTypesName, dataTypes);
+		this.emitFilter(sbf, className, schemasName);
 
 	}
 
-	void emitWriteSql(final StringBuilder sbf, final String className, final String dataTypesName,
-			final Map<String, DataType> dataTypes) {
+	void emitWriteSql(final StringBuilder sbf, final String className,
+			final String schemasName) {
 
 		Util.emitImport(sbf, WriteSql.class);
 
 		/*
 		 * class
 		 */
-		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends WriteSql {");
+		sbf.append("\n\n/** generated class for ").append(className)
+				.append(" */");
+		sbf.append("\npublic class ").append(className)
+				.append(" extends WriteSql {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ")
+				.append(Util.qoutedString(this.sql)).append(';');
 		sbf.append(P).append("Field[] IN = ");
-		emitFields(sbf, this.sqlParams, dataTypesName);
+		emitFields(sbf, this.sqlParams, schemasName);
 		sbf.append(';');
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
+				.append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		sbf.append("\n\t}");
 
-		this.emitSetters(sbf, dataTypes);
+		this.emitSetters(sbf);
 		sbf.append("\n}\n");
 	}
 
-	void emitFilterWithRecord(final StringBuilder sbf, final String packageName, final String className,
-			final String dataTypesName, final Map<String, DataType> dataTypes) {
+	void emitFilterWithRecord(final StringBuilder sbf, final String packageName,
+			final String className, final String schemasName) {
 
 		Util.emitImport(sbf, FilterWithRecordSql.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(";");
+		sbf.append("\nimport ").append(packageName).append(".rec.")
+				.append(recordCls).append(";");
 
 		/*
 		 * class
 		 */
-		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends FilterWithRecordSql<");
+		sbf.append("\n\n/** generated class for ").append(className)
+				.append(" */");
+		sbf.append("\npublic class ").append(className)
+				.append(" extends FilterWithRecordSql<");
 		sbf.append(recordCls).append("> {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ")
+				.append(Util.qoutedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams, dataTypesName);
+			emitFields(sbf, this.sqlParams, schemasName);
 			sbf.append(';');
 		}
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
+				.append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
@@ -223,39 +232,44 @@ public class Sql {
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
-			this.emitSetters(sbf, dataTypes);
+			this.emitSetters(sbf);
 		}
 		sbf.append("\n}\n");
 	}
 
-	void emitReadWithRecord(final StringBuilder sbf, final String packageName, final String className,
-			final String dataTypesName, final Map<String, DataType> dataTypes) {
+	void emitReadWithRecord(final StringBuilder sbf, final String packageName,
+			final String className, final String schemasName) {
 
 		Util.emitImport(sbf, ReadWithRecordSql.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(';');
+		sbf.append("\nimport ").append(packageName).append(".rec.")
+				.append(recordCls).append(';');
 
 		/*
 		 * class
 		 */
-		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends ReadWithRecordSql<").append(recordCls)
+		sbf.append("\n\n/** generated class for ").append(className)
+				.append(" */");
+		sbf.append("\npublic class ").append(className)
+				.append(" extends ReadWithRecordSql<").append(recordCls)
 				.append("> {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ")
+				.append(Util.qoutedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams, dataTypesName);
+			emitFields(sbf, this.sqlParams, schemasName);
 			sbf.append(';');
 		}
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
+				.append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
@@ -264,39 +278,43 @@ public class Sql {
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
-			this.emitSetters(sbf, dataTypes);
+			this.emitSetters(sbf);
 		}
 		sbf.append("\n}\n");
 	}
 
-	void emitRead(final StringBuilder sbf, final String className, final String dataTypesName,
-			final Map<String, DataType> dataTypes) {
+	void emitRead(final StringBuilder sbf, final String className,
+			final String schemasName) {
 		Util.emitImport(sbf, ReadSql.class);
 		/*
 		 * class
 		 */
-		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends ReadSql<").append(className)
+		sbf.append("\n\n/** generated class for ").append(className)
+				.append(" */");
+		sbf.append("\npublic class ").append(className)
+				.append(" extends ReadSql<").append(className)
 				.append(".OutputRecord> {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ")
+				.append(Util.qoutedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams, dataTypesName);
+			emitFields(sbf, this.sqlParams, schemasName);
 			sbf.append(';');
 		}
 
 		sbf.append("\n\tprotected static final Field[] OUT = ");
-		emitFields(sbf, this.outputFields, dataTypesName);
+		emitFields(sbf, this.outputFields, schemasName);
 		sbf.append(';');
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
+				.append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
@@ -304,41 +322,45 @@ public class Sql {
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
-			this.emitSetters(sbf, dataTypes);
+			this.emitSetters(sbf);
 		}
-		this.emitOutMethods(sbf, dataTypes);
+		this.emitOutMethods(sbf);
 		sbf.append("\n}\n");
 	}
 
-	void emitFilter(final StringBuilder sbf, final String className, final String dataTypesName,
-			final Map<String, DataType> dataTypes) {
+	void emitFilter(final StringBuilder sbf, final String className,
+			final String schemasName) {
 
 		Util.emitImport(sbf, FilterSql.class);
 		/*
 		 * class
 		 */
-		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends FilterSql<").append(className)
+		sbf.append("\n\n/** generated class for ").append(className)
+				.append(" */");
+		sbf.append("\npublic class ").append(className)
+				.append(" extends FilterSql<").append(className)
 				.append(".OutputRecord> {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ")
+				.append(Util.qoutedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams, dataTypesName);
+			emitFields(sbf, this.sqlParams, schemasName);
 			sbf.append(';');
 		}
 
 		sbf.append("\n\tprotected static final Field[] OUT = ");
-		emitFields(sbf, this.outputFields, dataTypesName);
+		emitFields(sbf, this.outputFields, schemasName);
 		sbf.append(';');
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
+				.append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
@@ -346,22 +368,24 @@ public class Sql {
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
-			this.emitSetters(sbf, dataTypes);
+			this.emitSetters(sbf);
 		}
-		this.emitOutMethods(sbf, dataTypes);
+		this.emitOutMethods(sbf);
 		sbf.append("\n}\n");
 	}
 
-	private static void emitImports(final StringBuilder sbf, final String packageName, final String dataTypesName) {
+	private static void emitImports(final StringBuilder sbf,
+			final String packageName, final String schemasName) {
 		sbf.append("package ").append(packageName).append(".sql;\n");
 
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
-		sbf.append("\nimport ").append(packageName).append('.').append(dataTypesName).append(';');
+		sbf.append("\nimport ").append(packageName).append('.')
+				.append(schemasName).append(';');
 
 	}
 
-	private void emitOutMethods(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+	private void emitOutMethods(final StringBuilder sbf) {
 		/*
 		 * abstract method to be implemented
 		 */
@@ -379,25 +403,27 @@ public class Sql {
 		sbf.append("\n\t\tpublic OutputRecord(final Field[] fields) {");
 		sbf.append("\n\t\t\tsuper(fields, null);\n\t\t}");
 
-		this.emitGetters(sbf, dataTypes);
+		this.emitGetters(sbf);
 
 		/*
 		 * over-ride new instance
 		 */
-		sbf.append("\n\n\t@Override\n\tpublic OutputRecord newInstance(Object[] arr) {");
+		sbf.append(
+				"\n\n\t@Override\n\tpublic OutputRecord newInstance(Object[] arr) {");
 		sbf.append("\n\t\treturn new OutputRecord(OUT);\n\t}");
 		sbf.append("\n\t}");
 
 	}
 
-	private void emitSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+	private void emitSetters(final StringBuilder sbf) {
 		for (final Field f : this.sqlParams) {
-			final DataType dt = dataTypes.get(f.dataType);
+			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
-			if (dt == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name, f.dataType);
+			if (vs == null) {
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
 			} else {
-				typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
+				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 			}
 			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
@@ -405,38 +431,45 @@ public class Sql {
 			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
 			sbf.append("\n\t * @param value to be assigned to ").append(nam);
 			sbf.append("\n\t */");
-			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.inputData.assignValue(").append(f.index).append(", value);");
+			sbf.append("\n\tpublic void set").append(cls).append('(')
+					.append(typ).append(" value){");
+			sbf.append("\n\t\tthis.inputData.assignValue(").append(f.index)
+					.append(", value);");
 			sbf.append("\n\t}");
 		}
 	}
 
 	/**
 	 * @param constr
-	 * @param dataTypes
+	 * @param schemas
 	 */
-	private void emitGetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+	private void emitGetters(final StringBuilder sbf) {
 		for (final Field f : this.outputFields) {
-			final DataType dt = dataTypes.get(f.dataType);
+			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
 			String get = typ;
-			if (dt == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name, f.dataType);
+			if (vs == null) {
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
 			} else {
-				typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
-				get = Util.JAVA_GET_TYPES[dt.valueType.ordinal()];
+				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
+				get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
 			}
 			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
 
-			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam).append("\n\t */");
-			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls).append("(){");
-			sbf.append("\n\t\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
+			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)
+					.append("\n\t */");
+			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls)
+					.append("(){");
+			sbf.append("\n\t\t\treturn super.fetch").append(get)
+					.append("Value(").append(f.index).append(");");
 			sbf.append("\n\t\t}");
 		}
 	}
 
-	private static void emitFields(final StringBuilder sbf, final Field[] fields, final String dtName) {
+	private static void emitFields(final StringBuilder sbf,
+			final Field[] fields, final String schemaName) {
 		sbf.append('{');
 		int idx = -1;
 		for (final Field field : fields) {
@@ -445,7 +478,7 @@ public class Sql {
 				sbf.append(',');
 			}
 			field.index = idx;
-			field.emitJavaCode(sbf, dtName, false);
+			field.emitJavaCode(sbf, schemaName, false);
 		}
 		sbf.append('}');
 	}

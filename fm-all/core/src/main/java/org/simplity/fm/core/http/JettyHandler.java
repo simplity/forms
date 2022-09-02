@@ -85,12 +85,12 @@ public class JettyHandler extends AbstractHandler {
 
 		//REST client capability is added here.
 		//TODO: this should be delegated to config
-		IUrlPathParser parser = Paths.fromJsonResource(URL_PATH_MAPPING_RES_NAME);
+		IRestAdapter parser = RestAdapter.fromJsonResource(URL_PATH_MAPPING_RES_NAME);
 		if(parser == null) {
 			logger.info("Resource {} not found or has errors. URLPaths will no tbe parsed for REST features.", URL_PATH_MAPPING_RES_NAME);
 		}else {
 			logger.info("URL Paths will be parsed for parameters and service names");
-			Agent.setUrlPathParser(parser);
+			Agent.setRestAdapter(parser);
 		}
 		final Server server = new Server(8080);
 		server.setHandler(new JettyHandler());

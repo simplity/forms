@@ -90,7 +90,7 @@ public class ListService implements IService {
 
 	private static void writeOut(final ISerializer writer, final Object[][] rows) {
 		writer.beginObject();
-		writer.name(Conventions.Http.TAG_LIST);
+		writer.name(Conventions.Request.TAG_LIST);
 		writer.beginArray();
 		for (final Object[] row : rows) {
 			writer.beginObject();

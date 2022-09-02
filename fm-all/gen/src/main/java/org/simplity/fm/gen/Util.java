@@ -23,10 +23,10 @@
 package org.simplity.fm.gen;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.simplity.fm.core.datatypes.BooleanType;
@@ -44,14 +44,26 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
 /**
- * Utility methods for dealing with work book
+ * Utility methods for this project
  *
  * @author simplity.org
  *
  */
-class Util {
-	static final String[] JAVA_VALUE_TYPES = getJavaValueTypes();
-	static final String[] JAVA_GET_TYPES = getJavaGetTypes();
+public class Util {
+	/**
+	 * Gson is not a small object. It is immutable and thread safe. Hence with
+	 * this small trick, we can avoid repeated creation of Gson instances
+	 */
+	private static final Gson GSON = new Gson();
+	/**
+	 * java Types for each ValueType enum
+	 */
+	public static final String[] JAVA_VALUE_TYPES = getJavaValueTypes();
+
+	/**
+	 * Java getter-types for each of ValueType enum
+	 */
+	public static final String[] JAVA_GET_TYPES = getJavaGetTypes();
 
 	private static String[] getJavaValueTypes() {
 		final ValueType[] types = ValueType.values();
@@ -79,21 +91,16 @@ class Util {
 		return result;
 	}
 
-	/**
-	 * Gson is not a small object. It is immutable and thread safe. Hence with
-	 * this small trick, we can avoid repeated creation of Gson instances
-	 */
-	public static final Gson GSON = new Gson();
 	private static final Logger logger = LoggerFactory.getLogger(Util.class);
 
 	/**
-	 * this is actually just string escape, nothing to do with XLSX
+	 * enclose the string inside double quotes, after escaping chars, if
+	 * required, for the same
 	 *
 	 * @param s
-	 * @return string with \ and " escaped for it to be printed inside quotes as
-	 *         java literal
+	 * @return escaped string with enclosed quotes
 	 */
-	static String escape(final String s) {
+	public static String qoutedString(final String s) {
 		if (s == null || s.isEmpty()) {
 			return "null";
 		}
@@ -101,9 +108,12 @@ class Util {
 	}
 
 	/**
-	 * type-script prefers single quotes
+	 * use single quotes around the string, after escaping chars
+	 *
+	 * @param s
+	 * @return escaped string with enclosed quotes
 	 */
-	static String escapeTs(final String s) {
+	public static String singleQuotedString(final String s) {
 		if (s == null) {
 			return "null";
 		}
@@ -111,14 +121,17 @@ class Util {
 	}
 
 	/**
-	 * type-script prefers single quotes
+	 *
+	 * @param obj
+	 *            to be quoted
+	 * @return a quoted string for the object
 	 */
-	static String escapeTs(final Object obj) {
+	public static String escapeTs(final Object obj) {
 		if (obj == null) {
 			return "null";
 		}
 		if (obj instanceof String) {
-			return escapeTs((String) obj);
+			return singleQuotedString((String) obj);
 		}
 		return obj.toString();
 	}
@@ -129,11 +142,16 @@ class Util {
 	 * @param sbf
 	 * @param cls
 	 */
-	static void emitImport(final StringBuilder sbf, final Class<?> cls) {
+	public static void emitImport(final StringBuilder sbf, final Class<?> cls) {
 		sbf.append("\nimport ").append(cls.getName()).append(';');
 	}
 
-	static String toClassName(final String name) {
+	/**
+	 *
+	 * @param name
+	 * @return Properly cased as the name of a Java Class
+	 */
+	public static String toClassName(final String name) {
 		String nam = name;
 		int idx = name.lastIndexOf('.');
 		if (idx != -1) {
@@ -146,19 +164,25 @@ class Util {
 		return toUpper(nam.charAt(0)) + nam.substring(1);
 	}
 
-	static String toLabel(final String name) {
+	/**
+	 *
+	 * @param name
+	 *            field/column name
+	 * @return default label based on the name
+	 */
+	public static String toLabel(final String name) {
 		StringBuilder sbf = new StringBuilder();
 		sbf.append(toUpper(name.charAt(0)));
 		int n = name.length();
 		/*
 		 * labels for id fields should not have the Id at the end
 		 */
-		if(name.endsWith("Id")) {
+		if (name.endsWith("Id")) {
 			n = n - 2;
 		}
-		for(int i = 1; i < n; i++ ) {
+		for (int i = 1; i < n; i++) {
 			char c = name.charAt(i);
-			if(isUpper(c)) {
+			if (isUpper(c)) {
 				sbf.append(' ');
 			}
 			sbf.append(c);
@@ -167,63 +191,103 @@ class Util {
 	}
 
 	private static final int DIFF = 'a' - 'A';
-	static boolean isUpper(char c) {
+	/**
+	 *
+	 * @param c
+	 * @return true if this is an upper case character
+	 */
+	public static boolean isUpper(char c) {
 		return c >= 'A' && c <= 'Z';
 	}
 
+	/**
+	 *
+	 * @param c
+	 * @return true if this is a lower case character
+	 */
 	static boolean isLower(char c) {
 		return c >= 'a' && c <= 'z';
 	}
 
+	/**
+	 *
+	 * @param c
+	 * @return lower-case character
+	 */
 	static char toLower(char c) {
-		if(isUpper(c)) {
+		if (isUpper(c)) {
 			return (char) (c + DIFF);
 		}
 		return c;
 	}
 
+	/**
+	 *
+	 * @param c
+	 * @return upper case character
+	 */
 	static char toUpper(char c) {
-		if(isLower(c)) {
+		if (isLower(c)) {
 			return (char) (c - DIFF);
 		}
 		return c;
 	}
 
+	/**
+	 *
+	 * @param name
+	 * @return camel-cased version of the name
+	 */
 	static String toName(final String name) {
 		final String nam = name;
 		return nam.substring(0, 1).toLowerCase() + nam.substring(1);
 	}
 
-	static String getClassQualifier(final String name) {
-		final int idx = name.lastIndexOf('.');
+	/**
+	 * if className is package.name.className, then return package.name
+	 *
+	 * @param completeClassName
+	 * @return prefix for the simple class name
+	 */
+	public static String getClassQualifier(final String completeClassName) {
+		final int idx = completeClassName.lastIndexOf('.');
 		if (idx == -1) {
 			return null;
 		}
-		return name.substring(0, idx);
-	}
-
-	static void writeOut(final String fileName, final StringBuilder sbf) {
-		try (Writer writer = new FileWriter(new File(fileName))) {
-			writer.write(sbf.toString());
-			logger.debug("File {} generated.", fileName);
-		} catch (final Exception e) {
-			logger.error("Error while writing file {} \n {}", fileName, e.getMessage());
-		}
-
+		return completeClassName.substring(0, idx);
 	}
 
 	/**
+	 * write the contents to the named file
+	 *
+	 * @param fileName
+	 * @param sbf
+	 */
+	public static void writeOut(final String fileName,
+			final StringBuilder sbf) {
+		try (Writer writer = new FileWriter(new File(fileName))) {
+			writer.write(sbf.toString());
+			logger.info("File {} generated.", fileName);
+		} catch (final Exception e) {
+			logger.error("Error while writing file {} \n {}", fileName,
+					e.getMessage());
+		}
+	}
+
+	/**
+	 * quote the string-value for String, else just the string value of the
+	 * object
 	 *
 	 * @param obj
-	 * @return value of this object, quoted if required
+	 * @return value of this object, quoted if it is a string
 	 */
-	static Object escapeObject(final Object obj) {
+	public static Object escapeObject(final Object obj) {
 		if (obj == null) {
 			return "null";
 		}
 
 		if (obj instanceof String) {
-			return escape((String) obj);
+			return qoutedString((String) obj);
 		}
 
 		return obj.toString();
@@ -234,223 +298,23 @@ class Util {
 	 * @param valueType
 	 * @return data type class name for this value type
 	 */
-	static Class<?> getDataTypeClass(final ValueType valueType) {
+	public static Class<?> getDataTypeClass(final ValueType valueType) {
 		switch (valueType) {
-		case Boolean:
+		case Boolean :
 			return BooleanType.class;
-		case Date:
+		case Date :
 			return DateType.class;
-		case Decimal:
+		case Decimal :
 			return DecimalType.class;
-		case Integer:
+		case Integer :
 			return IntegerType.class;
-		case Text:
+		case Text :
 			return TextType.class;
-		case Timestamp:
+		case Timestamp :
 			return TimestampType.class;
-		default:
+		default :
 			logger.error("{} is not a known value type", valueType);
 			return TextType.class;
-		}
-	}
-
-	/**
-	 * client side uses 0 for text etc...
-	 *
-	 * @param valueType
-	 * @return get index used by the client for this value type
-	 */
-	static int getValueTypeIdx(final ValueType valueType) {
-		switch (valueType) {
-		case Text:
-			return 0;
-		case Integer:
-			return 1;
-		case Decimal:
-			return 2;
-		case Boolean:
-			return 3;
-		case Date:
-			return 4;
-		case Timestamp:
-			return 5;
-		default:
-			return -1;
-		}
-	}
-
-	/**
-	 * parse the Json member as a Map. Add the key/index as a field for the
-	 * parsed object
-	 *
-	 * @param map
-	 *            non-null map to which this collection is to be parsed into
-	 * @param parentJson
-	 *            json that is to optionally contain JsonObject as member with
-	 *            this name
-	 * @param memberName
-	 *            name with which to find the json for the ,ap to be parsed
-	 * @param field
-	 *            to which the key/index is to be set to. null if this is not
-	 *            required. use getField() to get this
-	 * @throws IOException
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	static void addToMap(final Map map, final JsonReader reader, final Class cls) throws IOException {
-		logger.debug("Started parsing map of class {}", cls.getName());
-		final int nbr = map.size();
-		int idx = nbr - 1;
-		reader.beginObject();
-		while (true) {
-			idx++;
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				logger.debug("{} objects parsed", (nbr - idx));
-				reader.endObject();
-				return;
-			}
-
-			final String key = reader.nextName();
-			final Object value = GSON.fromJson(reader, cls);
-			if (value instanceof INamedMember) {
-				((INamedMember) value).setNameAndIdx(key, idx);
-			}
-			map.put(key, value);
-		}
-	}
-
-	/**
-	 * parse and return a map
-	 *
-	 * @param reader
-	 * @param cls
-	 * @throws IOException
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	static void loadMap(final Map map, final JsonReader reader, final Class cls) throws IOException {
-		logger.debug("Started loading instances of {} into a map", cls.getName());
-		final int nbr = map.size();
-		int idx = nbr - 1;
-		reader.beginObject();
-		while (true) {
-			idx++;
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				reader.endObject();
-				logger.debug("{} objects parsed", (idx - nbr));
-				return;
-			}
-
-			final String key = reader.nextName();
-			ISelfLoader value;
-			try {
-				value = (ISelfLoader) cls.getDeclaredConstructor().newInstance();
-				value.fromJson(reader, key, idx);
-				map.put(key, value);
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	/**
-	 * extract entries of the form {"att": "value", "att2": "avlue2"... } into
-	 * the map
-	 *
-	 * @param map
-	 * @param reader
-	 * @throws IOException
-	 */
-	static void loadStringMap(final Map<String, String> map, final JsonReader reader) throws IOException {
-		reader.beginObject();
-		while (reader.peek() != JsonToken.END_OBJECT) {
-			map.put(reader.nextName(), reader.nextString());
-		}
-		reader.endObject();
-	}
-
-	/**
-	 * object populates itself from a name-object json member.
-	 */
-	interface INamedMember {
-		/**
-		 *
-		 * @param name
-		 *            member name. typically becomes name attribute of the
-		 *            object
-		 * @param idx
-		 *            0-based index of this member. this is generally not the
-		 *            right thing to do in a json because the order of
-		 *            attributes is not significant.However,in our design, we
-		 *            would like to make use of it and hence this
-		 */
-		void setNameAndIdx(String name, int idx);
-	}
-
-	/**
-	 * object populates itself from a Json name-member pair.
-	 */
-	interface ISelfLoader {
-		/**
-		 *
-		 * @param reader
-		 *            is positioned at begin_object (it is not consumed. only
-		 *            name is consumed) caller is expected to consume the object
-		 *            and return
-		 * @param key
-		 *            name that is already parsed
-		 * @param idx
-		 *            0-based index of this member. this is generally not the
-		 *            right thing to do in a json because the order of
-		 *            attributes is not significant.However,in our design, we
-		 *            would like to make use of it and hence this
-		 * @throws IOException
-		 */
-		void fromJson(JsonReader reader, String key, int idx) throws IOException;
-	}
-
-	/**
-	 * read and discard the next token
-	 *
-	 * @param reader
-	 * @throws IOException
-	 */
-	public static void swallowAToken(final JsonReader reader) throws IOException {
-		final JsonToken token = reader.peek();
-		switch (token) {
-
-		case BEGIN_ARRAY:
-			GSON.fromJson(reader, Object[].class);
-			return;
-
-		case BEGIN_OBJECT:
-			GSON.fromJson(reader, Object.class);
-			return;
-
-		case BOOLEAN:
-		case NUMBER:
-		case STRING:
-			reader.nextString();
-			return;
-
-		case NAME:
-			reader.nextName();
-			return;
-
-		case NULL:
-			reader.nextNull();
-			return;
-
-		case END_ARRAY:
-			reader.endArray();
-			return;
-		case END_OBJECT:
-			reader.endArray();
-			return;
-		case END_DOCUMENT:
-			return;
-		default:
-			logger.warn("Util is not designed to swallow the token {} ", token.name());
 		}
 	}
 
@@ -469,11 +333,28 @@ class Util {
 			} else {
 				sbf.append(',');
 			}
-			sbf.append(escape(s));
+			sbf.append(qoutedString(s));
 		}
 		sbf.append('}');
 	}
 
+	/**
+	 * initialize entries in a Map with name/idx
+	 *
+	 * @param map
+	 *
+	 */
+	public static void initializeMapEntries(Map<String, ?> map) {
+		int idx = 0;
+		for (Map.Entry<String, ?> entry : map.entrySet()) {
+			Object value = entry.getValue();
+			if (value instanceof IInitializer) {
+				((IInitializer) value).initialize(entry.getKey(), idx);
+			}
+			idx++;
+		}
+
+	}
 	/**
 	 * add att: "value', but only if it is required
 	 *
@@ -482,11 +363,13 @@ class Util {
 	 * @param att
 	 * @param val
 	 */
-	static void addAttr(final StringBuilder sbf, final String prefix, final String att, final String val) {
+	public static void addAttr(final StringBuilder sbf, final String prefix,
+			final String att, final String val) {
 		if (val == null || val.isEmpty()) {
 			return;
 		}
-		sbf.append(prefix).append(Util.escape(att)).append(": ").append(Util.escape(val)).append(',');
+		sbf.append(prefix).append(Util.qoutedString(att)).append(": ")
+				.append(Util.qoutedString(val)).append(',');
 	}
 
 	/**
@@ -497,10 +380,261 @@ class Util {
 	 * @param att
 	 * @param val
 	 */
-	static void addAttrTs(final StringBuilder sbf, final String prefix, final String att, final String val) {
+	public static void addAttrTs(final StringBuilder sbf, final String prefix,
+			final String att, final String val) {
 		if (val == null || val.isEmpty()) {
 			return;
 		}
 		sbf.append(prefix).append(att).append(": '").append(val).append("',");
 	}
+	/**
+	 * parse the Json member as a Map. Add the key/index as a field for the
+	 * parsed object
+	 *
+	 * @param map
+	 *            non-null map to which this collection is to be parsed into
+	 * @param parentJson
+	 *            json that is to optionally contain JsonObject as member with
+	 *            this name
+	 * @param memberName
+	 *            name with which to find the json for the ,ap to be parsed
+	 * @param field
+	 *            to which the key/index is to be set to. null if this is not
+	 *            required. use getField() to get this
+	 * @throws IOException
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	static void addToMap(final Map map, final JsonReader reader,
+			final Class cls) throws IOException {
+		logger.debug("Started parsing map of class {}", cls.getName());
+		final int nbr = map.size();
+		int idx = nbr - 1;
+		reader.beginObject();
+		while (true) {
+			idx++;
+			final JsonToken token = reader.peek();
+			if (token == JsonToken.END_OBJECT) {
+				logger.debug("{} objects parsed", (nbr - idx));
+				reader.endObject();
+				return;
+			}
+
+			final String key = reader.nextName();
+			final Object value = GSON.fromJson(reader, cls);
+			if (value instanceof IInitializer) {
+				((IInitializer) value).initialize(key, idx);
+			}
+			map.put(key, value);
+		}
+	}
+
+	/**
+	 * create an instance of the object and load its attributes from JSON
+	 *
+	 * @param reader
+	 *            must be ready to read the object (typically after a
+	 *            reader.nextName()
+	 * @param cls
+	 * @return object instance. null in case of any issues in creating and
+	 *         populating the object
+	 */
+	static <T extends Object> T objectFromJson(final JsonReader reader,
+			final Class<T> cls) {
+		return GSON.fromJson(reader, cls);
+	}
+
+	/**
+	 *
+	 * @param <T>
+	 *            type of object to be loaded
+	 * @param fileName
+	 *            absolute file name of the json file
+	 * @param cls
+	 *            class of the object to be loaded
+	 * @return loaded object instance, or null in case of any error
+	 */
+	public static <T extends Object> T loadJson(String fileName, Class<T> cls) {
+		File f = new File(fileName);
+		if (f.exists() == false) {
+			logger.error("project configuration file {} not found. Aborting..",
+					fileName);
+			return null;
+		}
+
+		try (JsonReader reader = new JsonReader(new FileReader(f))) {
+			return GSON.fromJson(reader, cls);
+		} catch (final Exception e) {
+			logger.error("Exception while trying to read file {}. Error: {}",
+					f.getPath(), e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	/**
+	 * parse and return a map
+	 *
+	 * @param reader
+	 * @param cls
+	 * @throws IOException
+	 */
+	static <T extends Object> void loadMap(final Map<String, T> map,
+			final JsonReader reader, final Class<T> cls) throws IOException {
+		logger.debug("Started loading instances of {} into a map",
+				cls.getName());
+		final int nbr = map.size();
+		int idx = nbr - 1;
+		reader.beginObject();
+		while (true) {
+			idx++;
+			final JsonToken token = reader.peek();
+			if (token == JsonToken.END_OBJECT) {
+				reader.endObject();
+				logger.debug("{} objects parsed", (idx - nbr));
+				return;
+			}
+
+			final String key = reader.nextName();
+			T value = GSON.fromJson(reader, cls);
+			if (value instanceof IInitializer) {
+				((IInitializer) value).initialize(key, idx);
+			}
+			map.put(key, value);
+		}
+	}
+
+	/**
+	 * extract entries of the form {"att": "value", "att2": "avlue2"... } into
+	 * the map
+	 *
+	 * @param map
+	 * @param reader
+	 * @throws IOException
+	 */
+	static void loadStringMap(final Map<String, String> map,
+			final JsonReader reader) throws IOException {
+		reader.beginObject();
+		while (reader.peek() != JsonToken.END_OBJECT) {
+			map.put(reader.nextName(), reader.nextString());
+		}
+		reader.endObject();
+	}
+
+	/**
+	 * An object may want to initialize itself after setting all the attributes
+	 */
+	interface IInitializer {
+		/**
+		 *
+		 * @param name
+		 *            member name. typically becomes name attribute of the
+		 *            object
+		 * @param idx
+		 *            0-based index of this member. this is generally not the
+		 *            right thing to do in a json because the order of
+		 *            attributes is not significant.However,in our design, we
+		 *            would like to make use of it and hence this
+		 */
+		void initialize(String name, int idx);
+	}
+
+	/**
+	 * object populates itself from a its JSON representation.
+	 */
+	interface ISelfLoader {
+		/**
+		 *
+		 * @param reader
+		 *            is positioned at begin_object (it is not consumed. only
+		 *            name is consumed) caller is expected to consume the object
+		 *            and return
+		 * @param key
+		 *            name that is already parsed
+		 * @param idx
+		 *            0-based index of this member. this is generally not the
+		 *            right thing to do in a json because the order of
+		 *            attributes is not significant.However,in our design, we
+		 *            would like to make use of it and hence this
+		 * @throws IOException
+		 */
+		void fromJson(JsonReader reader, String key, int idx)
+				throws IOException;
+	}
+
+	/**
+	 * read and discard the next token
+	 *
+	 * @param reader
+	 * @throws IOException
+	 */
+	public static void swallowAToken(final JsonReader reader)
+			throws IOException {
+		final JsonToken token = reader.peek();
+		switch (token) {
+
+		case BEGIN_ARRAY :
+			GSON.fromJson(reader, Object[].class);
+			return;
+
+		case BEGIN_OBJECT :
+			GSON.fromJson(reader, Object.class);
+			return;
+
+		case BOOLEAN :
+		case NUMBER :
+		case STRING :
+			reader.nextString();
+			return;
+
+		case NAME :
+			reader.nextName();
+			return;
+
+		case NULL :
+			reader.nextNull();
+			return;
+
+		case END_ARRAY :
+			reader.endArray();
+			return;
+		case END_OBJECT :
+			reader.endArray();
+			return;
+		case END_DOCUMENT :
+			return;
+		default :
+			logger.warn("Util is not designed to swallow the token {} ",
+					token.name());
+		}
+	}
+
+	static void emitJavaGettersAndSetters(final Field[] fields,
+			final StringBuilder sbf) {
+		for (final Field f : fields) {
+			ValueSchema vs = f.schemaInstance;
+			String typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
+			String get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
+
+			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
+			sbf.append("\n\t * @param value to be assigned to ").append(nam);
+			sbf.append("\n\t */");
+			sbf.append("\n\tpublic void set").append(cls).append('(')
+					.append(typ).append(" value){");
+			sbf.append("\n\t\tthis.fieldValues[").append(f.index)
+					.append("] = value;");
+			sbf.append("\n\t}");
+
+			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam)
+					.append("\n\t */");
+			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls)
+					.append("(){");
+			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(")
+					.append(f.index).append(");");
+			sbf.append("\n\t}");
+		}
+
+	}
+
 }

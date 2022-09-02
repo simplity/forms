@@ -22,14 +22,10 @@
 
 package org.simplity.fm.gen;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.data.FieldType;
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,16 +35,17 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class Field implements Util.INamedMember {
+class Field {
 	private static final Map<String, FieldType> fieldTypes = createMap();
-	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
-	protected static final String C = ", ";
+	private static final Logger logger = LoggerFactory.getLogger(Field.class);
+	private static final String C = ", ";
 
 	String name;
-	String dataType;
+	String fieldType = "optionalData";
+	String dbColumnName;
+	String valueSchema;
 	String errorId;
 	String defaultValue;
-	boolean isRequired;
 	String listName;
 	String listKey;
 	String label;
@@ -59,134 +56,96 @@ class Field implements Util.INamedMember {
 	String hint;
 	boolean renderInList;
 	boolean renderInSave;
-	ValueType valueType;
+
+	// synthetic attributes
+	boolean isRequired;
+	ValueSchema schemaInstance;
 
 	int index;
-	String dbColumnName;
-	private String fieldType;
-	DataType dt;
+	FieldType fieldTypeEnum;
 
-	@Override
-	public void setNameAndIdx(final String name, final int idx) {
-		this.name = name;
+	public void init(final int idx, Map<String, ValueSchema> schemas) {
 		this.index = idx;
-	}
-
-	void init(final Map<String, DataType> dataTypes) {
-		this.dt = dataTypes.get(this.dataType);
-		if (this.dt == null) {
-			logger.error("Field {} has an invalid dataType of {}. text value type is assumed", this.name,
-					this.dataType);
-			this.valueType = ValueType.Text;
-		} else {
-			this.valueType = this.dt.valueType;
-
+		this.schemaInstance = schemas.get(this.valueSchema);
+		if (this.schemaInstance == null) {
+			if (this.valueSchema == null) {
+				logger.error(
+						"Field {} has not defined a value-schema. A Default is assumed.",
+						this.name);
+			} else {
+				logger.error(
+						"Field {} has specified {} as value-schema, but it is not defined. A default text-schema is used instead",
+						this.valueSchema, this.name);
+			}
+			this.schemaInstance = ValueSchema.DEFAULT_SCHEMA;
+			this.valueSchema = this.schemaInstance.name;
 		}
+
+		this.fieldTypeEnum = fieldTypes.get(this.fieldType.toLowerCase());
+		if (fieldTypeEnum == null) {
+			logger.error(
+					"{} is an invalid fieldType for field {}. optional data is  assumed",
+					this.fieldType, this.name);
+			this.fieldType = "optionalData";
+			this.fieldTypeEnum = FieldType.OptionalData;
+		}
+		this.isRequired = this.fieldTypeEnum == FieldType.RequiredData
+				|| this.fieldTypeEnum == FieldType.PrimaryKey;
 	}
 
-	void emitJavaCode(final StringBuilder sbf, final String dataTypesName, final boolean isDb) {
+	void emitJavaCode(final StringBuilder sbf, final String schemasName,
+			final boolean isDb) {
 		sbf.append("\n\t\t\tnew ");
 		if (isDb) {
 			sbf.append("Db");
 		}
+		// 1. name
 		sbf.append("Field(\"").append(this.name).append('"');
+		// 2. index
 		sbf.append(C).append(this.index);
-		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
-		sbf.append(C).append(Util.escape(this.defaultValue));
-		sbf.append(C).append(Util.escape(this.errorId));
+		// 3. schema name. All Schema names are statically defined in the main
+		// class. e.g. DataTypes.schemaName
+		sbf.append(C).append(schemasName).append('.').append(this.valueSchema);
+		// 4. default value as string
+		sbf.append(C).append(Util.qoutedString(this.defaultValue));
+		// 5. error id
+		sbf.append(C).append(Util.qoutedString(this.errorId));
+		// 6. listName as string, null if not required
 		/*
 		 * list is handled by inter-field in case key is specified
 		 */
 		if (this.listKey == null) {
-			sbf.append(C).append(Util.escape(this.listName));
+			sbf.append(C).append(Util.qoutedString(this.listName));
 		} else {
 			sbf.append(C).append("null");
 		}
-		if (isDb) {
-			sbf.append(C).append(Util.escape(this.dbColumnName));
-			sbf.append(C);
-			final FieldType ct = this.getFieldType();
-			if (ct == null) {
-				sbf.append("null");
-			} else {
-				sbf.append("FieldType.").append(ct.name());
-			}
 
+		// additional parameters for a DbField
+		if (isDb) {
+			// 7. column Name
+			sbf.append(C).append(Util.qoutedString(this.dbColumnName));
+			// 8. columnType as Enum
+			sbf.append(C).append("FieldType.")
+					.append(this.fieldTypeEnum.name());
 		} else {
+			// 7. isRequired for non-db field
 			sbf.append(C).append(this.isRequired);
 		}
 		sbf.append(')');
 	}
 
-	protected void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, DataType> dataTypes,
-			final String prefix, final Map<String, ValueList> lists, final Map<String, KeyedList> keyedLists) {
-		final List<String> validations = new ArrayList<>();
+	public void emitTs(final StringBuilder def, final String indent) {
 
 		if (this.isRequired) {
-			def.append(prefix).append("isRequired: true");
-			validations.add("required");
+			def.append(indent).append("isRequired: true,");
 		}
 
 		if (this.listName != null) {
-			def.append(prefix).append("listName: ").append(Util.escapeTs(this.listName));
-
-			if (this.listKey != null) {
-				def.append(prefix).append("listKey: ").append(Util.escapeTs(this.listKey));
-				final KeyedList kl = keyedLists.get(this.listName);
-				if (kl != null) {
-					def.append(prefix).append("keyedList: {");
-					final String indent = "\n\t\t\t";
-					kl.emitTs(def, indent);
-					def.append(indent).append("}");
-				}
-			} else {
-				final ValueList list = lists.get(this.listName);
-				if (list != null) {
-					final String indent = "\n\t\t\t";
-					def.append(prefix).append("valueList: [");
-					list.emitTs(def, indent);
-					def.append(indent).append("]");
-
-				}
-			}
+			def.append(indent).append("listName: ")
+					.append(Util.singleQuotedString(this.listName))
+					.append(COMA);
 		}
 
-		final DataType dt = dataTypes.get(this.dataType);
-		if (dt == null) {
-			def.append(prefix).append("valueType: 0");
-			logger.error("Field {} has an invalid data type of {}", this.name, this.dataType);
-		} else {
-			dt.emitTs(def, this.defaultValue, validations, prefix);
-		}
-
-		controls.append("\n\t\tthis.controls.set('").append(this.name).append("', [");
-		boolean firstOne = true;
-		for (final String s : validations) {
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				controls.append(", ");
-			}
-			controls.append("Validators.").append(s);
-		}
-
-		controls.append("]);");
-		controls.append("\n\t\tthis.fields.set('").append(this.name).append("', this.").append(this.name).append(");");
-	}
-
-	/**
-	 * @return column type, or null.
-	 */
-	public FieldType getFieldType() {
-		if (this.fieldType == null) {
-			return FieldType.OptionalData;
-		}
-		final FieldType ct = fieldTypes.get(this.fieldType.toLowerCase());
-		if (ct != null) {
-			return ct;
-		}
-		logger.error("{} is an invalid fieldType for field {}. optional data is  assumed", this.fieldType, this.name);
-		return FieldType.OptionalData;
 	}
 
 	/**
@@ -210,9 +169,12 @@ class Field implements Util.INamedMember {
 	public void emitFormTs(final StringBuilder sbf) {
 		sbf.append("\n\t\t").append(this.name).append(": {");
 		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
-		sbf.append(BEGIN).append("dataType: '").append(this.dataType).append(END);
-		sbf.append(BEGIN).append("valueType: '").append(this.valueType.name().toLowerCase()).append(END);
-		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
+		sbf.append(BEGIN).append("dataType: '").append(this.valueSchema)
+				.append(END);
+		sbf.append(BEGIN).append("valueType: '")
+				.append(this.schemaInstance.getValueType()).append(END);
+		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired)
+				.append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
 			lbl = Util.toLabel(this.name);
@@ -227,15 +189,20 @@ class Field implements Util.INamedMember {
 		Util.addAttrTs(sbf, BEGIN, "errorId", this.errorId);
 		Util.addAttrTs(sbf, BEGIN, "listName", this.listName);
 		Util.addAttrTs(sbf, BEGIN, "listKeyName", this.listKey);
-		final FieldType ft = this.getFieldType();
-		if (ft == FieldType.PrimaryKey || ft == FieldType.OptionalData || ft == FieldType.RequiredData) {
-			String rt = "text";
-			if (this.valueType == ValueType.Boolean) {
-				rt = "checkbox";
-			} else if (this.listName != null) {
+		if (this.renderInList) {
+			sbf.append(BEGIN).append("renderInList : true,");
+		}
+		if (this.renderInSave) {
+			sbf.append(BEGIN).append("renderInSave : true,");
+		}
+		if (this.fieldTypeEnum == FieldType.PrimaryKey
+				|| this.fieldTypeEnum == FieldType.OptionalData
+				|| this.fieldTypeEnum == FieldType.RequiredData) {
+			String rt;
+			if (this.listName != null) {
 				rt = "select";
-			} else if(this.dt.getMaxLength() > Application.TEXT_AREA_CUTOFF_LENGTH) {
-				rt = "textarea";
+			} else {
+				rt = this.schemaInstance.getRenderType();
 			}
 			Util.addAttrTs(sbf, BEGIN, "renderType", rt);
 		}

@@ -1,8 +1,13 @@
 package org.simplity.fm.example.gen.list;
 
 import org.simplity.fm.core.validn.ValueList;
+
+/**
+ * InstituteType
+ */
+
 public class InstituteType extends ValueList {
-	 private static final Object[][] VALUES = { 
+	private static final Object[][] VALUES = { 
 		{"DSERTPS", "Karnataka State Syllabus Primary School"}, 
 		{"DSERTPHS", "Karnataka State Syllabus Higher School"}, 
 		{"CBSE ", "CBSE"}, 
@@ -11,18 +16,17 @@ public class InstituteType extends ValueList {
 	};
 	 private static final String NAME = "instituteType";
 
-/**
- *
+	/**
 	 * @param name
 	 * @param valueList
- */
+	 */
 	public InstituteType(String name, Object[][] valueList) {
 		super(name, valueList);
 	}
 
-/**
- *instituteType
- */
+	/**
+	 *instituteType
+	 */
 	public InstituteType() {
 		super(NAME, VALUES);
 	}

@@ -70,7 +70,7 @@ class ParsedFilter {
 
 	static ParsedFilter parse(final IInputObject inputObject, final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
-		IInputObject conditions = inputObject.getObject(Conventions.Http.TAG_CONDITIONS);
+		IInputObject conditions = inputObject.getObject(Conventions.Request.TAG_CONDITIONS);
 		if (conditions == null || conditions.isEmpty()) {
 			logger.warn("payload for filter has no conditions. All rows will be filtered");
 			conditions = null;
@@ -79,9 +79,9 @@ class ParsedFilter {
 		/*
 		 * sort order
 		 */
-		final IInputObject sorts = inputObject.getObject(Conventions.Http.TAG_SORT);
+		final IInputObject sorts = inputObject.getObject(Conventions.Request.TAG_SORT);
 
-		final int maxRows = (int) inputObject.getLong(Conventions.Http.TAG_MAX_ROWS);
+		final int maxRows = (int) inputObject.getLong(Conventions.Request.TAG_MAX_ROWS);
 		if (maxRows != 0) {
 			logger.info("Number of max rows is set to {}. It is ignored as of now.", maxRows);
 		}
@@ -177,7 +177,7 @@ class ParsedFilter {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-			final String condnText = node.getString(Conventions.Http.TAG_FILTER_COMP);
+			final String condnText = node.getString(Conventions.Request.TAG_FILTER_COMP);
 			if (condnText == null || condnText.isEmpty()) {
 				logger.error("comp is missing for a filter condition for field {}", fieldName);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -190,7 +190,7 @@ class ParsedFilter {
 				return false;
 			}
 
-			String value = node.getString(Conventions.Http.TAG_FILTER_VALUE);
+			String value = node.getString(Conventions.Request.TAG_FILTER_VALUE);
 			if (value == null || value.isEmpty()) {
 				logger.error("value is missing for a filter condition");
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -198,7 +198,7 @@ class ParsedFilter {
 			}
 			String value2 = null;
 			if (condn == FilterCondition.Between) {
-				value2 = node.getString(Conventions.Http.TAG_FILTER_VALUE_TO);
+				value2 = node.getString(Conventions.Request.TAG_FILTER_VALUE_TO);
 				if (value2 == null || value2.isEmpty()) {
 					logger.error("valueTo is missing for a filter condition");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));

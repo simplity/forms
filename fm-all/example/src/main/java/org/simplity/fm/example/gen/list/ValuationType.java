@@ -3,8 +3,12 @@ package org.simplity.fm.example.gen.list;
 import java.util.HashMap;
 import org.simplity.fm.core.validn.KeyedValueList;
 import org.simplity.fm.core.validn.ValueList;
+
+/**
+ * ValuationType
+ */
 public class ValuationType extends KeyedValueList {
-	private static final Object[] KEYS = {1L, 2L, 3L
+	private static final Object[] KEYS = {"1", "2", "3"
 		};
 	private static final Object[][][] VALUES = {
 			{
@@ -23,7 +27,7 @@ public class ValuationType extends KeyedValueList {
 	private static final String NAME = "valuationType";
 
 /**
- *valuationType
+ * ValuationType
  */
 	public ValuationType() {
 		this.name = NAME;

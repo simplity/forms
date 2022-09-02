@@ -42,7 +42,6 @@ import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InclusiveValidation;
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +56,7 @@ class Record {
 	 * this logger is used by all related classes of form to give the programmer
 	 * the right stream of logs to look for any issue in the workbook
 	 */
-	static final Logger logger = LoggerFactory.getLogger(Record.class);
+	private static final Logger logger = LoggerFactory.getLogger(Record.class);
 
 	private static final String C = ", ";
 	private static final String P = "\n\tprivate static final ";
@@ -68,12 +67,8 @@ class Record {
 	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
-	String customValidation;
+	// String customValidation;
 	String[] operations;
-	/*
-	 * reason we have it as an array rather than a MAP is that the sequence,
-	 * though not recommended, could be hard-coded by some coders
-	 */
 	Field[] fields;
 	FromToPair[] fromToPairs;
 	ExclusivePair[] exclusivePairs;
@@ -82,7 +77,11 @@ class Record {
 	/*
 	 * derived fields required for generating java/ts
 	 */
-	Map<String, Field> fieldMap;
+	/*
+	 * reason we have it as an array rather than a MAP is that the sequence,
+	 * though not recommended, could be hard-coded by some coders
+	 */
+	Map<String, Field> fieldsMap;
 	Field[] fieldsWithList;
 	Field[] keyFields;
 
@@ -93,9 +92,14 @@ class Record {
 	/*
 	 * some tables may have primary key, but not have anything to update
 	 */
-	transient boolean isUpdatable;
+	boolean isUpdatable;
 
-	void init(final Map<String, DataType> dataTypes) {
+	public void init(String nam, Map<String, ValueSchema> schemas) {
+		if (this.name.equals(nam) == false) {
+			logger.error(
+					"File named {}.rec has a record named {}, violating the convention of having the same name. File name ignored",
+					nam, this.name);
+		}
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
@@ -104,57 +108,56 @@ class Record {
 		Field createdBy = null;
 		Field createdAt = null;
 
-		this.fieldMap = new HashMap<>();
 		final List<Field> list = new ArrayList<>();
 		final List<Field> keyList = new ArrayList<>();
-
-		int idx = -1;
-		for (final Field field : this.fields) {
+		this.fieldsMap = new HashMap<>();
+		for (int idx = 0; idx < this.fields.length; idx++) {
+			final Field field = this.fields[idx];
 			if (field == null) {
 				continue;
 			}
-			field.init(dataTypes);
-			idx++;
-			field.index = idx;
-			final String fieldName = field.name;
 
-			if (this.fieldMap.containsKey(fieldName)) {
-				logger.error("{} is a duplicate field ", fieldName);
-			} else {
-				this.fieldMap.put(fieldName, field);
+			field.init(idx, schemas);
+			Field existing = this.fieldsMap.put(field.name, field);
+			if (existing != null) {
+				logger.error(
+						"Field {} is a duplicate in record {}. Generated Code will have compilation errors",
+						field.name, this.name);
 			}
 
 			if (field.listName != null) {
 				list.add(field);
 			}
 
-			FieldType ct = field.getFieldType();
-			if (ct == null) {
+			FieldType ft = field.fieldTypeEnum;
+			if (ft == null) {
 				if (field.dbColumnName == null) {
-					logger.warn("{} is not linked to a db-column. No I/O happens on this field.", fieldName);
+					logger.warn(
+							"{} is not linked to a db-column. No I/O happens on this field.",
+							field.name);
 					continue;
 				}
 				logger.error(
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
-						fieldName, field.dbColumnName);
-				ct = FieldType.OptionalData;
+						field.name, field.dbColumnName);
+				ft = FieldType.OptionalData;
 			}
 
-			field.isRequired = ct.isRequired();
-
-			switch (ct) {
-			case PrimaryKey:
+			switch (ft) {
+			case PrimaryKey :
 				if (this.generatedKeyField != null) {
-					logger.error("{} is defined as a generated primary key, but {} is also defined as a primary key.",
+					logger.error(
+							"{} is defined as a generated primary key, but {} is also defined as a primary key.",
 							keyList.get(0).name, field.name);
 				} else {
 					keyList.add(field);
 				}
-				continue;
+				break;
 
-			case GeneratedPrimaryKey:
+			case GeneratedPrimaryKey :
 				if (this.generatedKeyField != null) {
-					logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
+					logger.error(
+							"Only one generated key please. Found {} as well as {} as generated primary keys.",
 							field.name, keyList.get(0).name);
 				} else {
 					if (keyList.size() > 0) {
@@ -166,63 +169,68 @@ class Record {
 					keyList.add(field);
 					this.generatedKeyField = field;
 				}
-				continue;
+				break;
 
-			case TenantKey:
-				if (field.dataType.equals("tenantKey") == false) {
+			case TenantKey :
+				if (field.valueSchema.equals("tenantKey") == false) {
 					logger.error(
-							"Tenant key field MUST use dataType of tenantKey. Field {} which is marked as tenant key is of data type {}",
-							field.name, field.dataType);
+							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
+							field.name, field.valueSchema);
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
 				} else {
-					logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
-							this.tenantField.name);
+					logger.error(
+							"Both {} and {} are marked as tenantKey. Tenant key has to be unique.",
+							field.name, this.tenantField.name);
 				}
-				continue;
+				break;
 
-			case CreatedAt:
+			case CreatedAt :
 				if (createdAt == null) {
 					createdAt = field;
 				} else {
-					logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
-							createdAt.name);
+					logger.error(
+							"Only one field to be used as createdAt but {} and {} are marked",
+							field.name, createdAt.name);
 				}
-				continue;
+				break;
 
-			case CreatedBy:
+			case CreatedBy :
 				if (createdBy == null) {
 					createdBy = field;
 				} else {
-					logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
-							createdBy.name);
+					logger.error(
+							"Only one field to be used as createdBy but {} and {} are marked",
+							field.name, createdBy.name);
 				}
-				continue;
+				break;
 
-			case ModifiedAt:
+			case ModifiedAt :
 				if (modifiedAt == null) {
 					modifiedAt = field;
 					if (this.useTimestampCheck) {
 						this.timestampField = field;
 					}
 				} else {
-					logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
-							this.timestampField.name);
+					logger.error(
+							"{} and {} are both defined as lastModifiedAt!!",
+							field.name, this.timestampField.name);
 				}
-				continue;
+				break;
 
-			case ModifiedBy:
+			case ModifiedBy :
 				if (modifiedBy == null) {
 					modifiedBy = field;
 				} else {
-					logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
-							modifiedBy.name);
+					logger.error(
+							"Only one field to be used as modifiedBy but {} and {} are marked",
+							field.name, modifiedBy.name);
 				}
-				continue;
+				break;
 
-			default:
-				continue;
+			default :
+				break;
 			}
 		}
 
@@ -242,14 +250,7 @@ class Record {
 
 	}
 
-	Set<String> getNameSet() {
-		if (this.fieldMap != null) {
-			return this.fieldMap.keySet();
-		}
-		return new HashSet<>();
-	}
-
-	void emitJavaClass(final StringBuilder sbf, final String generatedPackage, final DataTypes dataTypes) {
+	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
 		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		/*
 		 * our package name is rootPackage + any prefix/qualifier in our name
@@ -263,7 +264,8 @@ class Record {
 		}
 		sbf.append("package ").append(pck).append(";\n");
 
-		final boolean isDb = this.nameInDb != null && this.nameInDb.isEmpty() == false;
+		final boolean isDb = this.nameInDb != null
+				&& this.nameInDb.isEmpty() == false;
 		/*
 		 * imports
 		 */
@@ -300,13 +302,15 @@ class Record {
 		/*
 		 * data types are directly referred to the static declarations
 		 */
-		sbf.append("\nimport ").append(generatedPackage).append('.').append(typesName).append(';');
+		sbf.append("\nimport ").append(generatedPackage).append('.')
+				.append(typesName).append(';');
 		/*
 		 * class definition
 		 */
 		final String cls = Util.toClassName(this.name) + "Record";
 
-		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
+		sbf.append("\n\n/**\n * class that represents structure of ")
+				.append(this.name);
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(cls).append(" extends ");
 		if (isDb) {
@@ -318,7 +322,8 @@ class Record {
 		this.emitValidOps(sbf);
 		this.emitJavaValidations(sbf);
 
-		sbf.append("\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
+		sbf.append(
+				"\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
 		sbf.append(this.name).append("\", FIELDS, VALIDS);");
 
 		if (isDb) {
@@ -330,34 +335,40 @@ class Record {
 		/*
 		 * newInstane()
 		 */
-		sbf.append("\n\n\t@Override\n\tpublic ").append(cls).append(" newInstance(final Object[] values) {");
+		sbf.append("\n\n\t@Override\n\tpublic ").append(cls)
+				.append(" newInstance(final Object[] values) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("(values);\n\t}");
 
 		/*
 		 * parseTable() override for better type-safety
 		 */
-		sbf.append("\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<").append(cls);
+		sbf.append(
+				"\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<")
+				.append(cls);
 		sbf.append(
 				"> parseTable(final IInputObject inputObject, String memberName, final boolean forInsert, final IServiceContext ctx) {");
-		sbf.append("\n\t\treturn (List<").append(cls)
-				.append(">) super.parseTable(inputObject, memberName, forInsert, ctx);\n\t}");
+		sbf.append("\n\t\treturn (List<").append(cls).append(
+				">) super.parseTable(inputObject, memberName, forInsert, ctx);\n\t}");
 
 		/*
 		 * getters and setters
 		 */
-		Generator.emitJavaGettersAndSetters(this.fields, sbf, dataTypes.dataTypes);
+		Util.emitJavaGettersAndSetters(this.fields, sbf);
 		sbf.append("\n}\n");
 	}
 
-	static private void emitNonDbSpecific(final StringBuilder sbf, final String cls) {
+	static private void emitNonDbSpecific(final StringBuilder sbf,
+			final String cls) {
 		/*
 		 * constructor
 		 */
 		sbf.append("\n\n\t/**  default constructor */");
-		sbf.append("\n\tpublic ").append(cls).append("() {\n\t\tsuper(META, null);\n\t}");
+		sbf.append("\n\tpublic ").append(cls)
+				.append("() {\n\t\tsuper(META, null);\n\t}");
 
 		sbf.append("\n\n\t/**\n\t *@param values initial values\n\t */");
-		sbf.append("\n\tpublic ").append(cls).append("(Object[] values) {\n\t\tsuper(META, values);\n\t}");
+		sbf.append("\n\tpublic ").append(cls)
+				.append("(Object[] values) {\n\t\tsuper(META, values);\n\t}");
 	}
 
 	private void emitDbSpecific(final StringBuilder sbf, final String cls) {
@@ -380,31 +391,39 @@ class Record {
 			final StringBuilder clause = new StringBuilder();
 			this.makeWhere(clause, indexes, this.keyFields);
 
-			sbf.append(P).append("String WHERE = \"").append(clause.toString()).append("\";");
-			sbf.append(P).append("int[] WHERE_IDX = {").append(indexes.toString()).append("};");
+			sbf.append(P).append("String WHERE = \"").append(clause.toString())
+					.append("\";");
+			sbf.append(P).append("int[] WHERE_IDX = {")
+					.append(indexes.toString()).append("};");
 
 			this.emitUpdate(sbf, clause.toString(), indexes.toString());
-			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.nameInDb).append("\";");
+			sbf.append(P).append("String DELETE = \"DELETE FROM ")
+					.append(this.nameInDb).append("\";");
 		}
 
-		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", OPERS, SELECT, SELECT_IDX,");
+		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"")
+				.append(this.nameInDb).append("\", OPERS, SELECT, SELECT_IDX,");
 		if (this.keyFields == null) {
 			sbf.append("null, null, null, null, null, null, null");
 		} else {
-			sbf.append("INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX");
+			sbf.append(
+					"INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX");
 		}
 		sbf.append(");");
 		/*
 		 * constructor
 		 */
 		sbf.append("\n\n\t/**  default constructor */");
-		sbf.append("\n\tpublic ").append(cls).append("() {\n\t\tsuper(DBA, META, null);\n\t}");
+		sbf.append("\n\tpublic ").append(cls)
+				.append("() {\n\t\tsuper(DBA, META, null);\n\t}");
 
 		sbf.append("\n\n\t/**\n\t * @param values initial values\n\t */");
-		sbf.append("\n\tpublic ").append(cls).append("(Object[] values) {\n\t\tsuper(DBA, META, values);\n\t}");
+		sbf.append("\n\tpublic ").append(cls).append(
+				"(Object[] values) {\n\t\tsuper(DBA, META, values);\n\t}");
 	}
 
-	private void emitJavaFields(final StringBuilder sbf, final String dataTypesName, final boolean isDb) {
+	private void emitJavaFields(final StringBuilder sbf,
+			final String dataTypesName, final boolean isDb) {
 		sbf.append("\n\tprivate static final Field[] FIELDS = ");
 		if (this.fields == null) {
 			sbf.append("null;");
@@ -426,22 +445,22 @@ class Record {
 	private void emitValidOps(StringBuilder sbf) {
 		sbf.append("\n\tprivate static final boolean[] OPERS = {");
 		Set<String> set = null;
-		if(this.operations != null && this.operations.length > 0) {
+		if (this.operations != null && this.operations.length > 0) {
 			set = new HashSet<>();
-			for(String s : this.operations) {
-				if(s == null) {
+			for (String s : this.operations) {
+				if (s == null) {
 					continue;
 				}
-				//we want to be case insensitive..
+				// we want to be case insensitive..
 				s = s.toLowerCase();
 				s = s.substring(0, 1).toUpperCase() + s.substring(1);
 				set.add(s);
 			}
 		}
-		for(IoType op : IoType.values()) {
-			if(set != null && set.contains(op.name())) {
+		for (IoType op : IoType.values()) {
+			if (set != null && set.contains(op.name())) {
 				sbf.append("true,");
-			}else {
+			} else {
 				sbf.append("false,");
 			}
 		}
@@ -481,18 +500,19 @@ class Record {
 				if (field.listKey == null) {
 					continue;
 				}
-				final Field f = this.fieldMap.get(field.listKey);
+				final Field f = this.fieldsMap.get(field.listKey);
 				if (f == null) {
-					logger.error("DbField {} specifies {} as listKey, but that field is not defined", field.name,
-							field.listKey);
+					logger.error(
+							"DbField {} specifies {} as listKey, but that field is not defined",
+							field.name, field.listKey);
 					continue;
 				}
 
 				sbf.append("new DependentListValidation(").append(field.index);
 				sbf.append(C).append(f.index);
-				sbf.append(C).append(Util.escape(field.listName));
-				sbf.append(C).append(Util.escape(field.name));
-				sbf.append(C).append(Util.escape(field.errorId));
+				sbf.append(C).append(Util.qoutedString(field.listName));
+				sbf.append(C).append(Util.qoutedString(field.name));
+				sbf.append(C).append(Util.qoutedString(field.errorId));
 				sbf.append(")");
 				sbf.append(sufix);
 			}
@@ -508,7 +528,8 @@ class Record {
 		sbf.append("\n\t};");
 	}
 
-	private void makeWhere(final StringBuilder clause, final StringBuilder indexes, final Field[] keys) {
+	private void makeWhere(final StringBuilder clause,
+			final StringBuilder indexes, final Field[] keys) {
 		clause.append(" WHERE ");
 		boolean firstOne = true;
 		for (final Field field : keys) {
@@ -525,7 +546,8 @@ class Record {
 		 * as a matter of safety, tenant key is always part of queries
 		 */
 		if (this.tenantField != null) {
-			clause.append(" AND ").append(this.tenantField.dbColumnName).append("=?");
+			clause.append(" AND ").append(this.tenantField.dbColumnName)
+					.append("=?");
 			indexes.append(C).append(this.tenantField.index);
 		}
 	}
@@ -536,7 +558,7 @@ class Record {
 
 		boolean firstOne = true;
 		for (final Field field : this.fields) {
-			final FieldType ct = field.getFieldType();
+			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null) {
 				continue;
 			}
@@ -552,19 +574,21 @@ class Record {
 
 		sbf.append(" FROM ").append(this.nameInDb);
 		sbf.append("\";");
-		sbf.append(P).append("int[] SELECT_IDX = {").append(idxSbf).append("};");
+		sbf.append(P).append("int[] SELECT_IDX = {").append(idxSbf)
+				.append("};");
 
 	}
 
 	private void emitInsert(final StringBuilder sbf) {
-		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(this.nameInDb).append('(');
+		sbf.append(P).append(" String INSERT = \"INSERT INTO ")
+				.append(this.nameInDb).append('(');
 		final StringBuilder idxSbf = new StringBuilder();
 		idxSbf.append(P).append("int[] INSERT_IDX = {");
 		final StringBuilder vbf = new StringBuilder();
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
-			final FieldType ct = field.getFieldType();
+			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null || ct.isInserted() == false) {
 				continue;
 			}
@@ -592,9 +616,11 @@ class Record {
 		sbf.append(idxSbf).append("};");
 	}
 
-	private void emitUpdate(final StringBuilder sbf, final String whereClause, final String whereIndexes) {
+	private void emitUpdate(final StringBuilder sbf, final String whereClause,
+			final String whereIndexes) {
 		final StringBuilder updateBuf = new StringBuilder();
-		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(this.nameInDb).append(" SET ");
+		updateBuf.append(P).append(" String UPDATE = \"UPDATE ")
+				.append(this.nameInDb).append(" SET ");
 
 		final StringBuilder idxBuf = new StringBuilder();
 		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
@@ -602,7 +628,7 @@ class Record {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
-			final FieldType ct = field.getFieldType();
+			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null || ct.isUpdated() == false) {
 				continue;
 			}
@@ -642,7 +668,8 @@ class Record {
 		updateBuf.append(whereClause);
 
 		if (this.useTimestampCheck) {
-			updateBuf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
+			updateBuf.append(" AND ").append(this.timestampField.dbColumnName)
+					.append("=?");
 			idxBuf.append(C).append(this.timestampField.index);
 		}
 		updateBuf.append("\";");
@@ -679,11 +706,13 @@ class Record {
 		}
 
 		if (valBuf.length() > 0) {
-			sbf.append("\n\t\tthis.validations = [").append(valBuf).append("];");
+			sbf.append("\n\t\tthis.validations = [").append(valBuf)
+					.append("];");
 		}
 	}
 
-	void emitJavaTableClass(final StringBuilder sbf, final String generatedPackage) {
+	void emitJavaTableClass(final StringBuilder sbf,
+			final String generatedPackage) {
 		/*
 		 * table is defined only if this record is a DbRecord
 		 */
@@ -714,15 +743,18 @@ class Record {
 		 * class definition
 		 */
 
-		sbf.append("\n\n/**\n * class that represents an array of records of ").append(this.name);
+		sbf.append("\n\n/**\n * class that represents an array of records of ")
+				.append(this.name);
 		sbf.append("\n */");
-		sbf.append("\npublic class ").append(cls).append(" extends DbTable<").append(recCls).append("> {");
+		sbf.append("\npublic class ").append(cls).append(" extends DbTable<")
+				.append(recCls).append("> {");
 
 		/*
 		 * constructor
 		 */
 		sbf.append("\n\n\t/** default constructor */");
-		sbf.append("\n\tpublic ").append(cls).append("() {\n\t\tsuper(new ").append(recCls).append("());\n\t}");
+		sbf.append("\n\tpublic ").append(cls).append("() {\n\t\tsuper(new ")
+				.append(recCls).append("());\n\t}");
 
 		sbf.append("\n}\n");
 	}
@@ -731,7 +763,8 @@ class Record {
 
 	void emitClientForm(final StringBuilder sbf) {
 		sbf.append("import { Form } from 'simplity-core';");
-		sbf.append("\nexport const ").append(this.name).append("Form: Form = {");
+		sbf.append("\nexport const ").append(this.name)
+				.append("Form: Form = {");
 		sbf.append("\n\tname: '").append(this.name).append("',");
 		sbf.append("\n\tvalidOperations: {");
 		if (this.operations == null || this.operations.length == 0) {
@@ -741,7 +774,8 @@ class Record {
 		} else {
 			for (final String oper : this.operations) {
 				if (oper == null) {
-					logger.error("{} is not a valid form operation. skipped", oper);
+					logger.error("{} is not a valid form operation. skipped",
+							oper);
 				} else {
 					sbf.append("\n\t\t").append(oper).append(": true,");
 				}
@@ -762,7 +796,8 @@ class Record {
 		sbf.append("\n\tfieldNames: [").append(names.toString()).append("]");
 		if (this.keyFields != null && this.keyFields.length > 0) {
 			// we generally have only one key field
-			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].name).append(Q);
+			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].name)
+					.append(Q);
 			for (int i = 1; i < this.keyFields.length; i++) {
 				sbf.append(",'").append(this.keyFields[i].name).append(Q);
 			}

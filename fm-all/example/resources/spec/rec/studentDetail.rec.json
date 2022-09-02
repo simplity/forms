@@ -10,49 +10,48 @@
         "update"
     ],
     "fields": [
-        {
-            "name": "studentId",
-            "dataType": "flexibleId",
+            {"name": "studentId",
+        
+            "valueSchema": "flexibleId",
             "dbColumnName": "student_id",
-            "columnType": "primaryKey",
+           "fieldType": "primaryKey",
             "defaultValue": "-1"
         },
-        {
-            "name": "instituteId",
-            "dataType": "tenantKey",
+        {"name":     "instituteId",
+        
+            "valueSchema": "tenantKey",
             "dbColumnName": "institute_id",
-            "columnType": "tenantKey"
+           "fieldType": "tenantKey"
         },
-        {
-            "name": "departmentId",
-            "dataType": "id",
+        {"name":     "departmentId",
+        
+            "valueSchema": "id",
             "dbColumnName": "department_id",
-            "columnType": "requiredData",
-            "listName": "departmentList"
+           "fieldType": "requiredData"
         },
-        {
-            "name": "departmentName",
-            "dataType": "text",
+        {"name":     "departmentName",
+        
+            "valueSchema": "text",
             "dbColumnName": "department_name",
-            "columnType": "requiredData"
+           "fieldType": "requiredData"
         },
-        {
-            "name": "usn",
-            "dataType": "text",
+        {"name":     "usn",
+        
+            "valueSchema": "text",
             "dbColumnName": "usn",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "name",
-            "dataType": "name",
+        {"name":     "name",
+        
+            "valueSchema": "name",
             "dbColumnName": "name",
-            "columnType": "requiredData"
+           "fieldType": "requiredData"
         },
-        {
-            "name": "phoneNumber",
-            "dataType": "phone",
+        {"name":     "phoneNumber",
+        
+            "valueSchema": "phone",
             "dbColumnName": "phone_number",
-            "columnType": "requiredData"
+           "fieldType": "requiredData"
         }
     ]
 }

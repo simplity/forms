@@ -60,7 +60,7 @@ import com.google.gson.JsonParser;
  */
 public class Agent {
 	private static final Logger logger = LoggerFactory.getLogger(Agent.class);
-	private static IUrlPathParser pathParser = null;
+	private static IRestAdapter restAdapter = null;
 	/**
 	 * various headers that we respond back with
 	 */
@@ -75,10 +75,10 @@ public class Agent {
 
 	/**
 	 * set the parser to process REST requests
-	 * @param parser
+	 * @param adapter
 	 */
-	public static void setUrlPathParser(IUrlPathParser parser) {
-		pathParser = parser;
+	public static void setRestAdapter(IRestAdapter adapter) {
+		restAdapter = adapter;
 	}
 	/**
 	 *
@@ -99,6 +99,20 @@ public class Agent {
 	private IService service;
 	private JsonObject inputData;
 	private IServiceContext ctx;
+	
+	/**
+	 * null means no payload.
+	 */
+	private String responsePaylod;
+	/**
+	 * null means request is valid and is processed.
+	 */
+	private String requestError;
+	/**
+	 * Relevant only if requestError is null.
+	 * null means service succeeded. non-null text could be service-specific
+	 */
+	private String serviceError;
 
 	/**
 	 * response for a pre-flight request
@@ -131,170 +145,16 @@ public class Agent {
 	public void serve(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
 		this.req = request;
 		this.resp = response;
-		/*
-		 * process the request header to get service, session and user
-		 */
-		this.processHeader();
-		if (this.serviceName == null) {
-			logger.error("requested service {} is not served on this app.", this.serviceName);
-			return;
-		}
-		if (this.inputData == null) {
-			logger.info("Invalid JSON recd from client ");
-			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
-			return;
-		}
 
-		final StringWriter writer = new StringWriter();
-		final ISerializer outputObject = new JsonSerializer(writer);
-		this.ctx = this.app.getContextFactory().newContext(this.session, outputObject);
-
-		this.service = this.app.getCompProvider().getService(this.serviceName, this.ctx);
-		if (this.service == null) {
-			logger.error("No service. Responding with 404");
-			this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
-			return;
-		}
-
-		if (this.userId == null) {
-			if (this.service.serveGuests() == false) {
-				logger.info("No user. Service {} requires an authenticated user.");
-				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
-				return;
-			}
-		} else {
-			if (this.app.getAccessController().okToServe(this.service, this.ctx) == false) {
-				logger.error("User {} does not have the preveleges for service {}. Responding with 404", this.userId,
-						this.service.getId());
-				this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
-				return;
-			}
-		}
-
-
-		/*
-		 * we are ready to execute this service.
-		 */
-		this.app.getRequestLogger().log(this.userId, this.service.getId(), this.inputData.toString());
-
-		try {
-			this.service.serve(this.ctx, new JsonInputObject(this.inputData));
-			if (this.ctx.allOk()) {
-				logger.info("Service returned with All Ok");
-			} else {
-				logger.error("Service returned with error messages");
-			}
-		} catch (final Throwable e) {
-			logger.error("internal Error", e);
-			this.app.getExceptionListener().listen(this.ctx, e);
-			this.ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
-		}
-		this.respond(writer.toString());
+		this.processInput();
+		this.processRequest();
+		this.respond();
 	}
 
-	private void readInput() {
-		if (this.req.getContentLength() == 0) {
-			this.inputData = new JsonObject();
-		} else {
-			try (Reader reader = this.req.getReader()) {
-				/*
-				 * read it as json
-				 */
-				final JsonElement node = new JsonParser().parse(reader);
-				if (!node.isJsonObject()) {
-					return;
-				}
-				this.inputData = (JsonObject) node;
-
-			} catch (final Exception e) {
-				logger.error("Invalid data recd from client {}", e.getMessage());
-			}
-		}
-	}
-
-	private void respond(final String payload) {
-		/*
-		 * are we to set a user session?
-		 */
-		final UserContext seshan = this.ctx.getNewUserContext();
-		boolean addToken = false;
-		if (seshan != null) {
-			if (this.token == null) {
-				/*
-				 * this is a new session. We have to create a token and send
-				 * that to the client in the header as well
-				 */
-				this.token = UUID.randomUUID().toString();
-				this.resp.setHeader(Conventions.Http.HEADER_SERVICE, this.token);
-				logger.info("Auth token set to {} ", this.token);
-				addToken = true;
-			}
-			App.getApp().getSessionCache().put(this.token, seshan);
-		}
-		try (Writer writer = this.resp.getWriter()) {
-			writer.write("{\"");
-			writer.write(Conventions.Http.TAG_ALL_OK);
-			writer.write("\":");
-			if (this.ctx.allOk()) {
-				writer.write("true");
-				if (addToken) {
-					writer.write(",\"");
-					writer.write(Conventions.Http.TAG_TOKEN);
-					writer.write("\":\"");
-					writer.write(this.token);
-					writer.write('"');
-				}
-				if (payload != null && payload.isEmpty() == false) {
-					writer.write(",\"");
-					writer.append(Conventions.Http.TAG_DATA);
-					writer.write("\":");
-					writer.write(payload);
-				}
-			} else {
-				writer.write("false");
-			}
-			writeMessage(writer, this.ctx.getMessages());
-			writer.write("}");
-		} catch (final Exception e) {
-			e.printStackTrace();
-			try {
-				this.resp.sendError(500);
-			} catch (final IOException e1) {
-				//
-			}
-		}
-	}
-
-	/**
-	 * @param writer
-	 * @param messages
-	 * @throws IOException
-	 */
-	private static void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
-		if (msgs == null || msgs.length == 0) {
-			return;
-		}
-		writer.write(",\"");
-		writer.write(Conventions.Http.TAG_MESSAGES);
-		writer.write("\":[");
-		boolean isFirst = true;
-		for (final Message msg : msgs) {
-			if (msg == null) {
-				continue;
-			}
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				writer.write(",");
-			}
-			msg.toJson(writer);
-		}
-		writer.write("]");
-	}
-
-	private void processHeader() {
-		this.readInput();
+	private void processInput() {
+		this.processPayload();
 		this.readQueryString();
+		
 		String hdrServiceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
 		
 		if (hdrServiceName == null) {
@@ -302,14 +162,15 @@ public class Agent {
 		}
 		
 		String urlServiceName = null;
-		if(pathParser != null) {
+		if(restAdapter != null) {
 			String path = this.req.getPathInfo();
-			urlServiceName = pathParser.parsePath(path, this.req.getMethod(), inputData);
+			urlServiceName = restAdapter.parsePath(path, this.req.getMethod(), inputData);
 			if (urlServiceName == null) {
 				logger.info("path {} is not mapped to any service", path);
 			}
 		}
 		
+		//service name to be decided..
 		if(urlServiceName == null) {
 			if(hdrServiceName == null) {
 				logger.error("No serviceName specified, or mapped for this request");
@@ -331,17 +192,166 @@ public class Agent {
 		this.token = this.req.getHeader(Conventions.Http.HEADER_AUTH);
 		if (this.token == null) {
 			logger.info("Request received with  no token. Assumed guest request");
+			return;
+		}
+
+		this.session = this.app.getSessionCache().get(this.token);
+		if (this.session == null) {
+			logger.info("Token {} is not valid. possibly timed out. Treating this as a guest request", this.token);
+			this.token = null;
+			return;
+		}
+
+		this.userId = this.session.getUserId();
+		logger.info("Request from authuenticated user {} ", this.userId);
+	}
+
+	private void processRequest() {
+		if (this.serviceName == null) {
+			logger.error("requested has not specified any service.");
+			this.requestError = Conventions.Request.ERROR_NO_SERVICE;
+			return;
+		}
+		if (this.inputData == null) {
+			logger.info("Invalid JSON recd from client ");
+			this.requestError = Conventions.Request.ERROR_INVALID_DATA;
+			return;
+		}
+
+		final StringWriter writer = new StringWriter();
+		final ISerializer outputObject = new JsonSerializer(writer);
+		this.ctx = this.app.getContextFactory().newContext(this.session, outputObject);
+
+		this.service = this.app.getCompProvider().getService(this.serviceName, this.ctx);
+		if (this.service == null) {
+			logger.error("No service. Responding with 404");
+			this.requestError = Conventions.Request.ERROR_INVALID_SERVICE;
+			return;
+		}
+
+		if (this.userId == null) {
+			if (this.service.serveGuests() == false) {
+				logger.info("No user. Service {} requires an authenticated user.");
+				this.requestError = Conventions.Request.ERROR_AUTH_REQUIRED;
+				return;
+			}
 		} else {
-			this.session = this.app.getSessionCache().get(this.token);
-			if (this.session == null) {
-				logger.info("Token {} is not valid. possibly timed out. Treating this as a guest request", this.token);
-				this.token = null;
-			} else {
-				this.userId = this.session.getUserId();
-				logger.info("Request from authuenticated user {} ", this.userId);
+			if (this.app.getAccessController().okToServe(this.service, this.ctx) == false) {
+				logger.error("User {} does not have the preveleges for service {}. Responding with 404", this.userId,
+						this.service.getId());
+				this.requestError = Conventions.Request.ERROR_INVALID_SERVICE;
+				return;
 			}
 		}
-		//we are not 
+
+
+		/*
+		 * we are ready to execute this service.
+		 */
+		this.app.getRequestLogger().log(this.userId, this.service.getId(), this.inputData.toString());
+
+		try {
+			this.service.serve(this.ctx, new JsonInputObject(this.inputData));
+			if (this.ctx.allOk()) {
+				logger.info("Service returned with All Ok");
+			} else {
+				logger.error("Service returned with error messages");
+				this.requestError = Conventions.Request.ERROR_SERVICE_FAILED;
+			}
+		} catch (final Throwable e) {
+			logger.error("internal Error", e);
+			this.app.getExceptionListener().listen(this.ctx, e);
+			this.ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+			this.requestError = Conventions.Request.ERROR_SERVICE_FAILED;
+		}
+		
+		String pl = writer.toString();
+		if(pl != null && pl.isEmpty() == false) {
+			this.responsePaylod = pl;
+		}
+	}
+
+	private void respond() {
+		
+		setHeaderResponse();
+
+		boolean addToken = false;
+		if(this.serviceError == null) {
+			/*
+			 * are we to set a user session?
+			 */
+			final UserContext seshan = this.ctx.getNewUserContext();
+			if (seshan != null) {
+				if (this.token == null) {
+					/*
+					 * this is a new session. We have to create a token and send
+					 * that to the client in the header as well
+					 */
+					this.token = UUID.randomUUID().toString();
+					this.resp.setHeader(Conventions.Http.HEADER_SERVICE, this.token);
+					logger.info("Auth token set to {} ", this.token);
+					addToken = true;
+				}
+				App.getApp().getSessionCache().put(this.token, seshan);
+			}
+		}
+		
+		if(this.responsePaylod == null) {
+			return;
+		}
+		
+		try (Writer writer = this.resp.getWriter()) {
+			writer.write("{\"");
+			writer.write(Conventions.Request.TAG_ALL_OK);
+			writer.write("\":");
+			if (this.ctx.allOk()) {
+				writer.write("true");
+				if (addToken) {
+					writer.write(",\"");
+					writer.write(Conventions.Request.TAG_TOKEN);
+					writer.write("\":\"");
+					writer.write(this.token);
+					writer.write('"');
+				}
+				if (this.responsePaylod != null) {
+					writer.write(",\"");
+					writer.append(Conventions.Request.TAG_DATA);
+					writer.write("\":");
+					writer.write(this.responsePaylod);
+				}
+			} else {
+				writer.write("false");
+			}
+			writeMessage(writer, this.ctx.getMessages());
+			writer.write("}");
+		} catch (final Exception e) {
+			e.printStackTrace();
+			try {
+				this.resp.sendError(500);
+			} catch (final IOException e1) {
+				//
+			}
+		}
+	}
+
+	private void processPayload() {
+		if (this.req.getContentLength() == 0) {
+			this.inputData = new JsonObject();
+		} else {
+			try (Reader reader = this.req.getReader()) {
+				/*
+				 * read it as json
+				 */
+				final JsonElement node = new JsonParser().parse(reader);
+				if (!node.isJsonObject()) {
+					return;
+				}
+				this.inputData = (JsonObject) node;
+
+			} catch (final Exception e) {
+				logger.error("Invalid data recd from client {}", e.getMessage());
+			}
+		}
 	}
 
 	private void readQueryString() {
@@ -372,4 +382,58 @@ public class Agent {
 			return text;
 		}
 	}
+
+	private void setHeaderResponse() {
+		int status = Conventions.Http.STATUS_ALL_OK;
+		if(this.requestError != null) {
+			switch(this.requestError) {
+			case Conventions.Request.ERROR_SERVICE_FAILED :
+				status = Conventions.Http.STATUS_SERVICE_FAILED;
+				break;
+			case Conventions.Request.ERROR_NO_SERVICE :
+				status = Conventions.Http.STATUS_INVALID_DATA;
+				break;
+			case Conventions.Request.ERROR_INVALID_DATA :
+				status = Conventions.Http.STATUS_INVALID_DATA;
+				break;
+			case Conventions.Request.ERROR_INVALID_SERVICE :
+				status = Conventions.Http.STATUS_INVALID_SERVICE;
+				break;
+			case Conventions.Request.ERROR_AUTH_REQUIRED :
+				status = Conventions.Http.STATUS_AUTH_REQUIRED;
+				break;
+			default :
+				status = Conventions.Http.STATUS_SERVICE_FAILED;
+			}
+		}
+		this.resp.setStatus(status);
+		
+	}
+	/**
+	 * @param writer
+	 * @param messages
+	 * @throws IOException
+	 */
+	private static void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
+		if (msgs == null || msgs.length == 0) {
+			return;
+		}
+		writer.write(",\"");
+		writer.write(Conventions.Request.TAG_MESSAGES);
+		writer.write("\":[");
+		boolean isFirst = true;
+		for (final Message msg : msgs) {
+			if (msg == null) {
+				continue;
+			}
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				writer.write(",");
+			}
+			msg.toJson(writer);
+		}
+		writer.write("]");
+	}
+
 }

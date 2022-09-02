@@ -248,8 +248,7 @@ public class App implements IApp {
 	/**
 	 * This is a data structure to be used to pass parameter values for App
 	 * configuration. We prefer to keep this as a simple data-structure than
-	 * adding
-	 * setters/getters or making it immutable with builder-pattern etc..
+	 * adding setters/getters or making it immutable with builder-pattern etc..
 	 *
 	 * @author simplity.org
 	 *

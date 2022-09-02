@@ -2,7 +2,7 @@
   "$id": "https://simplity.org/schemas/exampleValueSchemaList",
   "title": "Value Schema List",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Enumeraiton of all value schemas defined in an app. This is just a example.",
+  "description": "Enumeraiton of all value schemas defined in an app. This is just an example.",
   "enum": [
     "accountStatus",
     "bool",

@@ -3,97 +3,97 @@
     "nameInDb": "subject_section_details",
     "operations": ["filter", "get", "update"],
     "fields": [
-        {
-            "name": "subjectSectionId",
-            "dataType": "id",
+            {"name": "subjectSectionId",
+        
+            "valueSchema": "id",
             "dbColumnName": "subject_section_id",
-            "columnType": "primaryKey"
+           "fieldType": "primaryKey"
         },
-        {
-            "name": "instituteId",
-            "dataType": "tenantKey",
+        {"name":     "instituteId",
+        
+            "valueSchema": "tenantKey",
             "dbColumnName": "institute_id",
-            "columnType": "tenantKey"
+           "fieldType": "tenantKey"
         },      
-        {
-            "name": "offeredSubjectId",
-            "dataType": "id",
+        {"name":     "offeredSubjectId",
+        
+            "valueSchema": "id",
             "dbColumnName": "offered_subject_id",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"0"
         },      
-        {
-            "name": "subjectId",
-            "dataType": "id",
+        {"name":     "subjectId",
+        
+            "valueSchema": "id",
             "dbColumnName": "subject_id",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"0"
         },      
-        {
-            "name": "levelSectionId",
-            "dataType": "id",
+        {"name":     "levelSectionId",
+        
+            "valueSchema": "id",
             "dbColumnName": "level_section_id",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"0"
         },      
-        {
-            "name": "departmentId",
-            "dataType": "id",
+        {"name":     "departmentId",
+        
+            "valueSchema": "id",
             "dbColumnName": "department_id",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },      
-        {
-            "name": "sectionId",
-            "dataType": "id",
+        {"name":     "sectionId",
+        
+            "valueSchema": "id",
             "dbColumnName": "section_id",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },      
-        {
-            "name": "subjectName",
-            "dataType": "name",
+        {"name":     "subjectName",
+        
+            "valueSchema": "name",
             "dbColumnName": "subject_name",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":""
         },
-        {
-            "name": "subjectCode",
-            "dataType": "name",
+        {"name":     "subjectCode",
+        
+            "valueSchema": "name",
             "dbColumnName": "subject_code",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":""
         },
-        {
-            "name": "sectionName",
-            "dataType": "name",
+        {"name":     "sectionName",
+        
+            "valueSchema": "name",
             "dbColumnName": "section_name",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":""
         },
-        {
-            "name": "totalClasses",
-            "dataType": "integer",
+        {"name":     "totalClasses",
+        
+            "valueSchema": "integer",
             "dbColumnName": "total_classes",
-            "columnType": "optionalData"
+           "fieldType": "optionalData"
         },
-        {
-            "name": "attendanceFrozen",
-            "dataType": "bool",
+        {"name":     "attendanceFrozen",
+        
+            "valueSchema": "bool",
             "dbColumnName": "attendance_frozen",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"false"
         },
-        {
-            "name": "cieFrozen",
-            "dataType": "bool",
+        {"name":     "cieFrozen",
+        
+            "valueSchema": "bool",
             "dbColumnName": "cie_frozen",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"false"
         },
-        {
-            "name": "isOffered",
-            "dataType": "bool",
+        {"name":     "isOffered",
+        
+            "valueSchema": "bool",
             "dbColumnName": "is_offered",
-            "columnType": "optionalData",
+           "fieldType": "optionalData",
             "defaultValue":"false"
         }
     ]

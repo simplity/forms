@@ -43,9 +43,9 @@ class InclusivePair {
 	void emitJavaCode(final StringBuilder sbf) {
 		sbf.append("new InclusiveValidation(").append(this.index1);
 		sbf.append(C).append(this.index2);
-		sbf.append(C).append(Util.escape(this.value1));
-		sbf.append(C).append(Util.escape(this.fieldName));
-		sbf.append(C).append(Util.escape(this.errorId));
+		sbf.append(C).append(Util.qoutedString(this.value1));
+		sbf.append(C).append(Util.qoutedString(this.fieldName));
+		sbf.append(C).append(Util.qoutedString(this.errorId));
 		sbf.append(")");
 	}
 
@@ -56,7 +56,7 @@ class InclusivePair {
 		sbf.append("{type: 'incl', errorId: '").append(this.errorId).append("', f1: '").append(this.field1);
 		sbf.append("', f2: '").append(this.field2).append("'");
 		if (this.value1 != null && this.value1.isEmpty() == false) {
-			sbf.append(", value:").append(Util.escapeTs(this.value1));
+			sbf.append(", value:").append(Util.singleQuotedString(this.value1));
 		}
 		sbf.append("}");
 	}

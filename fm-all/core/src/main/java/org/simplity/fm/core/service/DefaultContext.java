@@ -102,11 +102,11 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public Object getUserId() {
-		this.checkCtx();
+		checkCtx();
 		return this.userId;
 	}
 
-	private void checkCtx() {
+	private static void checkCtx() {
 		throw new ApplicationError("Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
 	}
 	@Override
@@ -188,7 +188,7 @@ public class DefaultContext implements IServiceContext {
 		}
 
 		this.serializer.beginObject();
-		this.serializer.name(Conventions.Http.TAG_LIST);
+		this.serializer.name(Conventions.Request.TAG_LIST);
 		this.serializer.beginArray();
 
 		if (values != null && values.length > 0) {
@@ -214,7 +214,7 @@ public class DefaultContext implements IServiceContext {
 		}
 		logger.info("Setting table as list inside the response object");
 		this.serializer.beginObject();
-		this.serializer.name(Conventions.Http.TAG_LIST);
+		this.serializer.name(Conventions.Request.TAG_LIST);
 		this.serializer.beginArray();
 
 		if (table != null) {
@@ -279,7 +279,7 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public UserContext getCurrentUserContext() {
-		this.checkCtx();
+		checkCtx();
 		return this.currentUtx;
 	}
 

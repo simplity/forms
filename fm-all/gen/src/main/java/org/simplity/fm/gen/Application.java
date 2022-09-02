@@ -22,17 +22,35 @@
 
 package org.simplity.fm.gen;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.IDataTypes;
+import org.simplity.fm.core.datatypes.BooleanType;
+import org.simplity.fm.core.datatypes.DataType;
+import org.simplity.fm.core.datatypes.DateType;
+import org.simplity.fm.core.datatypes.DecimalType;
+import org.simplity.fm.core.datatypes.IntegerType;
+import org.simplity.fm.core.datatypes.TextType;
+import org.simplity.fm.core.datatypes.TimestampType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-
+/**
+ * Design Considerations:
+ * Problem on hand:
+ * Generate desired Java classes and TypeScript files for the meta data specified for this app.
+ *
+ * Approach:
+ * Meta data is in Json files. We can either read them as Json Objects, or create data structures/classes.
+ * We decided to use classes with matching data-structures for ease of reading/loading.
+ *
+ * Source code generation is lengthy, but not complex. This is probably reflected in our design as well.
+ * Lengthy methods with heavily hard-coded strings.
+ *
+ * Since this is a fairly focused, non-generic code, we have used package-private attributes and avoided setters/getters
+ */
 /**
  * attributes read from application.json are output as generated sources
  *
@@ -40,96 +58,120 @@ import com.google.gson.stream.JsonToken;
  *
  */
 public class Application {
-	protected static final String ERROR = "ERROR";
-	protected static final String NAME = "name";
-	protected static final Logger logger = LoggerFactory.getLogger(Application.class);
-	protected static final int TEXT_AREA_CUTOFF_LENGTH = 199; 
+	private static final Logger logger = LoggerFactory
+			.getLogger(Application.class);
+	private static final String C = ", ";
+
+	/**
+	 * if a text field's length is less than this, it is rendered as text-field,
+	 * else as text-area
+	 */
+	public static int TEXT_AREA_CUTOFF = 199;
 
 	String name;
 	String tenantFieldName;
 	String tenantDbName;
-	DataTypes dataTypes = new DataTypes();
-	Map<String, ValueList> valueLists = new HashMap<>();
-	Map<String, KeyedList> keyedLists = new HashMap<>();
-	Map<String, RuntimeList> runtimeLists = new HashMap<>();
+	int maxLengthForTextField = 199;
+	Map<String, ValueSchema> valueSchemas;
+	Map<String, ValueList> valueLists;
 
-	void fromJson(final JsonReader reader) throws IOException {
-		reader.beginObject();
-		while (true) {
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				reader.endObject();
-				break;
-			}
-			final String key = reader.nextName();
-			switch (key) {
-			case NAME:
-				this.name = reader.nextString();
-				continue;
-
-			case "tenantFieldName":
-				this.tenantFieldName = reader.nextString();
-				continue;
-
-			case "tenantDbName":
-				this.tenantDbName = reader.nextString();
-				continue;
-
-			case "dataTypes":
-				this.dataTypes.fromJson(reader);
-				continue;
-
-			case "valueLists":
-				Util.loadMap(this.valueLists, reader, ValueList.class);
-				continue;
-
-			case "keyedLists":
-				Util.loadMap(this.keyedLists, reader, KeyedList.class);
-				continue;
-
-			case "runtimeLists":
-				Util.addToMap(this.runtimeLists, reader, RuntimeList.class);
-				continue;
-
-			default:
-				logger.warn("{} is not a valid attribute of application.ignored", key);
-				continue;
-			}
+	/**
+	 * must be called after loading, and before using it
+	 */
+	public void initialize() {
+		if (this.maxLengthForTextField > 0) {
+			TEXT_AREA_CUTOFF = this.maxLengthForTextField;
 		}
-		if (this.name == null) {
-			logger.error("name is required");
-			this.name = ERROR;
-		}
-
-		if (this.tenantFieldName == null) {
-			logger.debug("No tenant field for this project");
-		} else {
-			if (this.tenantDbName == null) {
-				logger.error("tenantDbName is required when dbFieldName is specified");
-				this.tenantDbName = ERROR;
-			}
-		}
+		Util.initializeMapEntries(this.valueSchemas);
+		Util.initializeMapEntries(this.valueLists);
+	}
+	/**
+	 * generate java classes for value schemas and value lists
+	 *
+	 * @param rootFolder
+	 *            source folder of the project where code is to be generated
+	 * @param packageName
+	 *            fully qualified package name like a.b.c
+	 */
+	public void generateJava(final String rootFolder,
+			final String packageName) {
+		this.generateJavaForSchemas(rootFolder, packageName);
+		this.generateJavaForLists(rootFolder, packageName);
 	}
 
-	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
+	private void generateJavaForSchemas(final String rootFolder,
+			final String packageName) {
+
 		/*
 		 * create DataTypes.java in the root folder.
 		 */
-		this.dataTypes.emitJava(rootFolder, packageName, dataTypesFileName);
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("package ").append(packageName).append(';');
+		sbf.append('\n');
 
-		final String pck = packageName + ".list";
-		final String fldr = rootFolder + "list/";
+		Util.emitImport(sbf, HashMap.class);
+		Util.emitImport(sbf, Map.class);
+		sbf.append("\n");
 
-		final File dir = new File(fldr);
-		if (dir.exists() == false) {
-			dir.mkdirs();
+		Util.emitImport(sbf, IDataTypes.class);
+		Util.emitImport(sbf, DataType.class);
+		Util.emitImport(sbf, TextType.class);
+		Util.emitImport(sbf, IntegerType.class);
+		Util.emitImport(sbf, DecimalType.class);
+		Util.emitImport(sbf, BooleanType.class);
+		Util.emitImport(sbf, DateType.class);
+		Util.emitImport(sbf, TimestampType.class);
+
+		final String clsName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+
+		sbf.append(
+				"\n\n/**\n * class that has static attributes for all data types defined for this project. It also extends <code>DataTypes</code>");
+		sbf.append("\n */ ");
+		sbf.append("\npublic class ").append(clsName)
+				.append(" implements IDataTypes {");
+
+		if (this.valueSchemas == null) {
+			this.valueSchemas = new HashMap<>();
 		}
-		this.emitJavaLists(pck, fldr);
-		this.emitJavaKlists(pck, fldr);
-		this.emitJavaRlists(pck, fldr);
+
+		final StringBuilder schemaNames = new StringBuilder();
+		for (final ValueSchema vs : this.valueSchemas.values()) {
+			vs.emitJava(sbf);
+			schemaNames.append(vs.name).append(C);
+		}
+
+		if (schemaNames.length() > 0) {
+			schemaNames.setLength(schemaNames.length() - C.length());
+		}
+
+		sbf.append("\n\n\tpublic static final DataType[] allTypes = {")
+				.append(schemaNames.toString()).append("};");
+
+		sbf.append("\n\t private Map<String, DataType> typesMap;");
+
+		sbf.append("\n\t/**\n\t * default constructor\n\t */");
+
+		sbf.append("\n\tpublic ").append(clsName).append("() {");
+		sbf.append("\n\t\tthis.typesMap = new HashMap<>();");
+		sbf.append("\n\t\tfor(DataType dt: allTypes) {");
+		sbf.append("\n\t\t\tthis.typesMap.put(dt.getName(), dt);");
+		sbf.append("\n\t\t}\n\t}");
+
+		sbf.append("\n\n@Override");
+		sbf.append("\n\tpublic DataType getDataType(String name) {");
+		sbf.append("\n\t\treturn this.typesMap.get(name);");
+		sbf.append("\n\t}");
+
+		sbf.append("\n}\n");
+
+		Util.writeOut(rootFolder + clsName + ".java", sbf);
 	}
 
-	void emitJavaLists(final String pack, final String folder) {
+	private void generateJavaForLists(final String rootFolder,
+			final String packageName) {
+		final String pck = packageName + ".list";
+		final String folder = rootFolder + "list/";
+
 		/**
 		 * lists are created under list sub-package
 		 */
@@ -137,104 +179,68 @@ public class Application {
 			logger.warn("No value lists created for this project");
 			return;
 		}
-		final StringBuilder sbf = new StringBuilder();
 		for (final ValueList list : this.valueLists.values()) {
-			sbf.setLength(0);
-			list.emitJava(sbf, pack);
-			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
+			list.generateJava(folder, pck);
 		}
 	}
 
-	void emitJavaKlists(final String pack, final String folder) {
-		/**
-		 * keyed lists
-		 */
-		if (this.keyedLists == null || this.keyedLists.size() == 0) {
-			logger.warn("No keyed lists created for this project");
-			return;
-		}
-
-		final StringBuilder sbf = new StringBuilder();
-		for (final KeyedList list : this.keyedLists.values()) {
-			sbf.setLength(0);
-			list.emitJava(sbf, pack);
-			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
-		}
+	/**
+	 * generate TypeScript code
+	 *
+	 * @param folder
+	 * @param coreName
+	 *            name of the core package to import from
+	 */
+	public void generateTs(final String folder, String coreName) {
+		this.generateTsForLists(folder, coreName);
+		this.generateTsForSchemas(folder, coreName);
 	}
-
-	void emitJavaRlists(final String pack, final String folder) {
-		/**
-		 * runtime lists
-		 */
-		if (this.runtimeLists == null || this.runtimeLists.size() == 0) {
-			logger.warn("No runtime lists created for this project");
-			return;
-		}
+	private void generateTsForSchemas(final String folder, String coreName) {
+		logger.info("Generatng TS code for value schemas ...");
 		final StringBuilder sbf = new StringBuilder();
-		for (final RuntimeList list : this.runtimeLists.values()) {
-			sbf.setLength(0);
-			list.emitJava(sbf, pack);
-			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
-		}
-	}
-
-	void emitTsDataTypes(final String folder) {
-		logger.info("Generatng data Types");
-		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { DataTypes } from 'simplity-core';");
+		sbf.append("import { DataTypes } from '").append(coreName).append("';");
 		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
-		this.dataTypes.emitTs(sbf);
+
+		for (ValueSchema vs : this.valueSchemas.values()) {
+			vs.emitTs(sbf);
+		}
+
 		sbf.append("\n}\n\n");
-		final String fn = folder + "allDataTypes.ts";
+
+		String fn = folder + "allDataTypes.ts";
+		Util.writeOut(fn, sbf);
+		logger.info("File {} generated", fn);
+
+		logger.info("Generatng  TS code for value lists...");
+		sbf.setLength(0);
+		sbf.append("import { Lists } from '").append(coreName).append("';");
+		sbf.append("\n\nexport const allLists: Lists = {");
+
+		for (ValueList vl : this.valueLists.values()) {
+			vl.emitTs(sbf);
+		}
+
+		sbf.append("\n}\n\n");
+		fn = folder + "allLists.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated", fn);
 	}
 
-	void emitTsLists(final String folder) {
-		logger.info("Generatng data Types");
-		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Lists } from 'simplity-core';");
+	private void generateTsForLists(final String folder,
+			final String coreName) {
+		logger.info("Generating TS code for lists...");
+
+		StringBuilder sbf = new StringBuilder();
+		sbf.append("import { Lists } from '").append(coreName).append("';");
 		sbf.append("\n\nexport const allLists: Lists = {");
-		int nbr = 0;
 
-		if (this.runtimeLists != null) {
-			for (final RuntimeList list : this.runtimeLists.values()) {
-				if (nbr != 0) {
-					sbf.append(",");
-				}
-				nbr++;
-				sbf.append("\n\t").append(list.name).append(": {");
-				sbf.append("\n\t\tname: '").append(list.name).append('\'');
-				if (list.keyColumn != null && list.keyColumn.isEmpty() == false) {
-					sbf.append(",\n\t\tisKeyed: true");
-				}
-				sbf.append("\n\t}");
-			}
+		for (ValueList list : this.valueLists.values()) {
+			list.emitTs(sbf);
+			sbf.append(',');
 		}
 
-		if (this.valueLists != null) {
-			for (final ValueList list : this.valueLists.values()) {
-				if (nbr != 0) {
-					sbf.append(",");
-				}
-				nbr++;
-				list.emitNewTs(sbf);
-			}
-		}
-
-		if (this.keyedLists != null) {
-			for (final KeyedList list : this.keyedLists.values()) {
-				if (nbr != 0) {
-					sbf.append(",");
-				}
-				nbr++;
-				list.emitNewTs(sbf);
-			}
-		}
-
-		sbf.append("\n}\n\n");
-		final String fn = folder + "allLists.ts";
-		Util.writeOut(fn, sbf);
-		logger.info("File {} generated with {} lists", fn, nbr);
+		sbf.append("\n};\n");
+		Util.writeOut(folder + "allLists.ts", sbf);
+		logger.info("TS code for {} lists generated", this.valueLists.size());
 	}
 }

@@ -1,29 +1,21 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
-public class UserType extends ValueList {
-	 private static final Object[][] VALUES = { 
-		{"student", "student"}, 
-		{"staff", "staff"}, 
-		{"admin", "admin"}, 
-		{"guardian", "guardian"}, 
-		{"trustee", "trustee"}
-	};
-	 private static final String NAME = "userType";
+import org.simplity.fm.core.validn.RuntimeList;
 
 /**
- *
-	 * @param name
-	 * @param valueList
+ * UserType
  */
-	public UserType(String name, Object[][] valueList) {
-		super(name, valueList);
-	}
+public class UserType extends RuntimeList {
+	 private static final String NAME = "userType";
+	 private static final String LIST_SQL = "SELECT null, null FROM null";
+	 private static final String CHECK_SQL = "SELECT null FROM null WHERE null=?";
 
 /**
- *userType
+ * UserType
  */
 	public UserType() {
-		super(NAME, VALUES);
+		this.name = NAME;
+		this.listSql = LIST_SQL;
+		this.checkSql = CHECK_SQL;
 	}
 }

@@ -7,114 +7,114 @@
         "update",
         "filter"
     ],
-    "controls": [
+    "controls": {
+            "studentId":
         {
-            "name": "studentId",
             "controlType": "hidden"
         },
+        	"subjectSectionId":
         {
-        	"name":"subjectSectionId",
         	"controlType":"hidden"
         },
+            "departmentName":
         {
-            "name": "departmentName",
             "controlType": "output",
             "label": "Department Name"
         },
+            "name":
         {
-            "name": "name",
             "controlType": "output",
             "label": "Student Name"
         },
+            "usn":
         {
-            "name": "usn",
             "controlType": "output",
             "label": "USN"
         },
+            "eligibility":
         {
-            "name": "eligibility",
             "controlType": "output",
             "label": "Eligibility"
         },
+            "test1":
         {
-            "name": "test1",
             "controlType": "output",
             "label": "Test 1"
         },
+            "test2":
         {
-            "name": "test2",
             "controlType": "output",
             "label": "Test 2"
         },
+            "test3":
         {
-            "name": "test3",
             "controlType": "output",
             "label": "Test 3"
         },
+            "quiz1":
         {
-            "name": "quiz1",
             "controlType": "output",
             "label": "Quiz 1"
         },
+            "quiz2":
         {
-            "name": "quiz2",
             "controlType": "output",
             "label": "Quiz 2"
         },
+            "theoryCie":
         {
-            "name": "theoryCie",
             "controlType": "output",
             "label": "Theory Marks"
         },
+            "theoryClassesHeld":
         {
-            "name": "theoryClassesHeld",
             "controlType": "output",
             "label": "theory Classes Held"
         },
+        	"theoryClassesAttended":
         {
-        	"name": "theoryClassesAttended",
             "controlType": "output",
             "label": "theory Classes Attended"
         },
+        	"theoryClassesPercentage":
         {
-        	"name": "theoryClassesPercentage",
             "controlType": "output",
             "label": "theory Classes Percentage"
         }, 
+        	"practicalCie":
         {
-        	"name": "practicalCie",
             "controlType": "output",
             "label": "Practicals Cie"
         },
+        	"practicalClassesHeld":
         {
-        	"name": "practicalClassesHeld",
             "controlType": "output",
             "label": "Practical Classes Held"
         },
+        	"practicalClassesAttended":
         {
-        	"name": "practicalClassesAttended",
             "controlType": "output",
             "label": "Practical Classes Attended"
         },
+        	"practicalClassesPercentage":
         {
-        	"name": "practicalClassesPercentage",
             "controlType": "output",
             "label": "Practical Classes Percentage"
         },
+        	"selfStudy":
         {
-        	"name": "selfStudy",
             "controlType": "output",
             "label": "Self Study"
         },
+        	"practicalMarks":
         {
-        	"name": "practicalMarks",
             "controlType": "output",
             "label": "Practicals Marks"
         },
+        	"totalCie":
         {
-        	"name": "totalCie",
             "controlType": "output",
             "label": "Total Cie"
         }
-    ]
+    }
 }

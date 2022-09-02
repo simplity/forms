@@ -17,22 +17,18 @@
       "type": "object",
       "description": "list of paths mapped to service name",
       "minProperties": 1,
-      "patternProperties": {
-        "^.*$": {
-          "type": "object",
-          "description": "",
-          "minProperties": 1,
-          "patternProperties": {
-            "^(\\*|get|post|put|patch|delete)$": {
-              "description": "* means any method. vale is the service name without the common prefix",
-              "type": "string"
-            }
-          },
-          "additionlProperties": false
+      "additionalProperties": {
+        "type": "object",
+        "description": "",
+        "minProperties": 1,
+        "patternProperties": {
+          "^(\\*|get|post|put|patch|delete)$": {
+            "description": "* means any method. vale is the service name without the common prefix",
+            "type": "string"
+          }
         },
         "additionlProperties": false
-      },
-      "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false

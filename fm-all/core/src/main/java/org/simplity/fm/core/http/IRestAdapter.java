@@ -4,12 +4,12 @@ import com.google.gson.JsonObject;
 
 
 /**
- * utility that can map a URL path to service as well as extract data from the relevant parts of the path
+ * Adapter that handles RESTful HTTP clients. 
  * @author simplity.org
  *
  */
 
-public interface IUrlPathParser {
+public interface IRestAdapter {
 	/**
 	 * parse a path string to get the service name, and data (name-value pairs)
 	 * @param path path part of a URL to be parsed

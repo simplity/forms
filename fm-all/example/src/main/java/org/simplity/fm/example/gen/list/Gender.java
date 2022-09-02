@@ -1,8 +1,13 @@
 package org.simplity.fm.example.gen.list;
 
 import org.simplity.fm.core.validn.ValueList;
+
+/**
+ * Gender
+ */
+
 public class Gender extends ValueList {
-	 private static final Object[][] VALUES = { 
+	private static final Object[][] VALUES = { 
 		{"Male", "Male"}, 
 		{"Female", "Female"}, 
 		{"Others", "Others"}, 
@@ -10,18 +15,17 @@ public class Gender extends ValueList {
 	};
 	 private static final String NAME = "gender";
 
-/**
- *
+	/**
 	 * @param name
 	 * @param valueList
- */
+	 */
 	public Gender(String name, Object[][] valueList) {
 		super(name, valueList);
 	}
 
-/**
- *gender
- */
+	/**
+	 *gender
+	 */
 	public Gender() {
 		super(NAME, VALUES);
 	}

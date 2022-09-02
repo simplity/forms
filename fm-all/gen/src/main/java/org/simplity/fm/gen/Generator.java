@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +40,14 @@ import com.google.gson.stream.JsonReader;
  *
  */
 public class Generator {
-	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(Generator.class);
 	private static final String FOLDER = "/";
 
 	private static final String EXT_FRM = ".frm.json";
 	private static final String EXT_REC = ".rec.json";
 	private static final String EXT_SQL = ".sql.json";
+	private static final String CORE_NAME = "simplity-client";
 
 	/**
 	 *
@@ -55,15 +56,16 @@ public class Generator {
 	 */
 	public static void main(final String[] args) throws Exception {
 		if (args.length == 2) {
-			generateClientComponents(args[0], args[1]);
+			generateClientComponentsNOT_USED(args[0], args[1]);
 			return;
 		}
 		if (args.length == 5) {
 			generate(args[0], args[1], args[2], args[3], args[4]);
 			return;
 		}
-		System.err.println("Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
-				+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
+		System.err.println(
+				"Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
+						+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
 	}
 
 	/**
@@ -72,7 +74,8 @@ public class Generator {
 	 * @param inputRootFolder
 	 * @param outputRootFolder
 	 */
-	public static void generateClientComponents(final String inputRootFolder, final String outputRootFolder) {
+	private static void generateClientComponentsNOT_USED(
+			final String inputRootFolder, final String outputRootFolder) {
 		String inFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
 			inFolder += FOLDER;
@@ -83,33 +86,30 @@ public class Generator {
 			outFolder += FOLDER;
 		}
 
-		final String fileName = inputRootFolder + Conventions.App.APP_FILE;
-		File f = new File(fileName);
-		if (f.exists() == false) {
-			logger.error("project configuration file {} not found. Aborting..", fileName);
+		String fileName = inputRootFolder + Conventions.App.APP_FILE;
+		Application app = Util.loadJson(fileName, Application.class);
+
+		if (app == null) {
+			logger.error(
+					"Error while loading configuration file {} . Aborting..",
+					fileName);
 			return;
 		}
 
-		final Application app = new Application();
-		try (JsonReader reader = new JsonReader(new FileReader(f))) {
-			app.fromJson(reader);
-		} catch (final Exception e) {
-			logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
-			e.printStackTrace();
-		}
-
+		app.initialize();
 		/*
 		 * generate project level components like data types
 		 */
-		app.emitTsDataTypes(outFolder);
-		app.emitTsLists(outFolder);
-		emitMsgsTs(inFolder, outFolder);
+		app.generateTs(outFolder, CORE_NAME);
+		emitMsgsTsNOT_USED(inFolder, outFolder);
 
 		logger.debug("Going to process records under folder {}", inFolder);
-		f = new File(inFolder + "rec/");
+		File f = new File(inFolder + "rec/");
 
 		if (f.exists() == false) {
-			logger.error("Records folder {} not found. No records are processed", f.getPath());
+			logger.error(
+					"Records folder {} not found. No records are processed",
+					f.getPath());
 			return;
 		}
 
@@ -118,58 +118,62 @@ public class Generator {
 		/*
 		 * builders for the declaration files
 		 */
-		final StringBuilder forms = new StringBuilder("\nexport const allForms: Forms = {");
-		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity-core';");
+		final StringBuilder forms = new StringBuilder(
+				"\nexport const allForms: Forms = {");
+		final StringBuilder formsImport = new StringBuilder();
+		formsImport.append("import { Forms } from '").append(CORE_NAME)
+				.append("';");
 
 		/*
-		 * transitional issue with forms on the server: server defines forms as a way to
-		 * expose simple records as well as hierarchical structure of forms to the
-		 * client. frm.json file essentially declares that the underlying record is
-		 * available to the client and it also provides a way to send/receive
-		 * hierarchical structures.
-		 * 
-		 * For the new client, we do not need the hierarchical structure, but we do need
-		 * the form as a record, in case the name is different from the record
-		 * 
-		 * For example, if there is a form named a that just uses recordName=b, the new
-		 * client requires a "form" named b that has the fields in a.
-		 * 
-		 * Our design is to detect such cases, and keep them ready as 'aliases' of a
-		 * record, and emit them as and when the underlying record is emitted.
-		 * 
-		 * for example, in the above case, after emitting record b, we also emit the
-		 * record b as if its name is a.
-		 * 
+		 * transitional issue with forms on the server: server defines forms as
+		 * a way to expose simple records as well as hierarchical structure of
+		 * forms to the client. frm.json file essentially declares that the
+		 * underlying record is available to the client and it also provides a
+		 * way to send/receive hierarchical structures.
+		 *
+		 * For the new client, we do not need the hierarchical structure, but we
+		 * do need the form as a record, in case the name is different from the
+		 * record
+		 *
+		 * For example, if there is a form named a that just uses recordName=b,
+		 * the new client requires a "form" named b that has the fields in a.
+		 *
+		 * Our design is to detect such cases, and keep them ready as 'aliases'
+		 * of a record, and emit them as and when the underlying record is
+		 * emitted.
+		 *
+		 * for example, in the above case, after emitting record b, we also emit
+		 * the record b as if its name is a.
+		 *
 		 */
 
 		Map<String, Set<String>> aliases = new HashMap<>();
 		File formsFolder = new File(inFolder + "form/");
 		if (formsFolder.exists()) {
-			buildAliases(aliases, formsFolder);
+			buildAliasesNOT_USED(aliases, formsFolder);
 		}
 
 		/*
-		 * also, we want to ensure that a wrapped form name does not clash with another
-		 * record name
+		 * also, we want to ensure that a wrapped form name does not clash with
+		 * another record name
 		 */
 		Set<String> allRecords = new HashSet<>();
 
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
 			if (fn.endsWith(EXT_REC) == false) {
-				logger.debug("Skipping non-form file {} ", fn);
+				logger.debug("File {} skipped as it does not end with {}", fn,
+						EXT_REC);
 				continue;
 			}
 			logger.debug("Going to generate record " + fn);
-			final Record record;
-			try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-				record = Util.GSON.fromJson(reader, Record.class);
-			} catch (final Exception e) {
-				e.printStackTrace();
-				logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			final Record record = Util.loadJson(file.getPath(), Record.class);
+			if (record == null) {
+				logger.error("Record {} not generated.", fn);
 				continue;
 			}
-			final String recordName = fn.substring(0, fn.length() - ".rec.json".length());
+			final String recordName = fn.substring(0,
+					fn.length() - ".rec.json".length());
 			if (!recordName.equals(record.name)) {
 				logger.error(
 						"File {} contains record named {}. It is mandatory to use record name same as the filename",
@@ -177,14 +181,16 @@ public class Generator {
 				continue;
 			}
 
-			record.init(app.dataTypes.dataTypes);
-			writeRecord(record, outFolder, forms, formsImport, allRecords);
+			record.init(recordName, app.valueSchemas);
+			writeRecordNOT_USED(record, outFolder, forms, formsImport,
+					allRecords);
 
 			Set<String> names = aliases.get(recordName);
 			if (names != null) {
 				for (String s : names) {
 					record.name = s;
-					writeRecord(record, outFolder, forms, formsImport, allRecords);
+					writeRecordNOT_USED(record, outFolder, forms, formsImport,
+							allRecords);
 				}
 			}
 
@@ -197,7 +203,8 @@ public class Generator {
 		Util.writeOut(outFolder + "allForms.ts", formsImport);
 	}
 
-	private static void writeRecord(Record record, String outFolder, StringBuilder forms, StringBuilder formsImport,
+	private static void writeRecordNOT_USED(Record record, String outFolder,
+			StringBuilder forms, StringBuilder formsImport,
 			Set<String> allRecords) {
 		String recordName = record.name;
 		if (allRecords.add(recordName) == false) {
@@ -213,30 +220,32 @@ public class Generator {
 		if (sbf.length() > 0) {
 			String genFileName = outFolder + "forms/" + recordName + ".form.ts";
 			Util.writeOut(genFileName, sbf);
-			forms.append("\n\t").append(recordName).append(": ").append(recordName).append("Form,");
-			formsImport.append("\nimport { ").append(recordName).append("Form } from './forms/").append(recordName)
+			forms.append("\n\t").append(recordName).append(": ")
+					.append(recordName).append("Form,");
+			formsImport.append("\nimport { ").append(recordName)
+					.append("Form } from './forms/").append(recordName)
 					.append(".form';");
 		}
 	}
 
-	private static void buildAliases(Map<String, Set<String>> aliases, File f) {
+	private static void buildAliasesNOT_USED(Map<String, Set<String>> aliases,
+			File f) {
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
 			if (fn.endsWith(EXT_REC) == false) {
 				logger.debug("Skipping non-form file {} ", fn);
 				continue;
 			}
-			final Form form;
-			try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-				form = Util.GSON.fromJson(reader, Form.class);
-			} catch (final Exception e) {
-				e.printStackTrace();
-				logger.error("Form {} not Processed. Error : {}, {}", fn, e, e.getMessage());
+			final Form form = Util.loadJson(file.getPath(), Form.class);
+			if (form == null) {
+				logger.error("Form {} not Processed.", fn);
 				continue;
 			}
-			final String formName = fn.substring(0, fn.length() - ".form.json".length());
+			final String formName = fn.substring(0,
+					fn.length() - ".form.json".length());
 			if (!formName.equals(form.name)) {
-				logger.error("File {} contains form named {}. It is mandatory to use form name same as the filename",
+				logger.error(
+						"File {} contains form named {}. It is mandatory to use form name same as the filename",
 						formName, form.name);
 				continue;
 			}
@@ -255,7 +264,8 @@ public class Generator {
 		}
 	}
 
-	private static void emitMsgsTs(final String inFolder, final String outFolder) {
+	private static void emitMsgsTsNOT_USED(final String inFolder,
+			final String outFolder) {
 		logger.info("Generating Messages..");
 		final String fileName = inFolder + Conventions.App.MESSAGES_FILE;
 		final Map<String, String> msgs = new HashMap<>();
@@ -265,12 +275,16 @@ public class Generator {
 				Util.loadStringMap(msgs, reader);
 				logger.info("{} messages read", msgs.size());
 			} catch (final Exception e) {
-				logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
+				logger.error(
+						"Exception while trying to read file {}. Error: {}",
+						f.getPath(), e.getMessage());
 				e.printStackTrace();
 				return;
 			}
 		} else {
-			logger.error("project has not defined messages mapping in the file {}.", fileName);
+			logger.error(
+					"project has not defined messages mapping in the file {}.",
+					fileName);
 		}
 
 		final StringBuilder sbf = new StringBuilder();
@@ -283,7 +297,8 @@ public class Generator {
 			} else {
 				sbf.append(',');
 			}
-			sbf.append("\n\t").append(Util.escape(entry.getKey())).append(": ").append(Util.escape(entry.getValue()));
+			sbf.append("\n\t").append(Util.qoutedString(entry.getKey()))
+					.append(": ").append(Util.qoutedString(entry.getValue()));
 		}
 		sbf.append("\n}\n\n");
 		final String fn = outFolder + "allMessages.ts";
@@ -293,17 +308,22 @@ public class Generator {
 
 	/**
 	 *
-	 * @param inputRootFolder folder where application.xlsx file, and spec folder
-	 *                        are located. e.g.
-	 * @param javaRootFolder  java source folder where the sources are to be
-	 *                        generated
-	 * @param javaRootPackage root
-	 * @param tsImportPrefix  relative path of form folder from the folder where
-	 *                        named forms are generated.for example ".." in case the
-	 *                        two folders are in the same parent folder
-	 * @param tsRootFolder    folder where generated ts files are to be saved
+	 * @param inputRootFolder
+	 *            folder where application.xlsx file, and spec folder are
+	 *            located. e.g.
+	 * @param javaRootFolder
+	 *            java source folder where the sources are to be generated
+	 * @param javaRootPackage
+	 *            root
+	 * @param tsImportPrefix
+	 *            relative path of form folder from the folder where named forms
+	 *            are generated.for example ".." in case the two folders are in
+	 *            the same parent folder
+	 * @param tsRootFolder
+	 *            folder where generated ts files are to be saved
 	 */
-	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
+	public static void generate(final String inputRootFolder,
+			final String javaRootFolder, final String javaRootPackage,
 			final String tsRootFolder, final String tsImportPrefix) {
 
 		String resourceRootFolder = inputRootFolder;
@@ -321,7 +341,7 @@ public class Generator {
 		 * create output folders if required
 		 */
 		if (createOutputFolders(generatedSourceRootFolder,
-				new String[] { "rec/", "form/", "list/", "sql/" }) == false) {
+				new String[]{"rec/", "form/", "list/", "sql/"}) == false) {
 			return;
 		}
 
@@ -329,36 +349,33 @@ public class Generator {
 		 * ts folder
 		 */
 		if (!ensureFolder(new File(tsRootFolder))) {
-			logger.error("Unable to clean/create ts root folder {}", tsRootFolder);
+			logger.error("Unable to clean/create ts root folder {}",
+					tsRootFolder);
 			return;
 		}
 
 		final String fileName = resourceRootFolder + Conventions.App.APP_FILE;
-		File f = new File(fileName);
-		if (f.exists() == false) {
-			logger.error("project configuration file {} not found. Aborting..", fileName);
-			return;
-		}
 
-		final Application app = new Application();
-		try (JsonReader reader = new JsonReader(new FileReader(f))) {
-			app.fromJson(reader);
-		} catch (final Exception e) {
-			logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
-			e.printStackTrace();
+		final Application app = Util.loadJson(fileName, Application.class);
+		if (app == null) {
+			logger.error("Exception while trying to read file {}", fileName);
 			return;
 		}
+		app.initialize();
 
 		/*
 		 * generate project level components like data types
 		 */
-		app.emitJava(generatedSourceRootFolder, javaRootPackage, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
+		app.generateJava(generatedSourceRootFolder, javaRootPackage);
 
-		logger.debug("Going to process records under folder {}", resourceRootFolder);
+		logger.debug("Going to process records under folder {}",
+				resourceRootFolder);
 		final Map<String, Record> recs = new HashMap<>();
-		f = new File(resourceRootFolder + "rec/");
+		File f = new File(resourceRootFolder + "rec/");
 		if (f.exists() == false) {
-			logger.error("Records folder {} not found. No records are processed", f.getPath());
+			logger.error(
+					"Records folder {} not found. No records are processed",
+					f.getPath());
 		} else {
 
 			for (final File file : f.listFiles()) {
@@ -369,18 +386,21 @@ public class Generator {
 				}
 
 				logger.info("file: {}", fn);
-				final Record record = emitRecord(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
-						javaRootPackage, tsImportPrefix);
+				final Record record = emitRecord(file,
+						generatedSourceRootFolder, tsRootFolder,
+						app.valueSchemas, app, javaRootPackage, tsImportPrefix);
 				if (record != null) {
 					recs.put(record.name, record);
 				}
 			}
 		}
 
-		logger.debug("Going to process forms under folder {}", resourceRootFolder);
+		logger.debug("Going to process forms under folder {}",
+				resourceRootFolder);
 		f = new File(resourceRootFolder + "form/");
 		if (f.exists() == false) {
-			logger.error("Forms folder {} not found. No forms are processed", f.getPath());
+			logger.error("Forms folder {} not found. No forms are processed",
+					f.getPath());
 		} else {
 
 			for (final File file : f.listFiles()) {
@@ -390,15 +410,17 @@ public class Generator {
 					continue;
 				}
 				logger.info("file: {}", fn);
-				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
-						tsImportPrefix, recs);
+				emitForm(file, generatedSourceRootFolder, tsRootFolder, app,
+						javaRootPackage, tsImportPrefix, recs);
 			}
 		}
 
-		logger.debug("Going to process sqls under folder {}sql/", resourceRootFolder);
+		logger.debug("Going to process sqls under folder {}sql/",
+				resourceRootFolder);
 		f = new File(resourceRootFolder + "sql/");
 		if (f.exists() == false) {
-			logger.error("Sql folder {} not found. No sqls processed", f.getPath());
+			logger.error("Sql folder {} not found. No sqls processed",
+					f.getPath());
 		} else {
 
 			for (final File file : f.listFiles()) {
@@ -408,35 +430,37 @@ public class Generator {
 					continue;
 				}
 				logger.info("file: {}", fn);
-				emitSql(file, generatedSourceRootFolder, app.dataTypes, javaRootPackage);
+				emitSql(file, generatedSourceRootFolder, app.valueSchemas,
+						javaRootPackage);
 			}
 		}
 	}
 
-	private static void emitForm(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
-			final DataTypes dataTypes, final Application app, final String rootPackageName, final String tsImportPrefix,
-			final Map<String, Record> records) {
+	private static void emitForm(final File file,
+			final String generatedSourceRootFolder, final String tsOutputFolder,
+			final Application app, final String rootPackageName,
+			final String tsImportPrefix, final Map<String, Record> records) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_FRM.length());
 		logger.debug("Going to generate Form " + fn);
-		final Form form;
-		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			form = Util.GSON.fromJson(reader, Form.class);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			logger.error("Form {} not generated. Error : {}, {}", fn, e, e.getMessage());
+		final Form form = Util.loadJson(file.getPath(), Form.class);
+		if (form == null) {
+			logger.error("Form {} not generated", fn);
 			return;
 		}
 
 		if (!fn.equals(form.name)) {
-			logger.error("File {} contains form named {}. It is mandatory to use form name same as the filename", fn,
-					form.name);
+			logger.error(
+					"File {} contains form named {}. It is mandatory to use form name same as the filename",
+					fn, form.name);
 			return;
 		}
 		Record record = null;
 		record = records.get(form.recordName);
 		if (record == null) {
-			logger.error("Form {} uses record {}, but that record is not defined", form.name, form.recordName);
+			logger.error(
+					"Form {} uses record {}, but that record is not defined",
+					form.name, form.recordName);
 			return;
 		}
 		form.initialize(record);
@@ -448,7 +472,7 @@ public class Generator {
 		Util.writeOut(outPrefix + "Form.java", sbf);
 
 		sbf.setLength(0);
-		form.emitTs(sbf, dataTypes.dataTypes, app.valueLists, app.keyedLists, tsImportPrefix);
+		form.emitTs(sbf, app.valueLists, tsImportPrefix);
 		Util.writeOut(tsOutputFolder + fn + "Form.ts", sbf);
 
 	}
@@ -457,39 +481,39 @@ public class Generator {
 	 * @param files
 	 * @param generatedSourceRootFolder
 	 * @param tsOutputFolder
-	 * @param dataTypes
+	 * @param valueSchemas
 	 * @param app
 	 * @param rootPackageName
 	 * @param tsImportPrefix
 	 */
-	private static Record emitRecord(final File file, final String generatedSourceRootFolder,
-			final String tsOutputFolder, final DataTypes dataTypes, final Application app, final String packageName,
-			final String tsImportPrefix) {
+	private static Record emitRecord(final File file,
+			final String generatedSourceRootFolder, final String tsOutputFolder,
+			final Map<String, ValueSchema> valueSchemas, final Application app,
+			final String packageName, final String tsImportPrefix) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_REC.length());
 		logger.debug("Going to generate record " + fn);
-		final Record record;
-		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			record = Util.GSON.fromJson(reader, Record.class);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
+		final Record record = Util.loadJson(file.getPath(), Record.class);
+		if (record == null) {
+			logger.error("Record {} not generated. ", fn);
 			return null;
 		}
 		if (!fn.equals(record.name)) {
-			logger.error("File {} contains record named {}. It is mandatory to use record name same as the filename",
+			logger.error(
+					"File {} contains record named {}. It is mandatory to use record name same as the filename",
 					fn, record.name);
 			return null;
 		}
 
-		record.init(dataTypes.dataTypes);
+		record.init(fn, valueSchemas);
 
-		final String outNamePrefix = generatedSourceRootFolder + "rec/" + Util.toClassName(fn);
+		final String outNamePrefix = generatedSourceRootFolder + "rec/"
+				+ Util.toClassName(fn);
 		/*
 		 * Record.java
 		 */
 		final StringBuilder sbf = new StringBuilder();
-		record.emitJavaClass(sbf, packageName, dataTypes);
+		record.emitJavaClass(sbf, packageName);
 		String outName = outNamePrefix + "Record.java";
 		Util.writeOut(outName, sbf);
 
@@ -505,29 +529,31 @@ public class Generator {
 		return record;
 	}
 
-	private static void emitSql(final File file, final String generatedSourceRootFolder, final DataTypes dataTypes,
+	private static void emitSql(final File file,
+			final String generatedSourceRootFolder,
+			final Map<String, ValueSchema> valueSchemas,
 			final String packageName) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_SQL.length());
 		logger.debug("Going to generate Sql " + fn);
-		final Sql sql;
-		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			sql = Util.GSON.fromJson(reader, Sql.class);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			logger.error("Sql {} not generated. Error : {}, {}", fn, e, e.getMessage());
+		final Sql sql = Util.loadJson(file.getPath(), Sql.class);
+		if (sql == null) {
+			logger.error("Sql {} not generated.", fn);
 			return;
 		}
-		sql.init(dataTypes.dataTypes);
+		sql.init(valueSchemas);
 		final String cls = Util.toClassName(fn) + "Sql";
 		final StringBuilder sbf = new StringBuilder();
-		sql.emitJava(sbf, packageName, cls, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME, dataTypes.dataTypes);
-		final String outName = generatedSourceRootFolder + "sql/" + Util.toClassName(fn) + "Sql.java";
+		sql.emitJava(sbf, packageName, cls,
+				Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
+		final String outName = generatedSourceRootFolder + "sql/"
+				+ Util.toClassName(fn) + "Sql.java";
 		Util.writeOut(outName, sbf);
 
 	}
 
-	private static boolean createOutputFolders(final String root, final String[] folders) {
+	private static boolean createOutputFolders(final String root,
+			final String[] folders) {
 		boolean allOk = true;
 		for (final String folder : folders) {
 			if (!ensureFolder(new File(root + folder))) {
@@ -544,7 +570,8 @@ public class Generator {
 				logger.debug("All files in folder {} are deleted", folder);
 				for (final File ff : f.listFiles()) {
 					if (!ff.delete()) {
-						logger.error("Unable to delete file {}", ff.getAbsolutePath());
+						logger.error("Unable to delete file {}",
+								ff.getAbsolutePath());
 						return false;
 					}
 				}
@@ -552,46 +579,22 @@ public class Generator {
 			}
 
 			if (f.delete()) {
-				logger.debug("{} is a file. It is deleted to make way for a directory with the same name", folder);
+				logger.debug(
+						"{} is a file. It is deleted to make way for a directory with the same name",
+						folder);
 			} else {
-				logger.error("{} is a file. Unable to delete it to create a folder with that name", folder);
+				logger.error(
+						"{} is a file. Unable to delete it to create a folder with that name",
+						folder);
 				return false;
 			}
 		}
 		if (!f.mkdirs()) {
-			logger.error("Unable to create folder {}. Aborting..." + f.getPath());
+			logger.error(
+					"Unable to create folder {}. Aborting..." + f.getPath());
 			return false;
 		}
 		return true;
 	}
 
-	static void emitJavaGettersAndSetters(final Field[] fields, final StringBuilder sbf,
-			final Map<String, DataType> dataTypes) {
-		for (final Field f : fields) {
-			final DataType dt = dataTypes.get(f.dataType);
-			String typ = "unknownBecauseOfUnknownDataType";
-			String get = typ;
-			if (dt == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name, f.dataType);
-			} else {
-				typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
-				get = Util.JAVA_GET_TYPES[dt.valueType.ordinal()];
-			}
-			final String nam = f.name;
-			final String cls = Util.toClassName(nam);
-
-			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
-			sbf.append("\n\t * @param value to be assigned to ").append(nam);
-			sbf.append("\n\t */");
-			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.fieldValues[").append(f.index).append("] = value;");
-			sbf.append("\n\t}");
-
-			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
-			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
-			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
-			sbf.append("\n\t}");
-		}
-
-	}
 }

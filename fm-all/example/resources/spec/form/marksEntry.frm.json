@@ -15,18 +15,18 @@
             "minRows": 1
         }
     ],
-    "controls": [
+    "controls": {
+            "subjectSectionId":
         {
-            "name": "subjectSectionId",
             "controlType": "hidden"
         },
+            "subjectName":
         {
-            "name": "subjectName",
             "controlType": "output"
         },
+            "sectionName":
         {
-            "name": "sectionName",
             "controlType": "output"
         }
-    ]
+    }
 }

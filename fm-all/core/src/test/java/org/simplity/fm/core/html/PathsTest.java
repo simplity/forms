@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.simplity.fm.core.IoUtil;
-import org.simplity.fm.core.http.Paths;
+import org.simplity.fm.core.http.RestAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class PathsTest {
 	private void shouldNotParseInvalidJsons() {
 		this.invalidPaths.entrySet().forEach(entry -> {
 			logger.info("checking invalid paths: {}", entry.getKey());
-			assertNull(Paths.fromJson((JsonObject)entry.getValue()));
+			assertNull(RestAdapter.fromJson((JsonObject)entry.getValue()));
 		});
 	}
 	
@@ -55,13 +55,13 @@ public class PathsTest {
 	private void shouldParseWithErrors() {
 		this.validPathsWithErrors.entrySet().forEach(entry -> {
 			logger.info("checking paths with error : {}", entry.getKey());
-			assertNull(Paths.fromJson((JsonObject)entry.getValue()));
+			assertNull(RestAdapter.fromJson((JsonObject)entry.getValue()));
 		});
 	}
 	
 
 	private void shouldApplyPrefixes() {
-		Paths paths = Paths.fromJson(this.pathsWithPrefixes);
+		RestAdapter paths = RestAdapter.fromJson(this.pathsWithPrefixes);
 		String serviceName = paths.parsePath("app/module/p1/p2", "get", new JsonObject());
 		assertEquals("a.b.s", serviceName);
 		
@@ -71,7 +71,7 @@ public class PathsTest {
 	
 
 	private void shouldExtractFieldsAndMapService() {
-		Paths paths = Paths.fromJson(this.testPaths);
+		RestAdapter paths = RestAdapter.fromJson(this.testPaths);
 		this.testData.forEach(entry -> {
 			JsonObject data = new JsonObject();
 			JsonObject attrs = entry.getAsJsonObject();

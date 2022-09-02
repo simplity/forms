@@ -30,7 +30,6 @@ import java.util.Set;
 import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
-import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public class Form {
 	 */
 	boolean serveGuests;
 	String[] operations;
-	Control[] controls;
+	Map<String, Control> controls;
 	LinkedForm[] linkedForms;
 	// Section[] sections;
 
@@ -71,14 +70,15 @@ public class Form {
 		this.fields = new HashMap<>();
 
 		this.record = rec;
-		for (final Field f : rec.fieldMap.values()) {
-			final FieldType ct = f.getFieldType();
-			if (ct == FieldType.PrimaryKey || ct == FieldType.GeneratedPrimaryKey) {
+		for (final Field f : rec.fieldsMap.values()) {
+			final FieldType ct = f.fieldTypeEnum;
+			if (ct == FieldType.PrimaryKey
+					|| ct == FieldType.GeneratedPrimaryKey) {
 				this.keyFieldNames.add(f.name);
 			}
 		}
 
-		this.fields.putAll(rec.fieldMap);
+		this.fields.putAll(rec.fieldsMap);
 
 		if (this.linkedForms != null) {
 			int idx = 0;
@@ -86,6 +86,9 @@ public class Form {
 				lf.index = idx;
 				idx++;
 			}
+		}
+		if (this.controls != null) {
+			Util.initializeMapEntries(this.controls);
 		}
 	}
 
@@ -106,26 +109,32 @@ public class Form {
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkMetaData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
 		final String recordClass = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordClass).append(';');
+		sbf.append("\nimport ").append(packageName).append(".rec.")
+				.append(recordClass).append(';');
 
 		final String cls = Util.toClassName(this.name) + "Form";
 		/*
 		 * class declaration
 		 */
-		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ");
-		sbf.append(cls).append(" extends Form<").append(recordClass).append("> {");
+		sbf.append("\n/** class for form ").append(this.name)
+				.append("  */\npublic class ");
+		sbf.append(cls).append(" extends Form<").append(recordClass)
+				.append("> {");
 
 		final String p = "\n\tprotected static final ";
 
 		/*
 		 * protected static final Field[] FIELDS = {.....};
 		 */
-		sbf.append(p).append("String NAME = \"").append(this.name).append("\";");
+		sbf.append(p).append("String NAME = \"").append(this.name)
+				.append("\";");
 		/*
 		 * protected static final String RECORD = "....";
 		 */
-		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
-		sbf.append(") App.getApp().getCompProvider().getRecord(\"").append(this.recordName).append("\");");
+		sbf.append(p).append(recordClass).append(" RECORD = (")
+				.append(recordClass);
+		sbf.append(") App.getApp().getCompProvider().getRecord(\"")
+				.append(this.recordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};
@@ -150,7 +159,8 @@ public class Form {
 				if (i != 0) {
 					bf.append(',');
 				}
-				bf.append("new LinkedForm(L").append(i).append(", F").append(i).append(')');
+				bf.append("new LinkedForm(L").append(i).append(", F").append(i)
+						.append(')');
 			}
 			sbf.append(lf).append('{').append(bf).append("};");
 		}
@@ -161,7 +171,7 @@ public class Form {
 		 */
 		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
 		sbf.append("\n\t\tsuper(NAME, RECORD, OPS, LINKS);");
-		if(this.serveGuests) {
+		if (this.serveGuests) {
 			sbf.append("\n\t\tthis.serveGuests = true;");
 		}
 
@@ -178,7 +188,8 @@ public class Form {
 			for (final String op : dbOps) {
 				final Integer idx = OP_INDEXES.get(op.toLowerCase());
 				if (idx == null) {
-					logger.error("{} is not a valid db operation (IoType). Ignored.");
+					logger.error(
+							"{} is not a valid db operation (IoType). Ignored.");
 				} else {
 					ops[idx] = true;
 				}
@@ -210,18 +221,19 @@ public class Form {
 
 	/**
 	 * @param sbf
-	 * @param typesMap
 	 * @param lists
-	 * @param keyedLists
 	 * @param tsImportPrefix
 	 */
-	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
-			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
-		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
-		sbf.append("\nimport { FormData } from '").append(tsImportPrefix).append("formData';");
-		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
-		sbf.append("\nimport { Validators } from '@angular/forms'");
-		sbf.append("\nimport { ServiceAgent} from '").append(tsImportPrefix).append("serviceAgent';");
+	public void emitTs(final StringBuilder sbf,
+			final Map<String, ValueList> lists, final String tsImportPrefix) {
+		sbf.append("\nimport { Form , Field, ChildForm } from '")
+				.append(tsImportPrefix).append("form';");
+		sbf.append("\nimport { FormData } from '").append(tsImportPrefix)
+				.append("formData';");
+		sbf.append("\nimport { SelectOption, Vo } from '")
+				.append(tsImportPrefix).append("types';");
+		sbf.append("\nimport { ServiceAgent} from '").append(tsImportPrefix)
+				.append("serviceAgent';");
 		/*
 		 * import for child forms being referred
 		 */
@@ -229,14 +241,15 @@ public class Form {
 			for (final LinkedForm child : this.linkedForms) {
 				final String fn = child.getFormName();
 				final String c = Util.toClassName(fn);
-				sbf.append("\nimport { ").append(c).append("Form, ").append(c).append("Vo } from './").append(fn)
-						.append("Form';");
+				sbf.append("\nimport { ").append(c).append("Form, ").append(c)
+						.append("Vo } from './").append(fn).append("Form';");
 			}
 		}
 
 		final String cls = Util.toClassName(this.name) + "Form";
 		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
-		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
+		sbf.append("\n\tprivate static _instance = new ").append(cls)
+				.append("();");
 
 		/*
 		 * form may not have all fields as control.As far as the client is
@@ -244,20 +257,19 @@ public class Form {
 		 */
 
 		/*
-		 * controls/fields as members. We also accumulate code for controls
+		 * controls/fields as members.
 		 */
-		final StringBuilder sbfCon = new StringBuilder();
 		final StringBuilder listsSbf = new StringBuilder();
 		if (this.controls != null) {
-			for (final Control control : this.controls) {
-				control.emitTs(sbf, sbfCon, this.fields, dataTypes, lists, keyedLists);
+			for (final Control control : this.controls.values()) {
+				control.emitTs(sbf, this.fields);
 				/*
 				 * populate the other two sbfs if required
 				 */
 				final String nam = control.name;
 				final Field f = this.fields.get(nam);
 				if (f != null) {
-					final String s = Util.escapeTs(nam);
+					final String s = Util.singleQuotedString(nam);
 
 					if (f.listName != null) {
 						if (listsSbf.length() > 0) {
@@ -281,7 +293,8 @@ public class Form {
 		/*
 		 * getInstance method
 		 */
-		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append(" {");
+		sbf.append("\n\n\tpublic static getInstance(): ").append(cls)
+				.append(" {");
 		sbf.append("\n\t\treturn ").append(cls).append("._instance;\n\t}");
 
 		/*
@@ -298,16 +311,14 @@ public class Form {
 		 */
 		sbf.append("\n\t\tthis.fields = new Map();");
 
-		sbf.append("\n\t\tthis.controls = new Map();").append(sbfCon.toString());
-
 		/*
 		 * put child forms into an array
 		 */
 		if (this.linkedForms != null && this.linkedForms.length != 0) {
 			sbf.append("\n\n\t\tthis.childForms = new Map();");
 			for (final LinkedForm child : this.linkedForms) {
-				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
-						.append(");");
+				sbf.append("\n\t\tthis.childForms.set('").append(child.name)
+						.append("', this.").append(child.name).append(");");
 			}
 		}
 
@@ -321,7 +332,9 @@ public class Form {
 				op = op.trim().toLowerCase();
 				final Integer obj = OP_INDEXES.get(op);
 				if (obj == null) {
-					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
+					logger.error(
+							"{} is not a valid dbOperation. directive in allowDbOperations ignored",
+							op);
 				} else {
 					if (first) {
 						first = false;
@@ -339,7 +352,8 @@ public class Form {
 		 * fields with drop-downs
 		 */
 		if (listsSbf.length() > 0) {
-			sbf.append("\n\t\tthis.listFields = [").append(listsSbf).append("];");
+			sbf.append("\n\t\tthis.listFields = [").append(listsSbf)
+					.append("];");
 		}
 		/*
 		 * key fields
@@ -369,14 +383,15 @@ public class Form {
 		sbf.append("\n}\n");
 
 		this.emitTsFormFd(sbf);
-		this.emitTsFormVo(sbf, dataTypes);
+		this.emitTsFormVo(sbf);
 	}
 
 	/**
 	 * create an interface for the data model of this form
 	 */
-	private void emitTsFormVo(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
-		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Vo extends Vo {");
+	private void emitTsFormVo(final StringBuilder sbf) {
+		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name))
+				.append("Vo extends Vo {");
 		boolean isFirst = true;
 		for (final Field field : this.fields.values()) {
 			if (isFirst) {
@@ -384,8 +399,9 @@ public class Form {
 			} else {
 				sbf.append(C);
 			}
-			final DataType dt = dataTypes.get(field.dataType);
-			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
+			final ValueSchema vs = field.schemaInstance;
+			sbf.append("\n\t").append(field.name).append("?: ")
+					.append(getTsValueType(vs));
 		}
 		if (this.linkedForms != null) {
 			for (final LinkedForm lf : this.linkedForms) {
@@ -395,7 +411,8 @@ public class Form {
 					sbf.append(C);
 				}
 				final String c = Util.toClassName(lf.getFormName());
-				sbf.append("\n\t").append(lf.name).append("?: ").append(c).append("Vo");
+				sbf.append("\n\t").append(lf.name).append("?: ").append(c)
+						.append("Vo");
 			}
 		}
 		sbf.append("\n}\n");
@@ -403,8 +420,8 @@ public class Form {
 	}
 
 	/**
-	 * extend form data to restrict name field to valid names of this form.
-	 * Note that these operate only on form controls, and not on other fields.
+	 * extend form data to restrict name field to valid names of this form. Note
+	 * that these operate only on form controls, and not on other fields.
 	 * Non-control fields are manipulated through the Vo interface, with no
 	 * support for two-way binding with the form. They would be one-way through
 	 * vo.??
@@ -415,12 +432,15 @@ public class Form {
 		 * getFieldValue()
 		 */
 		final String cls = Util.toClassName(this.name);
-		sbf.append("\n\nexport class ").append(cls).append("Fd extends FormData {");
-		sbf.append("\n\tconstructor(form: ").append(cls).append("Form, sa: ServiceAgent) {");
+		sbf.append("\n\nexport class ").append(cls)
+				.append("Fd extends FormData {");
+		sbf.append("\n\tconstructor(form: ").append(cls)
+				.append("Form, sa: ServiceAgent) {");
 		sbf.append("\n\t\tsuper(form, sa);\n\t}");
 
-		if (this.controls == null || this.controls.length == 0) {
-			sbf.append("\n\t/**  this form has no editable fields. data nust be accessed as Vo and not through fd **/");
+		if (this.controls == null || this.controls.size() == 0) {
+			sbf.append(
+					"\n\t/**  this form has no editable fields. data nust be accessed as Vo and not through fd **/");
 			sbf.append("\n}\n");
 			return;
 		}
@@ -431,7 +451,7 @@ public class Form {
 		final StringBuilder names = new StringBuilder();
 		final char col = '\'';
 		boolean isFirst = true;
-		for (final Control control : this.controls) {
+		for (final Control control : this.controls.values()) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
@@ -441,32 +461,34 @@ public class Form {
 		}
 
 		final String types = "string | number | boolean | null";
-		sbf.append("\n\n\tsetFieldValue(name: ").append(names).append(", value: ").append(types).append(" ): void {");
+		sbf.append("\n\n\tsetFieldValue(name: ").append(names)
+				.append(", value: ").append(types).append(" ): void {");
 		sbf.append("\n\t\tsuper.setFieldValue(name, value);\n\t}");
 
-		sbf.append("\n\n\tgetFieldValue(name: ").append(names).append(" ): ").append(types).append(" {");
+		sbf.append("\n\n\tgetFieldValue(name: ").append(names).append(" ): ")
+				.append(types).append(" {");
 		sbf.append("\n\t\treturn super.getFieldValue(name);\n\t}");
 		sbf.append("\n}\n");
 	}
 
-	private static String getTsValueType(final DataType dt) {
-		if (dt == null) {
+	private static String getTsValueType(final ValueSchema vs) {
+		if (vs == null) {
 			return "string";
 		}
-		switch (dt.valueType) {
-		case Text:
-		case Date:
-		case Timestamp:
+		switch (vs.valueTypeEnum) {
+		case Text :
+		case Date :
+		case Timestamp :
 			return "string";
 
-		case Integer:
-		case Decimal:
+		case Integer :
+		case Decimal :
 			return "number";
 
-		case Boolean:
+		case Boolean :
 			return "boolean";
 
-		default:
+		default :
 			return "string";
 		}
 	}

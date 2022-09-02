@@ -20,12 +20,12 @@ import org.simplity.fm.example.gen.DefinedDataTypes;
  */ 
 public class StudentAssessmentDetailRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("studentAssessmentId", 0, DefinedDataTypes.id, null, null, null, "student_assessment_id", FieldType.OptionalData), 
-			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", FieldType.OptionalData), 
+			new DbField("studentAssessmentId", 0, DefinedDataTypes.id, null, null, null, "student_assessment_id", FieldType.GeneratedPrimaryKey), 
+			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", FieldType.TenantKey), 
 			new DbField("subjectSectionId", 2, DefinedDataTypes.id, null, null, null, "subject_section_id", FieldType.OptionalData), 
 			new DbField("assessmentSchemeId", 3, DefinedDataTypes.id, null, null, null, "assessment_scheme_id", FieldType.OptionalData), 
-			new DbField("assessmentSeqNo", 4, DefinedDataTypes.integer, null, null, null, "assessment_seq_no", FieldType.OptionalData), 
-			new DbField("studentId", 5, DefinedDataTypes.id, null, null, null, "student_id", FieldType.OptionalData), 
+			new DbField("assessmentSeqNo", 4, DefinedDataTypes.integer, null, null, null, "assessment_seq_no", FieldType.RequiredData), 
+			new DbField("studentId", 5, DefinedDataTypes.id, null, null, null, "student_id", FieldType.RequiredData), 
 			new DbField("name", 6, DefinedDataTypes.name, null, null, null, "name", FieldType.OptionalData), 
 			new DbField("usn", 7, DefinedDataTypes.text, null, null, null, "usn", FieldType.OptionalData), 
 			new DbField("hasAttended", 8, DefinedDataTypes.bool, "false", null, null, "has_attended", FieldType.OptionalData), 
@@ -40,8 +40,15 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 	/* DB related */
 	private static final String SELECT = "SELECT student_assessment_id, institute_id, subject_section_id, assessment_scheme_id, assessment_seq_no, student_id, name, usn, has_attended, marks_scored, null FROM student_assessment_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	private static final  String INSERT = "INSERT INTO student_assessment_details(institute_id, subject_section_id, assessment_scheme_id, assessment_seq_no, student_id, name, usn, has_attended, marks_scored, null) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final int[] INSERT_IDX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	private static final String WHERE = " WHERE student_assessment_id=? AND institute_id=?";
+	private static final int[] WHERE_IDX = {0, 1};
+	private static final  String UPDATE = "UPDATE student_assessment_details SET subject_section_id= ? , assessment_scheme_id= ? , assessment_seq_no= ? , student_id= ? , name= ? , usn= ? , has_attended= ? , marks_scored= ? , null= ?  WHERE student_assessment_id=? AND institute_id=?";
+	private static final  int[] UPDATE_IDX = {2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 1};
+	private static final String DELETE = "DELETE FROM student_assessment_details";
 
-	private static final Dba DBA = new Dba(FIELDS, "student_assessment_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "student_assessment_details", OPERS, SELECT, SELECT_IDX,INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX);
 
 	/**  default constructor */
 	public StudentAssessmentDetailRecord() {
@@ -70,90 +77,90 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 	 * set value for studentAssessmentId
 	 * @param value to be assigned to studentAssessmentId
 	 */
-	public void setStudentAssessmentId(long value){
+	public void setStudentAssessmentId(String value){
 		this.fieldValues[0] = value;
 	}
 
 	/**
 	 * @return value of studentAssessmentId
 	 */
-	public long getStudentAssessmentId(){
-		return super.fetchLongValue(0);
+	public String getStudentAssessmentId(){
+		return super.fetchStringValue(0);
 	}
 
 	/**
 	 * set value for instituteId
 	 * @param value to be assigned to instituteId
 	 */
-	public void setInstituteId(long value){
+	public void setInstituteId(String value){
 		this.fieldValues[1] = value;
 	}
 
 	/**
 	 * @return value of instituteId
 	 */
-	public long getInstituteId(){
-		return super.fetchLongValue(1);
+	public String getInstituteId(){
+		return super.fetchStringValue(1);
 	}
 
 	/**
 	 * set value for subjectSectionId
 	 * @param value to be assigned to subjectSectionId
 	 */
-	public void setSubjectSectionId(long value){
+	public void setSubjectSectionId(String value){
 		this.fieldValues[2] = value;
 	}
 
 	/**
 	 * @return value of subjectSectionId
 	 */
-	public long getSubjectSectionId(){
-		return super.fetchLongValue(2);
+	public String getSubjectSectionId(){
+		return super.fetchStringValue(2);
 	}
 
 	/**
 	 * set value for assessmentSchemeId
 	 * @param value to be assigned to assessmentSchemeId
 	 */
-	public void setAssessmentSchemeId(long value){
+	public void setAssessmentSchemeId(String value){
 		this.fieldValues[3] = value;
 	}
 
 	/**
 	 * @return value of assessmentSchemeId
 	 */
-	public long getAssessmentSchemeId(){
-		return super.fetchLongValue(3);
+	public String getAssessmentSchemeId(){
+		return super.fetchStringValue(3);
 	}
 
 	/**
 	 * set value for assessmentSeqNo
 	 * @param value to be assigned to assessmentSeqNo
 	 */
-	public void setAssessmentSeqNo(long value){
+	public void setAssessmentSeqNo(String value){
 		this.fieldValues[4] = value;
 	}
 
 	/**
 	 * @return value of assessmentSeqNo
 	 */
-	public long getAssessmentSeqNo(){
-		return super.fetchLongValue(4);
+	public String getAssessmentSeqNo(){
+		return super.fetchStringValue(4);
 	}
 
 	/**
 	 * set value for studentId
 	 * @param value to be assigned to studentId
 	 */
-	public void setStudentId(long value){
+	public void setStudentId(String value){
 		this.fieldValues[5] = value;
 	}
 
 	/**
 	 * @return value of studentId
 	 */
-	public long getStudentId(){
-		return super.fetchLongValue(5);
+	public String getStudentId(){
+		return super.fetchStringValue(5);
 	}
 
 	/**
@@ -190,30 +197,30 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 	 * set value for hasAttended
 	 * @param value to be assigned to hasAttended
 	 */
-	public void setHasAttended(boolean value){
+	public void setHasAttended(String value){
 		this.fieldValues[8] = value;
 	}
 
 	/**
 	 * @return value of hasAttended
 	 */
-	public boolean getHasAttended(){
-		return super.fetchBoolValue(8);
+	public String getHasAttended(){
+		return super.fetchStringValue(8);
 	}
 
 	/**
 	 * set value for marksScored
 	 * @param value to be assigned to marksScored
 	 */
-	public void setMarksScored(long value){
+	public void setMarksScored(String value){
 		this.fieldValues[9] = value;
 	}
 
 	/**
 	 * @return value of marksScored
 	 */
-	public long getMarksScored(){
-		return super.fetchLongValue(9);
+	public String getMarksScored(){
+		return super.fetchStringValue(9);
 	}
 
 	/**

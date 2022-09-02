@@ -34,14 +34,13 @@
       }
     },
     "fields": {
-      "type": "array",
-      "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "pattern": "^[a-zA-Z_][a-zA-Z_0-9]*$",
         "type": "object",
-        "required": ["name", "valueSchema"],
+        "required": ["valueSchema"],
         "properties": {
-          "name": {
-            "$ref": "#/$defs/name"
-          },
           "valueSchema": {
             "description": "All value schemas defined for the app",
             "$ref": "#/$defs/allValueSchemas"
@@ -112,17 +111,17 @@
         "additionalProperties": false
       }
     },
-    "ranges": {
+    "fromToPairs": {
       "description": "used for validating ranges.",
       "type": "array",
       "items": {
         "type": "object",
         "required": ["fromField", "toField"],
         "properties": {
-          "fromField": {
+          "field1": {
             "$ref": "#/$defs/name"
           },
-          "toField": {
+          "field2": {
             "$ref": "#/$defs/name"
           },
           "equalOk": {

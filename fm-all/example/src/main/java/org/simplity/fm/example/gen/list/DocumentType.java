@@ -1,8 +1,13 @@
 package org.simplity.fm.example.gen.list;
 
 import org.simplity.fm.core.validn.ValueList;
+
+/**
+ * DocumentType
+ */
+
 public class DocumentType extends ValueList {
-	 private static final Object[][] VALUES = { 
+	private static final Object[][] VALUES = { 
 		{"Marks Card", "Marks Card"}, 
 		{"Certificate", "Ceritifcate (e.g: Birth Certificate etc)"}, 
 		{"Photo", "Photo"}, 
@@ -10,18 +15,17 @@ public class DocumentType extends ValueList {
 	};
 	 private static final String NAME = "documentType";
 
-/**
- *
+	/**
 	 * @param name
 	 * @param valueList
- */
+	 */
 	public DocumentType(String name, Object[][] valueList) {
 		super(name, valueList);
 	}
 
-/**
- *documentType
- */
+	/**
+	 *documentType
+	 */
 	public DocumentType() {
 		super(NAME, VALUES);
 	}

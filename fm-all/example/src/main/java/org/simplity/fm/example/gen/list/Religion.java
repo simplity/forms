@@ -1,8 +1,13 @@
 package org.simplity.fm.example.gen.list;
 
 import org.simplity.fm.core.validn.ValueList;
+
+/**
+ * Religion
+ */
+
 public class Religion extends ValueList {
-	 private static final Object[][] VALUES = { 
+	private static final Object[][] VALUES = { 
 		{"Hindu", "Hindu"}, 
 		{"Muslim", "Muslim"}, 
 		{"Christian", "Christian"}, 
@@ -12,18 +17,17 @@ public class Religion extends ValueList {
 	};
 	 private static final String NAME = "religion";
 
-/**
- *
+	/**
 	 * @param name
 	 * @param valueList
- */
+	 */
 	public Religion(String name, Object[][] valueList) {
 		super(name, valueList);
 	}
 
-/**
- *religion
- */
+	/**
+	 *religion
+	 */
 	public Religion() {
 		super(NAME, VALUES);
 	}

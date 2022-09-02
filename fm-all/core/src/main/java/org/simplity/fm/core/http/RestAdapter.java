@@ -39,7 +39,7 @@ import com.google.gson.JsonPrimitive;
 * @author simplity.org
 *
 */
-public class Paths implements IUrlPathParser{
+public class RestAdapter implements IRestAdapter{
 	/**
 	 * conventions used for tags in the JSON
 	 */
@@ -69,7 +69,7 @@ public class Paths implements IUrlPathParser{
 	 * @param resourceName
 	 * @return null in case of any error
 	 */
-	public static Paths fromJsonResource(String resourceName) {
+	public static RestAdapter fromJsonResource(String resourceName) {
 		JsonObject json = IoUtil.readJsonResource(resourceName);
 		if(json == null) {
 			logger.error("Resource {} could not be read as a json.");
@@ -85,8 +85,8 @@ public class Paths implements IUrlPathParser{
 	 * @param json
 	 * @return null in case of any error
 	 */
-	public static Paths fromJson(JsonObject json) {
-		Paths paths = new Paths();
+	public static RestAdapter fromJson(JsonObject json) {
+		RestAdapter paths = new RestAdapter();
 		if(paths.addPaths(json)) {
 			return paths;
 		}
@@ -94,7 +94,7 @@ public class Paths implements IUrlPathParser{
 		
 	}
 
-	static final Logger logger = LoggerFactory.getLogger(Paths.class);
+	static final Logger logger = LoggerFactory.getLogger(RestAdapter.class);
 	static final String PATH_SEP_STR = "/";
 	/*
 	 * root node. PathNode has the tree structure built into that.
@@ -104,7 +104,7 @@ public class Paths implements IUrlPathParser{
 	/**
 	 * create an empty tree to which paths can be added later
 	 */
-	private Paths() {
+	private RestAdapter() {
 		this.rootNode = new Node(null, null, false);
 	}
 
@@ -405,7 +405,7 @@ class Node {
 	 */
 	Node setFieldChild(String field) {
 		if (this.children != null) {
-			Paths.logger.error("Node at {} already has path-children, and hence a field child is invalid.", this.name);
+			RestAdapter.logger.error("Node at {} already has path-children, and hence a field child is invalid.", this.name);
 			return null;
 		}
 		if (this.fieldChild == null) {
@@ -416,7 +416,7 @@ class Node {
 			return this.fieldChild;
 		}
 
-		Paths.logger.error(
+		RestAdapter.logger.error(
 				"Two paths have common path till part {} and then have different field names : {} and {} as next part. This leads to ambiguity while determining the oath for a given url.",
 				this.name, field, this.fieldChild.name);
 		return null;
@@ -431,7 +431,7 @@ class Node {
 	 */
 	Node setPathChild(String pathPart) {
 		if (this.fieldChild != null) {
-			Paths.logger.error("Node at {} already has a field-child named {}. Path child naemd {} can not be added.",
+			RestAdapter.logger.error("Node at {} already has a field-child named {}. Path child naemd {} can not be added.",
 					this.name, this.fieldChild.name, pathPart);
 			return null;
 		}
@@ -477,7 +477,7 @@ class Node {
 	 */
 	boolean setServices(JsonObject services, String servicePrefix) {
 		if (this.defaultService != null || this.services != null) {
-			Paths.logger.error(DUPLICATE, this.name);
+			RestAdapter.logger.error(DUPLICATE, this.name);
 			return false;
 		}
 		Set<String> methods = services.keySet();
@@ -492,7 +492,7 @@ class Node {
 				}
 			}
 			if(service == null) {
-				Paths.logger.error("Invalid serviceName for method {}", method);
+				RestAdapter.logger.error("Invalid serviceName for method {}", method);
 				return false;
 			}
 			if (servicePrefix != null) {
@@ -518,7 +518,7 @@ class Node {
 	String getService(String method) {
 		if (method == null || method.isEmpty()) {
 			if (this.defaultService == null) {
-				Paths.logger
+				RestAdapter.logger
 						.info("No method specified and this path has no default service.");
 			}
 			return this.defaultService;
@@ -537,7 +537,7 @@ class Node {
 		 * go for default
 		 */
 		if (this.defaultService == null) {
-			Paths.logger.info("No service attached to method {}, and there is no default service", method);
+			RestAdapter.logger.info("No service attached to method {}, and there is no default service", method);
 		}
 		return this.defaultService;
 	}

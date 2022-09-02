@@ -20,11 +20,11 @@ import org.simplity.fm.example.gen.DefinedDataTypes;
  */ 
 public class StudentCieDetailRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("studentId", 0, DefinedDataTypes.flexibleId, "-1", null, null, "student_id", FieldType.OptionalData), 
-			new DbField("subjectSectionId", 1, DefinedDataTypes.id, null, null, null, "subject_section_id", FieldType.OptionalData), 
-			new DbField("departmentName", 2, DefinedDataTypes.text, null, null, null, "department_name", FieldType.OptionalData), 
+			new DbField("studentId", 0, DefinedDataTypes.flexibleId, "-1", null, null, "student_id", FieldType.PrimaryKey), 
+			new DbField("subjectSectionId", 1, DefinedDataTypes.id, null, null, null, "subject_section_id", FieldType.RequiredData), 
+			new DbField("departmentName", 2, DefinedDataTypes.text, null, null, null, "department_name", FieldType.RequiredData), 
 			new DbField("usn", 3, DefinedDataTypes.text, null, null, null, "usn", FieldType.OptionalData), 
-			new DbField("name", 4, DefinedDataTypes.name, null, null, null, "student_name", FieldType.OptionalData), 
+			new DbField("name", 4, DefinedDataTypes.name, null, null, null, "student_name", FieldType.RequiredData), 
 			new DbField("eligibility", 5, DefinedDataTypes.name, null, null, null, "is_eligible", FieldType.OptionalData), 
 			new DbField("test1", 6, DefinedDataTypes.text, "1", null, null, null, FieldType.OptionalData), 
 			new DbField("test2", 7, DefinedDataTypes.text, "1", null, null, null, FieldType.OptionalData), 
@@ -51,8 +51,15 @@ public class StudentCieDetailRecord extends DbRecord {
 	/* DB related */
 	private static final String SELECT = "SELECT student_id, subject_section_id, department_name, usn, student_name, is_eligible, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null FROM student_cie_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
+	private static final  String INSERT = "INSERT INTO student_cie_details(student_id, subject_section_id, department_name, usn, student_name, is_eligible, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final int[] INSERT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
+	private static final String WHERE = " WHERE student_id=?";
+	private static final int[] WHERE_IDX = {0};
+	private static final  String UPDATE = "UPDATE student_cie_details SET subject_section_id= ? , department_name= ? , usn= ? , student_name= ? , is_eligible= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ? , null= ?  WHERE student_id=?";
+	private static final  int[] UPDATE_IDX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0};
+	private static final String DELETE = "DELETE FROM student_cie_details";
 
-	private static final Dba DBA = new Dba(FIELDS, "student_cie_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "student_cie_details", OPERS, SELECT, SELECT_IDX,INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX);
 
 	/**  default constructor */
 	public StudentCieDetailRecord() {
@@ -81,30 +88,30 @@ public class StudentCieDetailRecord extends DbRecord {
 	 * set value for studentId
 	 * @param value to be assigned to studentId
 	 */
-	public void setStudentId(long value){
+	public void setStudentId(String value){
 		this.fieldValues[0] = value;
 	}
 
 	/**
 	 * @return value of studentId
 	 */
-	public long getStudentId(){
-		return super.fetchLongValue(0);
+	public String getStudentId(){
+		return super.fetchStringValue(0);
 	}
 
 	/**
 	 * set value for subjectSectionId
 	 * @param value to be assigned to subjectSectionId
 	 */
-	public void setSubjectSectionId(long value){
+	public void setSubjectSectionId(String value){
 		this.fieldValues[1] = value;
 	}
 
 	/**
 	 * @return value of subjectSectionId
 	 */
-	public long getSubjectSectionId(){
-		return super.fetchLongValue(1);
+	public String getSubjectSectionId(){
+		return super.fetchStringValue(1);
 	}
 
 	/**

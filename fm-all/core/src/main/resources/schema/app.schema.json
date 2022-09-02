@@ -3,13 +3,19 @@
   "$id": "https://simplity.org/schemas/app",
   "title": "Application Configuration Parameters",
   "description": "Schema for app.json",
-  "required": ["name", "valueSchemas"],
+  "required": ["name"],
   "additionalProperties": false,
   "properties": {
     "name": {
       "title": "App Name",
       "description": "Name of the App",
       "$ref": "#/$defs/name"
+    },
+    "maxLengthForTextField": {
+      "title": "Max Length for TextField",
+      "description": "Any field langer than this is to be rendered as Text Area",
+      "type": "integer",
+      "defaultValue": 199
     },
     "tenantFieldName": {
       "title": "Tenant Field Name",
@@ -23,97 +29,97 @@
     },
     "valueSchemas": {
       "title": "Value Schemas",
-      "description": "Schmeas used for validating input values for fields. Used for automatically validating values entered by the user, or input values for a service",
+      "description": "Schemas to validate values. These are used to validate input to API's as well as user-inputs in a client-form",
       "type": "object",
-      "additionalProperties": { "$ref": "#/defs/valueSchema" }
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]$": {
+          "title": "Value Schema",
+          "description": "validation rules for a value",
+          "$ref": "#/$defs/valueSchema"
+        }
+      }
     },
     "valueLists": {
-      "title": "List of Valid Values for a field",
-      "description": "Used for validating input values for a service, as well as providing list for drop-downs",
+      "title": "List of value-label pairs",
+      "description": "List of values and lables that can be used for validating a field, as well as rendering a drop-down",
       "type": "object",
-      "additionalProperties": { "$ref": "#/defs/valueList" }
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]$": {
+          "title": "Value List",
+          "description": "List of valid values for a field",
+          "$ref": "#/$defs/valueList"
+        }
+      }
     }
   },
   "$defs": {
-    "name": { "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$" },
-
+    "name": {
+      "description": "suitable to be used as an entity name in a programming language.",
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$"
+    },
     "valueSchema": {
       "type": "object",
+      "required": ["valueType"],
+      "additionalProperties": false,
       "properties": {
         "valueType": {
-          "title": "Value Type",
-          "description": "text, integer, decimal, boolean, date and instance are the supported value types",
-          "enum": ["text", "integer", "decimal", "boolean", "date"]
+          "type": {
+            "enum": [
+              "text",
+              "integer",
+              "decimal",
+              "boolean",
+              "date",
+              "timestamp"
+            ]
+          }
         },
-        "errorId": {
-          "title": "Message Id",
-          "description": "id using which an end-user-friendly description/message can be retrieved for this schema",
-          "$ref": "#/$defs/name"
-        }
+        "errorId": { "$ref": "#/$defs/name" }
       },
       "allOf": [
         {
-          "if": { "properties": { "valueType": { "constant": "text" } } },
+          "if": { "properties": { "valueType": { "const": "text" } } },
           "then": {
+            "required": ["maxLength"],
             "properties": {
               "pattern": {
                 "title": "Pattern",
                 "description": "Pattern the value should conform to. Must be a sommon subset of patterns supported by most languages, specifically java and javascript",
                 "type": "string"
               },
-              "minLength": {
-                "type": "integer",
-                "default": 1
-              },
-              "maxLength": {
-                "type": "integer"
-              }
+              "minLength": { "type": "integer", "default": 1 },
+              "maxLength": { "type": "integer" }
             }
           }
         },
         {
-          "if": { "properties": { "valueType": { "constant": "integer" } } },
+          "if": { "properties": { "valueType": { "const": "integer" } } },
           "then": {
+            "required": ["maxValue"],
             "properties": {
-              "minValue": {
-                "type": "integer",
-                "default": 1
-              },
-              "maxValue": {
-                "type": "integer"
-              }
+              "minValue": { "type": "integer" },
+              "maxValue": { "type": "integer" }
             }
           }
         },
         {
-          "if": { "properties": { "valueType": { "constant": "decimal" } } },
+          "if": { "properties": { "valueType": { "const": "decimal" } } },
           "then": {
+            "required": ["maxValue", "nbrFractions"],
             "properties": {
-              "minValue": {
-                "type": "integer",
-                "default": 1
-              },
-              "maxValue": {
-                "type": "integer"
-              },
-              "nbrFractions": {
-                "type": "integer"
-              }
+              "minValue": { "type": "number" },
+              "maxValue": { "type": "number" },
+              "nbrFractions": { "type": "integer" }
             }
           }
         },
         {
-          "if": { "properties": { "valueType": { "constant": "date" } } },
+          "if": { "properties": { "valueType": { "const": "date" } } },
           "then": {
+            "required": ["maxFutureDays", "maxPastDays"],
             "properties": {
-              "maxPastDays": {
-                "type": "integer",
-                "default": 0
-              },
-              "maxFutureDays": {
-                "type": "integer",
-                "default": 0
-              }
+              "maxFutureDays": { "type": "integer" },
+              "maxPastDays": { "type": "integer" }
             }
           }
         }
@@ -121,36 +127,38 @@
     },
     "valueList": {
       "type": "object",
+      "required": ["listType"],
+      "additionalProperties": false,
       "properties": {
-        "listType": { "enum": ["simple", "dependent", "runtime"] }
+        "listType": {
+          "type": {
+            "enum": ["simple", "keyed", "runtime"]
+          }
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "listType": { "constant": "simple" } } },
+          "if": { "properties": { "listType": { "const": "simple" } } },
           "then": {
+            "required": ["list"],
             "properties": {
-              "list": {
-                "$ref": "#/$defs/simpleList"
-              }
+              "list": { "$ref": "#/$defs/simpleList" }
             }
           }
         },
         {
-          "if": { "properties": { "listType": { "constant": "dependant" } } },
+          "if": { "properties": { "listType": { "const": "keyed" } } },
           "then": {
+            "required": ["keys"],
             "properties": {
-              "list": {
-                "$ref": "#/$defs/keyedList"
-              }
+              "keys": { "$ref": "#/$defs/keyedList" }
             }
           }
         },
         {
-          "if": { "properties": { "listType": { "constant": "runtime" } } },
+          "if": { "properties": { "listType": { "const": "runtime" } } },
           "then": {
-            "title": "Runtime List",
-            "description": "List is fetched at run time Table/View",
-            "required": ["dbTableName", "dbColumn1", "dbColumn2"],
+            "required": ["dbParams"],
             "properties": {
               "dbTableName": {
                 "title": "Table Name",
@@ -211,28 +219,28 @@
           }
         }
       ]
-    }
-  },
-  "simpleList": {
-    "type": "array",
-    "items": {
-      "type": "object",
-      "required": ["value", "label"],
-      "properties": {
-        "value": {
-          "type": ["string", "integer"]
+    },
+    "simpleList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["value", "label"],
+        "properties": {
+          "value": {
+            "type": ["string", "integer"]
+          },
+          "label": {
+            "type": "string"
+          }
         },
-        "label": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    }
-  },
-  "keyedList": {
-    "type": "object",
-    "additionalProperties": {
-      "$ref": "#/$defs/simpleList"
+        "additionalProperties": false
+      }
+    },
+    "keyedList": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/simpleList"
+      }
     }
   }
 }

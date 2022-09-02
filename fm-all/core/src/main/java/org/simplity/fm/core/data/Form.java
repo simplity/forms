@@ -393,7 +393,7 @@ public abstract class Form<T extends Record> {
 				 */
 				final ISerializer writer = ctx.getSerializer();
 				writer.beginObject();
-				writer.name(Conventions.Http.TAG_LIST);
+				writer.name(Conventions.Request.TAG_LIST);
 				writer.beginArray();
 
 				if (list.size() == 0) {
