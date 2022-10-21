@@ -37,10 +37,10 @@ import org.simplity.fm.core.service.IServiceContext;
  *
  * @author simplity.org
  * @param <T>
- *            dbRecord of the linked form
+ *            Record of the linked form
  *
  */
-public class LinkedForm<T extends DbRecord> {
+public class LinkedForm<T extends Record> {
 	/**
 	 * how this form is linked to its parent
 	 */
@@ -68,8 +68,8 @@ public class LinkedForm<T extends DbRecord> {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void read(final DbRecord parentRec, final ISerializer writer, final ReadonlyHandle handle)
-			throws SQLException {
+	public void read(final DbRecord parentRec, final ISerializer writer,
+			final ReadonlyHandle handle) throws SQLException {
 		this.linkMeta.read(parentRec, this.form, writer, handle);
 	}
 
@@ -81,10 +81,12 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbRecord parentRec, final IInputObject inputObject, final ReadWriteHandle handle,
+	public boolean insert(final DbRecord parentRec,
+			final IInputObject inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
-		return this.linkMeta.save(parentRec, this.form, inputObject, handle, ctx);
+		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
+				ctx);
 	}
 
 	/**
@@ -95,10 +97,12 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean update(final DbRecord parentRec, final IInputObject inputObject, final ReadWriteHandle handle,
+	public boolean update(final DbRecord parentRec,
+			final IInputObject inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
-		return this.linkMeta.save(parentRec, this.form, inputObject, handle, ctx);
+		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
+				ctx);
 	}
 
 	/**
@@ -108,7 +112,8 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbRecord parentRec, final ReadWriteHandle handle, final IServiceContext ctx)
+	public boolean delete(final DbRecord parentRec,
+			final ReadWriteHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.delete(parentRec, this.form, handle);
@@ -117,7 +122,7 @@ public class LinkedForm<T extends DbRecord> {
 	private void checkUpdatability() {
 		if (this.form.hasLinks()) {
 			throw new ApplicationError(
-					"Auto delete operation not allowed on a form with hrand-links. It can have only one level of linked forms.");
+					"Auto delete operation is not allowed on a form with hard-links. It can have only one level of linked forms.");
 		}
 	}
 
@@ -138,6 +143,7 @@ public class LinkedForm<T extends DbRecord> {
 	@SuppressWarnings("unchecked")
 	public void override(final Record parent, final IServiceContext ctx) {
 		final String formName = this.form.getName();
-		this.form = (Form<T>) App.getApp().getCompProvider().getForm(formName, ctx);
+		this.form = (Form<T>) App.getApp().getCompProvider().getForm(formName,
+				ctx);
 	}
 }

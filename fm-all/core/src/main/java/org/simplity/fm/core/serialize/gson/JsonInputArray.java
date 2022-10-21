@@ -53,12 +53,14 @@ public class JsonInputArray implements IInputArray {
 	 */
 	public JsonInputArray(final JsonArray array) {
 		if (array == null) {
-			throw new ApplicationError("JsonInputArray requires non-null array.");
+			throw new ApplicationError(
+					"JsonInputArray requires non-null array.");
 		}
 		final int nbr = array.size();
 		for (int i = 0; i < nbr; i++) {
 			if (array.get(i).isJsonObject() == false) {
-				throw new ApplicationError("JsonInputArray contains a non-object member at " + i);
+				throw new ApplicationError(
+						"JsonInputArray contains a non-object member at " + i);
 			}
 		}
 		this.array = array;
@@ -71,7 +73,7 @@ public class JsonInputArray implements IInputArray {
 
 	@Override
 	public void forEach(final Function<IInputObject, Boolean> fn) {
-		final boolean[] isStopped = { false };
+		final boolean[] isStopped = {false};
 		this.array.forEach(ele -> {
 			if (isStopped[0]) {
 				return;
@@ -89,7 +91,7 @@ public class JsonInputArray implements IInputArray {
 	@Override
 	public Iterator<IInputObject> iterator() {
 		final JsonArray arr = this.array;
-		return new Iterator<>() {
+		return new Iterator<IInputObject>() {
 			private int idx = 0;
 
 			@Override

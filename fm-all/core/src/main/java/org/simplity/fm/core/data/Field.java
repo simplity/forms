@@ -56,6 +56,15 @@ public class Field {
 	 */
 	private DataType dataType;
 	/**
+	 * we allow a field to have a list/array of values. If true, then the value
+	 * is a string with comma-separated values. Note that this is meant for
+	 * small list of numbers/code etc.. Not suitable for array of generic text,
+	 * as the text itself may contain comma. This is not a limitation, but a
+	 * design decision to ensure that it is used for simple cases only.
+	 *
+	 */
+	private boolean isArray;
+	/**
 	 * default value is used only if this is optional and the value is missing.
 	 * not used if the field is mandatory
 	 */
@@ -85,6 +94,9 @@ public class Field {
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client
+	 * @param isArray
+	 *            is this field represent a list of primitive values? If true,
+	 *            it is a string with the underlying
 	 * @param defaultValue
 	 *            value to be used in case the client has not sent a value for
 	 *            this. This e is used ONLY if isRequired is false. That is,
@@ -101,13 +113,16 @@ public class Field {
 	 *            is this field mandatory. used for validating data coming from
 	 *            a client
 	 */
-	public Field(final String fieldName, final int index, final DataType dataType, final String defaultValue,
-			final String messageId, final String valueListName, final boolean isRequired) {
+	public Field(final String fieldName, final int index,
+			final DataType dataType, final boolean isArray,
+			final String defaultValue, final String messageId,
+			final String valueListName, final boolean isRequired) {
 		this.name = fieldName;
 		this.index = index;
 		this.isRequired = isRequired;
 		this.messageId = messageId;
 		this.dataType = dataType;
+		this.isArray = isArray;
 		if (defaultValue == null) {
 			this.defaultValue = null;
 		} else {
@@ -116,7 +131,8 @@ public class Field {
 		if (valueListName == null) {
 			this.valueList = null;
 		} else {
-			this.valueList = App.getApp().getCompProvider().getValueList(valueListName);
+			this.valueList = App.getApp().getCompProvider()
+					.getValueList(valueListName);
 		}
 	}
 
@@ -170,6 +186,9 @@ public class Field {
 	 * @return the value type of this field
 	 */
 	public ValueType getValueType() {
+		if (this.isArray) {
+			return ValueType.Text;
+		}
 		return this.dataType.getValueType();
 	}
 
@@ -188,14 +207,17 @@ public class Field {
 	 *            used for reporting error is this is part of table
 	 * @return true if all ok. false if an error message is added to the context
 	 */
-	public boolean parseIntoRow(final String value, final Object[] row, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
+	public boolean parseIntoRow(final String value, final Object[] row,
+			final IServiceContext ctx, final String tableName,
+			final int rowNbr) {
 
 		if (value == null || value.isEmpty()) {
 			row[this.index] = null;
 			if (this.isRequired) {
-				logger.error("Field {} is required but no data is received", this.name);
-				ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
+				logger.error("Field {} is required but no data is received",
+						this.name);
+				ctx.addMessage(
+						Message.newValidationError(this, tableName, rowNbr));
 				return false;
 			}
 			return true;
@@ -218,13 +240,29 @@ public class Field {
 	 * @param idx
 	 * @return object of the right type. or null if the value is invalid
 	 */
-	private Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
+	private Object parse(final String inputValue, final IServiceContext ctx,
+			final String tableName, final int idx) {
 		final Object obj = this.dataType.parse(inputValue);
 		if (obj == null) {
-			logger.error("{} is not valid for field {} as per data type {}", inputValue, this.name,
-					this.dataType.getName());
+			logger.error("{} is not valid for field {} as per data type {}",
+					inputValue, this.name, this.dataType.getName());
 			ctx.addMessage(Message.newValidationError(this, tableName, idx));
 			return null;
+		}
+
+		if (this.isArray) {
+			final DataType.ParsedList parsedList = (DataType.ParsedList) obj;
+
+			if (this.valueList == null) {
+				return parsedList.textValue;
+			}
+
+			for (Object val : parsedList.valueList) {
+				if (!this.valueList.isValid(val, null, ctx)) {
+					return null;
+				}
+			}
+			return parsedList.textValue;
 		}
 
 		if (this.valueList == null) {
@@ -235,7 +273,8 @@ public class Field {
 		 * by allowing 0 as part of dataType definition. One issue is when this
 		 * is a valueList. Let us handle that specifically
 		 */
-		if (this.getValueType().equals(ValueType.Integer) && this.isRequired == false && ((Long) obj) == 0) {
+		if (this.getValueType().equals(ValueType.Integer)
+				&& this.isRequired == false && ((Long) obj) == 0) {
 			return obj;
 		}
 
@@ -243,7 +282,9 @@ public class Field {
 			return obj;
 		}
 
-		logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.name);
+		logger.error(
+				"{} is not found in the list of valid values for  for field {}",
+				inputValue, this.name);
 		ctx.addMessage(Message.newValidationError(this, tableName, idx));
 		return null;
 
@@ -258,12 +299,14 @@ public class Field {
 		this.isRequired = over.isRequired;
 
 		if (over.dataType != null && over.dataType.isEmpty() == false) {
-			final DataType dt = App.getApp().getCompProvider().getDataType(over.dataType);
+			final DataType dt = App.getApp().getCompProvider()
+					.getDataType(over.dataType);
 			if (dt.getValueType() != this.getValueType()) {
 				throw new ApplicationError(
 						"Field {} is of data type {}. It can not be overrideen with data type '{}' because its value type is different");
 			}
-			this.dataType = App.getApp().getCompProvider().getDataType(over.dataType);
+			this.dataType = App.getApp().getCompProvider()
+					.getDataType(over.dataType);
 		}
 
 		if (over.defaultValue != null && over.defaultValue.isEmpty() == false) {
@@ -275,7 +318,8 @@ public class Field {
 		}
 
 		if (over.listName != null && over.listName.isEmpty() == false) {
-			this.valueList = App.getApp().getCompProvider().getValueList(over.listName);
+			this.valueList = App.getApp().getCompProvider()
+					.getValueList(over.listName);
 		}
 	}
 }

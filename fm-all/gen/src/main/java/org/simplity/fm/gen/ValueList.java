@@ -14,7 +14,6 @@ import org.simplity.fm.gen.Util.IInitializer;
 public class ValueList implements IInitializer {
 	private static final String LIST_SIMPLE = "simple";
 	private static final String LIST_KEYED = "keyed";
-	private static final String LIST_RUNTIME = "runtime";
 	private static final String C = ", ";
 	private static final String WHERE = " WHERE ";
 	private static final String AND = " AND ";
@@ -289,6 +288,7 @@ public class ValueList implements IInitializer {
 	public boolean emitTs(StringBuilder sbf) {
 		sbf.append(T1).append(this.name).append(": {");
 		sbf.append(T2).append("name: '").append(this.name).append("',");
+		sbf.append(T2).append("listType: '").append(this.listType).append("',");
 		if (this.isKeyed) {
 			sbf.append(T2).append("isKeyed: true,");
 		}
@@ -297,7 +297,7 @@ public class ValueList implements IInitializer {
 			sbf.append(T2).append("list: [");
 			emitTsPairs(sbf, this.list, T3);
 			sbf.append(T2).append("],");
-		} else if (this.listType.equals(LIST_RUNTIME)) {
+		} else if (this.listType.equals(LIST_KEYED)) {
 			sbf.append(T2).append("keyedLists: {");
 
 			for (final Map.Entry<String, Pair[]> entry : this.keys.entrySet()) {
@@ -311,7 +311,7 @@ public class ValueList implements IInitializer {
 			// nothing more for runtime list
 		}
 
-		sbf.append(T1).append('}');
+		sbf.append(T1).append("},");
 		return true;
 	}
 
@@ -327,7 +327,7 @@ public class ValueList implements IInitializer {
 			}
 			sbf.append(',').append(indent).append("\ttext:")
 					.append(Util.singleQuotedString(p.label));
-			sbf.append(indent).append("}");
+			sbf.append(indent).append("},");
 		}
 	}
 }

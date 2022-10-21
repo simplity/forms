@@ -48,14 +48,14 @@ public class Conventions {
 		public static final String[] HDR_NAMES = {
 				"Access-Control-Allow-Methods", "Access-Control-Allow-Headers",
 				"Access-Control-Max-Age", "Connection", "Cache-Control",
-				"Expires", "Accept" };
+				"Expires", "Accept"};
 		/**
 		 * values for the headers
 		 */
-		public static final String[] HDR_TEXTS = { "POST, GET, OPTIONS",
+		public static final String[] HDR_TEXTS = {"POST, GET, OPTIONS",
 				"content-type, " + HEADER_SERVICE + ", " + HEADER_AUTH, "1728",
 				"Keep-Alive", "no-cache, no-store, must-revalidate", "11111110",
-				"application/json" };
+				"application/json"};
 		/**
 		 * all Ok
 		 */
@@ -82,13 +82,13 @@ public class Conventions {
 		public static final int STATUS_INTERNAL_ERROR = 500;
 
 		/**
-		 * service has generated an error. We do not have the exact code.
-		 * 409 is the closest!!
+		 * service has generated an error. We do not have the exact code. 409 is
+		 * the closest!!
 		 */
 		public static final int STATUS_SERVICE_FAILED = 409;
 	}
 	/**
-	 * 
+	 *
 	 * COnventions for request-response paradigm
 	 *
 	 */
@@ -150,31 +150,31 @@ public class Conventions {
 		 */
 		public static final char SERVICE_OPER_SEPARATOR = '_';
 		/**
-		 * service was executed successfully, but it returned with error message/s
+		 * service was executed successfully, but it returned with error
+		 * message/s
 		 */
 		public static final String ERROR_SERVICE_FAILED = "serviceFailed";
-		
+
 		/**
 		 * request has not specified any service
 		 */
 		public static final String ERROR_NO_SERVICE = "noService";
-		
+
 		/**
 		 * request has errors in its data-structure.
 		 */
 		public static final String ERROR_INVALID_DATA = "invalidData";
-		
+
 		/**
-		 * requested service is either not served at all, or not served for this user
+		 * requested service is either not served at all, or not served for this
+		 * user
 		 */
 		public static final String ERROR_INVALID_SERVICE = "invalidService";
-		
+
 		/**
 		 * User has to be authenticated before requesting this service
 		 */
 		public static final String ERROR_AUTH_REQUIRED = "authRequired";
-		
-		
 
 	}
 
@@ -265,9 +265,13 @@ public class Conventions {
 		public static final String FOLDER_NAME_FORM = "form";
 
 		/**
-		 * folder name under which record classes are generated
+		 * folder name under which records are generated
 		 */
 		public static final String FOLDER_NAME_RECORD = "rec";
+		/**
+		 * folder name under which pages are generated
+		 */
+		public static final String FOLDER_NAME_PAGE = "page";
 		/**
 		 * generated form classes are named with this suffix. e.g. instituteForm
 		 */
@@ -281,6 +285,20 @@ public class Conventions {
 		 * instituteRecord
 		 */
 		public static final String RECORD_CLASS_SUFIX = "Record";
+
+		/**
+		 * file extension for record metadata
+		 */
+		public static final String EXTENSION_RECORD = ".rec.json";
+		/**
+		 * file extension for form metadata
+		 */
+		public static final String EXTENSION_FORM = ".form.json";
+		/**
+		 * file extension for sql metadata
+		 */
+		public static final String EXTENSION_SQL = ".sql.json";
+
 		/**
 		 * predefined name for list service
 		 */

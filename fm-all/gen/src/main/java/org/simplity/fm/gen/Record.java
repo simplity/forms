@@ -32,9 +32,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.data.DbField;
+import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.DbTable;
+import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
@@ -67,6 +71,7 @@ class Record {
 	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
+	boolean isVisibleToClient;
 	// String customValidation;
 	String[] operations;
 	Field[] fields;
@@ -89,6 +94,8 @@ class Record {
 	Field timestampField;
 	Field generatedKeyField;
 
+	private String className;
+
 	/*
 	 * some tables may have primary key, but not have anything to update
 	 */
@@ -100,6 +107,8 @@ class Record {
 					"File named {}.rec has a record named {}, violating the convention of having the same name. File name ignored",
 					nam, this.name);
 		}
+		this.className = Util.toClassName(this.name)
+				+ Conventions.App.RECORD_CLASS_SUFIX;
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
@@ -131,7 +140,7 @@ class Record {
 
 			FieldType ft = field.fieldTypeEnum;
 			if (ft == null) {
-				if (field.dbColumnName == null) {
+				if (field.nameInDb == null) {
 					logger.warn(
 							"{} is not linked to a db-column. No I/O happens on this field.",
 							field.name);
@@ -139,7 +148,7 @@ class Record {
 				}
 				logger.error(
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
-						field.name, field.dbColumnName);
+						field.name, field.nameInDb);
 				ft = FieldType.OptionalData;
 			}
 
@@ -250,14 +259,14 @@ class Record {
 
 	}
 
-	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
-		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+	void generateJava(final String folderName, final String javaPackage) {
+		final StringBuilder sbf = new StringBuilder();
 		/*
 		 * our package name is rootPackage + any prefix/qualifier in our name
 		 *
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
-		String pck = generatedPackage + ".rec";
+		String pck = javaPackage + ".rec";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
 			pck += '.' + qual;
@@ -273,11 +282,11 @@ class Record {
 		Util.emitImport(sbf, Instant.class);
 		Util.emitImport(sbf, IInputObject.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
-		Util.emitImport(sbf, org.simplity.fm.core.data.RecordMetaData.class);
+		Util.emitImport(sbf, RecordMetaData.class);
 		if (isDb) {
-			Util.emitImport(sbf, org.simplity.fm.core.data.Dba.class);
-			Util.emitImport(sbf, org.simplity.fm.core.data.DbField.class);
-			Util.emitImport(sbf, org.simplity.fm.core.data.DbRecord.class);
+			Util.emitImport(sbf, Dba.class);
+			Util.emitImport(sbf, DbField.class);
+			Util.emitImport(sbf, DbRecord.class);
 			Util.emitImport(sbf, FieldType.class);
 		} else {
 			Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
@@ -302,23 +311,24 @@ class Record {
 		/*
 		 * data types are directly referred to the static declarations
 		 */
-		sbf.append("\nimport ").append(generatedPackage).append('.')
-				.append(typesName).append(';');
+		sbf.append("\nimport ").append(javaPackage).append('.')
+				.append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+				.append(';');
 		/*
 		 * class definition
 		 */
-		final String cls = Util.toClassName(this.name) + "Record";
 
 		sbf.append("\n\n/**\n * class that represents structure of ")
 				.append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends ");
+		sbf.append("\npublic class ").append(this.className)
+				.append(" extends ");
 		if (isDb) {
 			sbf.append("Db");
 		}
 		sbf.append("Record {");
 
-		this.emitJavaFields(sbf, typesName, isDb);
+		this.emitJavaFields(sbf, isDb);
 		this.emitValidOps(sbf);
 		this.emitJavaValidations(sbf);
 
@@ -327,27 +337,28 @@ class Record {
 		sbf.append(this.name).append("\", FIELDS, VALIDS);");
 
 		if (isDb) {
-			this.emitDbSpecific(sbf, cls);
+			this.emitDbSpecific(sbf);
 		} else {
-			emitNonDbSpecific(sbf, cls);
+			emitNonDbSpecific(sbf);
 		}
 
 		/*
 		 * newInstane()
 		 */
-		sbf.append("\n\n\t@Override\n\tpublic ").append(cls)
+		sbf.append("\n\n\t@Override\n\tpublic ").append(this.className)
 				.append(" newInstance(final Object[] values) {");
-		sbf.append("\n\t\treturn new ").append(cls).append("(values);\n\t}");
+		sbf.append("\n\t\treturn new ").append(this.className)
+				.append("(values);\n\t}");
 
 		/*
 		 * parseTable() override for better type-safety
 		 */
 		sbf.append(
 				"\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<")
-				.append(cls);
+				.append(this.className);
 		sbf.append(
 				"> parseTable(final IInputObject inputObject, String memberName, final boolean forInsert, final IServiceContext ctx) {");
-		sbf.append("\n\t\treturn (List<").append(cls).append(
+		sbf.append("\n\t\treturn (List<").append(this.className).append(
 				">) super.parseTable(inputObject, memberName, forInsert, ctx);\n\t}");
 
 		/*
@@ -355,23 +366,24 @@ class Record {
 		 */
 		Util.emitJavaGettersAndSetters(this.fields, sbf);
 		sbf.append("\n}\n");
+
+		Util.writeOut(folderName + this.className + ".java", sbf);
 	}
 
-	static private void emitNonDbSpecific(final StringBuilder sbf,
-			final String cls) {
+	private void emitNonDbSpecific(final StringBuilder sbf) {
 		/*
 		 * constructor
 		 */
 		sbf.append("\n\n\t/**  default constructor */");
-		sbf.append("\n\tpublic ").append(cls)
+		sbf.append("\n\tpublic ").append(this.className)
 				.append("() {\n\t\tsuper(META, null);\n\t}");
 
 		sbf.append("\n\n\t/**\n\t *@param values initial values\n\t */");
-		sbf.append("\n\tpublic ").append(cls)
+		sbf.append("\n\tpublic ").append(this.className)
 				.append("(Object[] values) {\n\t\tsuper(META, values);\n\t}");
 	}
 
-	private void emitDbSpecific(final StringBuilder sbf, final String cls) {
+	private void emitDbSpecific(final StringBuilder sbf) {
 		sbf.append("\n\t/* DB related */");
 
 		this.emitSelect(sbf);
@@ -414,16 +426,15 @@ class Record {
 		 * constructor
 		 */
 		sbf.append("\n\n\t/**  default constructor */");
-		sbf.append("\n\tpublic ").append(cls)
+		sbf.append("\n\tpublic ").append(this.className)
 				.append("() {\n\t\tsuper(DBA, META, null);\n\t}");
 
 		sbf.append("\n\n\t/**\n\t * @param values initial values\n\t */");
-		sbf.append("\n\tpublic ").append(cls).append(
+		sbf.append("\n\tpublic ").append(this.className).append(
 				"(Object[] values) {\n\t\tsuper(DBA, META, values);\n\t}");
 	}
 
-	private void emitJavaFields(final StringBuilder sbf,
-			final String dataTypesName, final boolean isDb) {
+	private void emitJavaFields(final StringBuilder sbf, final boolean isDb) {
 		sbf.append("\n\tprivate static final Field[] FIELDS = ");
 		if (this.fields == null) {
 			sbf.append("null;");
@@ -437,7 +448,7 @@ class Record {
 			} else {
 				sbf.append(C);
 			}
-			field.emitJavaCode(sbf, dataTypesName, isDb);
+			field.emitJavaCode(sbf, isDb);
 		}
 		sbf.append("\n\t};");
 	}
@@ -539,14 +550,14 @@ class Record {
 				clause.append(" AND ");
 				indexes.append(C);
 			}
-			clause.append(field.dbColumnName).append("=?");
+			clause.append(field.nameInDb).append("=?");
 			indexes.append(field.index);
 		}
 		/*
 		 * as a matter of safety, tenant key is always part of queries
 		 */
 		if (this.tenantField != null) {
-			clause.append(" AND ").append(this.tenantField.dbColumnName)
+			clause.append(" AND ").append(this.tenantField.nameInDb)
 					.append("=?");
 			indexes.append(C).append(this.tenantField.index);
 		}
@@ -568,7 +579,7 @@ class Record {
 				sbf.append(C);
 				idxSbf.append(C);
 			}
-			sbf.append(field.dbColumnName);
+			sbf.append(field.nameInDb);
 			idxSbf.append(field.index);
 		}
 
@@ -598,7 +609,7 @@ class Record {
 				sbf.append(C);
 				vbf.append(C);
 			}
-			sbf.append(field.dbColumnName);
+			sbf.append(field.nameInDb);
 			if (ct == FieldType.ModifiedAt || ct == FieldType.CreatedAt) {
 				vbf.append(" CURRENT_TIMESTAMP ");
 			} else {
@@ -639,7 +650,7 @@ class Record {
 				updateBuf.append(C);
 			}
 
-			updateBuf.append(field.dbColumnName).append("=");
+			updateBuf.append(field.nameInDb).append("=");
 			if (ct == FieldType.ModifiedAt) {
 				updateBuf.append(" CURRENT_TIMESTAMP ");
 			} else {
@@ -668,47 +679,12 @@ class Record {
 		updateBuf.append(whereClause);
 
 		if (this.useTimestampCheck) {
-			updateBuf.append(" AND ").append(this.timestampField.dbColumnName)
+			updateBuf.append(" AND ").append(this.timestampField.nameInDb)
 					.append("=?");
 			idxBuf.append(C).append(this.timestampField.index);
 		}
 		updateBuf.append("\";");
 		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
-	}
-
-	void emitTs(final StringBuilder sbf) {
-		final StringBuilder valBuf = new StringBuilder();
-		if (this.fromToPairs != null) {
-			for (final FromToPair pair : this.fromToPairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (this.exclusivePairs != null) {
-			for (final ExclusivePair pair : this.exclusivePairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (this.inclusivePairs != null) {
-			for (final InclusivePair pair : this.inclusivePairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (valBuf.length() > 0) {
-			sbf.append("\n\t\tthis.validations = [").append(valBuf)
-					.append("];");
-		}
 	}
 
 	void emitJavaTableClass(final StringBuilder sbf,
@@ -761,8 +737,21 @@ class Record {
 
 	private static final char Q = '\'';
 
-	void emitClientForm(final StringBuilder sbf) {
-		sbf.append("import { Form } from 'simplity-core';");
+	/**
+	 *
+	 * @param folderName
+	 *            including the last folder character, inside which this file is
+	 *            to be created.
+	 * @param tsImport
+	 *            package name from which to import Form Interface
+	 * @return true if the file was indeed generated. False otherwise
+	 */
+	public boolean generateTs(final String folderName, final String tsImport) {
+		if (!this.isVisibleToClient) {
+			return false;
+		}
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("import { Form } from '").append(tsImport).append("';");
 		sbf.append("\nexport const ").append(this.name)
 				.append("Form: Form = {");
 		sbf.append("\n\tname: '").append(this.name).append("',");
@@ -804,5 +793,9 @@ class Record {
 			sbf.append("]");
 		}
 		sbf.append("\n}\n");
+
+		Util.writeOut(folderName + this.name + ".form.ts", sbf);
+
+		return true;
 	}
 }

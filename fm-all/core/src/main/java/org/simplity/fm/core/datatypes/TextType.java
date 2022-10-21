@@ -40,8 +40,8 @@ public class TextType extends DataType {
 	 * @param maxLength
 	 * @param regex
 	 */
-	public TextType(final String name, final String messageId, final int minLength, final int maxLength,
-			final String regex) {
+	public TextType(final String name, final String messageId,
+			final int minLength, final int maxLength, final String regex) {
 		this.name = name;
 		this.valueType = ValueType.Text;
 		this.minLength = minLength;
@@ -62,7 +62,8 @@ public class TextType extends DataType {
 	@Override
 	public String parse(final String value) {
 		final int len = value.length();
-		if (len < this.minLength || (this.maxLength > 0 && len > this.maxLength)) {
+		if (len < this.minLength
+				|| (this.maxLength > 0 && len > this.maxLength)) {
 			return null;
 		}
 		if (this.regex == null || Pattern.matches(this.regex, value)) {

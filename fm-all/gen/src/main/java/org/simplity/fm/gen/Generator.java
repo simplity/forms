@@ -23,31 +23,30 @@
 package org.simplity.fm.gen;
 
 import java.io.File;
-import java.io.FileReader;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.stream.JsonReader;
-
 /**
  * @author simplity.org
- *
  */
 public class Generator {
 	protected static final Logger logger = LoggerFactory
 			.getLogger(Generator.class);
+
 	private static final String FOLDER = "/";
 
-	private static final String EXT_FRM = ".frm.json";
-	private static final String EXT_REC = ".rec.json";
-	private static final String EXT_SQL = ".sql.json";
 	private static final String CORE_NAME = "simplity-client";
+
+	private static final String[] JAVA_FOLDERS = {
+			Conventions.App.FOLDER_NAME_RECORD,
+			Conventions.App.FOLDER_NAME_FORM, Conventions.App.FOLDER_NAME_LIST,
+			Conventions.App.FOLDER_NAME_SQL};
+	private static final String[] TS_FOLDERS = {
+			Conventions.App.FOLDER_NAME_FORM};
 
 	/**
 	 *
@@ -55,512 +54,13 @@ public class Generator {
 	 * @throws Exception
 	 */
 	public static void main(final String[] args) throws Exception {
-		if (args.length == 2) {
-			generateClientComponentsNOT_USED(args[0], args[1]);
-			return;
-		}
-		if (args.length == 5) {
-			generate(args[0], args[1], args[2], args[3], args[4]);
+		if (args.length == 4) {
+			generate(args[0], args[1], args[2], args[3]);
 			return;
 		}
 		System.err.println(
 				"Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
-						+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
-	}
-
-	/**
-	 * generate *.form.ts files from records
-	 *
-	 * @param inputRootFolder
-	 * @param outputRootFolder
-	 */
-	private static void generateClientComponentsNOT_USED(
-			final String inputRootFolder, final String outputRootFolder) {
-		String inFolder = inputRootFolder;
-		if (!inputRootFolder.endsWith(FOLDER)) {
-			inFolder += FOLDER;
-		}
-
-		String outFolder = outputRootFolder;
-		if (!outputRootFolder.endsWith(FOLDER)) {
-			outFolder += FOLDER;
-		}
-
-		String fileName = inputRootFolder + Conventions.App.APP_FILE;
-		Application app = Util.loadJson(fileName, Application.class);
-
-		if (app == null) {
-			logger.error(
-					"Error while loading configuration file {} . Aborting..",
-					fileName);
-			return;
-		}
-
-		app.initialize();
-		/*
-		 * generate project level components like data types
-		 */
-		app.generateTs(outFolder, CORE_NAME);
-		emitMsgsTsNOT_USED(inFolder, outFolder);
-
-		logger.debug("Going to process records under folder {}", inFolder);
-		File f = new File(inFolder + "rec/");
-
-		if (f.exists() == false) {
-			logger.error(
-					"Records folder {} not found. No records are processed",
-					f.getPath());
-			return;
-		}
-
-		ensureFolder(new File(outFolder + "forms/"));
-		ensureFolder(new File(outFolder + "pages/"));
-		/*
-		 * builders for the declaration files
-		 */
-		final StringBuilder forms = new StringBuilder(
-				"\nexport const allForms: Forms = {");
-		final StringBuilder formsImport = new StringBuilder();
-		formsImport.append("import { Forms } from '").append(CORE_NAME)
-				.append("';");
-
-		/*
-		 * transitional issue with forms on the server: server defines forms as
-		 * a way to expose simple records as well as hierarchical structure of
-		 * forms to the client. frm.json file essentially declares that the
-		 * underlying record is available to the client and it also provides a
-		 * way to send/receive hierarchical structures.
-		 *
-		 * For the new client, we do not need the hierarchical structure, but we
-		 * do need the form as a record, in case the name is different from the
-		 * record
-		 *
-		 * For example, if there is a form named a that just uses recordName=b,
-		 * the new client requires a "form" named b that has the fields in a.
-		 *
-		 * Our design is to detect such cases, and keep them ready as 'aliases'
-		 * of a record, and emit them as and when the underlying record is
-		 * emitted.
-		 *
-		 * for example, in the above case, after emitting record b, we also emit
-		 * the record b as if its name is a.
-		 *
-		 */
-
-		Map<String, Set<String>> aliases = new HashMap<>();
-		File formsFolder = new File(inFolder + "form/");
-		if (formsFolder.exists()) {
-			buildAliasesNOT_USED(aliases, formsFolder);
-		}
-
-		/*
-		 * also, we want to ensure that a wrapped form name does not clash with
-		 * another record name
-		 */
-		Set<String> allRecords = new HashSet<>();
-
-		for (final File file : f.listFiles()) {
-			final String fn = file.getName();
-			if (fn.endsWith(EXT_REC) == false) {
-				logger.debug("File {} skipped as it does not end with {}", fn,
-						EXT_REC);
-				continue;
-			}
-			logger.debug("Going to generate record " + fn);
-			final Record record = Util.loadJson(file.getPath(), Record.class);
-			if (record == null) {
-				logger.error("Record {} not generated.", fn);
-				continue;
-			}
-			final String recordName = fn.substring(0,
-					fn.length() - ".rec.json".length());
-			if (!recordName.equals(record.name)) {
-				logger.error(
-						"File {} contains record named {}. It is mandatory to use record name same as the filename",
-						recordName, record.name);
-				continue;
-			}
-
-			record.init(recordName, app.valueSchemas);
-			writeRecordNOT_USED(record, outFolder, forms, formsImport,
-					allRecords);
-
-			Set<String> names = aliases.get(recordName);
-			if (names != null) {
-				for (String s : names) {
-					record.name = s;
-					writeRecordNOT_USED(record, outFolder, forms, formsImport,
-							allRecords);
-				}
-			}
-
-		}
-
-		/*
-		 * write-out declaration files
-		 */
-		formsImport.append(forms.toString()).append("\n}\n");
-		Util.writeOut(outFolder + "allForms.ts", formsImport);
-	}
-
-	private static void writeRecordNOT_USED(Record record, String outFolder,
-			StringBuilder forms, StringBuilder formsImport,
-			Set<String> allRecords) {
-		String recordName = record.name;
-		if (allRecords.add(recordName) == false) {
-			logger.error(
-					"{} is defined as a record. A form with the same name exists but it uses a different record name. This is incorrect",
-					recordName);
-			logger.error(
-					"Form should use the same name as the primary record it is based on, or a name that is different from any other ecord name");
-			return;
-		}
-		StringBuilder sbf = new StringBuilder();
-		record.emitClientForm(sbf);
-		if (sbf.length() > 0) {
-			String genFileName = outFolder + "forms/" + recordName + ".form.ts";
-			Util.writeOut(genFileName, sbf);
-			forms.append("\n\t").append(recordName).append(": ")
-					.append(recordName).append("Form,");
-			formsImport.append("\nimport { ").append(recordName)
-					.append("Form } from './forms/").append(recordName)
-					.append(".form';");
-		}
-	}
-
-	private static void buildAliasesNOT_USED(Map<String, Set<String>> aliases,
-			File f) {
-		for (final File file : f.listFiles()) {
-			final String fn = file.getName();
-			if (fn.endsWith(EXT_REC) == false) {
-				logger.debug("Skipping non-form file {} ", fn);
-				continue;
-			}
-			final Form form = Util.loadJson(file.getPath(), Form.class);
-			if (form == null) {
-				logger.error("Form {} not Processed.", fn);
-				continue;
-			}
-			final String formName = fn.substring(0,
-					fn.length() - ".form.json".length());
-			if (!formName.equals(form.name)) {
-				logger.error(
-						"File {} contains form named {}. It is mandatory to use form name same as the filename",
-						formName, form.name);
-				continue;
-			}
-
-			String recordName = form.recordName;
-			if (formName.equals(recordName)) {
-				continue;
-			}
-
-			Set<String> names = aliases.get(recordName);
-			if (names == null) {
-				names = new HashSet<>();
-				aliases.put(recordName, names);
-			}
-			names.add(formName);
-		}
-	}
-
-	private static void emitMsgsTsNOT_USED(final String inFolder,
-			final String outFolder) {
-		logger.info("Generating Messages..");
-		final String fileName = inFolder + Conventions.App.MESSAGES_FILE;
-		final Map<String, String> msgs = new HashMap<>();
-		final File f = new File(fileName);
-		if (f.exists()) {
-			try (JsonReader reader = new JsonReader(new FileReader(f))) {
-				Util.loadStringMap(msgs, reader);
-				logger.info("{} messages read", msgs.size());
-			} catch (final Exception e) {
-				logger.error(
-						"Exception while trying to read file {}. Error: {}",
-						f.getPath(), e.getMessage());
-				e.printStackTrace();
-				return;
-			}
-		} else {
-			logger.error(
-					"project has not defined messages mapping in the file {}.",
-					fileName);
-		}
-
-		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Messages } from 'simplity-core';");
-		sbf.append("\n\nexport const allMessages: Messages = {");
-		boolean isFirst = true;
-		for (final Map.Entry<String, String> entry : msgs.entrySet()) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sbf.append(',');
-			}
-			sbf.append("\n\t").append(Util.qoutedString(entry.getKey()))
-					.append(": ").append(Util.qoutedString(entry.getValue()));
-		}
-		sbf.append("\n}\n\n");
-		final String fn = outFolder + "allMessages.ts";
-		Util.writeOut(fn, sbf);
-		logger.info("Messages file {} generated", fn);
-	}
-
-	/**
-	 *
-	 * @param inputRootFolder
-	 *            folder where application.xlsx file, and spec folder are
-	 *            located. e.g.
-	 * @param javaRootFolder
-	 *            java source folder where the sources are to be generated
-	 * @param javaRootPackage
-	 *            root
-	 * @param tsImportPrefix
-	 *            relative path of form folder from the folder where named forms
-	 *            are generated.for example ".." in case the two folders are in
-	 *            the same parent folder
-	 * @param tsRootFolder
-	 *            folder where generated ts files are to be saved
-	 */
-	public static void generate(final String inputRootFolder,
-			final String javaRootFolder, final String javaRootPackage,
-			final String tsRootFolder, final String tsImportPrefix) {
-
-		String resourceRootFolder = inputRootFolder;
-		if (!inputRootFolder.endsWith(FOLDER)) {
-			resourceRootFolder += FOLDER;
-		}
-
-		String generatedSourceRootFolder = javaRootFolder;
-		if (!generatedSourceRootFolder.endsWith(FOLDER)) {
-			generatedSourceRootFolder += FOLDER;
-		}
-		generatedSourceRootFolder += javaRootPackage.replace('.', '/') + FOLDER;
-
-		/*
-		 * create output folders if required
-		 */
-		if (createOutputFolders(generatedSourceRootFolder,
-				new String[]{"rec/", "form/", "list/", "sql/"}) == false) {
-			return;
-		}
-
-		/*
-		 * ts folder
-		 */
-		if (!ensureFolder(new File(tsRootFolder))) {
-			logger.error("Unable to clean/create ts root folder {}",
-					tsRootFolder);
-			return;
-		}
-
-		final String fileName = resourceRootFolder + Conventions.App.APP_FILE;
-
-		final Application app = Util.loadJson(fileName, Application.class);
-		if (app == null) {
-			logger.error("Exception while trying to read file {}", fileName);
-			return;
-		}
-		app.initialize();
-
-		/*
-		 * generate project level components like data types
-		 */
-		app.generateJava(generatedSourceRootFolder, javaRootPackage);
-
-		logger.debug("Going to process records under folder {}",
-				resourceRootFolder);
-		final Map<String, Record> recs = new HashMap<>();
-		File f = new File(resourceRootFolder + "rec/");
-		if (f.exists() == false) {
-			logger.error(
-					"Records folder {} not found. No records are processed",
-					f.getPath());
-		} else {
-
-			for (final File file : f.listFiles()) {
-				final String fn = file.getName();
-				if (fn.endsWith(EXT_REC) == false) {
-					logger.debug("Skipping non-record file {}", fn);
-					continue;
-				}
-
-				logger.info("file: {}", fn);
-				final Record record = emitRecord(file,
-						generatedSourceRootFolder, tsRootFolder,
-						app.valueSchemas, app, javaRootPackage, tsImportPrefix);
-				if (record != null) {
-					recs.put(record.name, record);
-				}
-			}
-		}
-
-		logger.debug("Going to process forms under folder {}",
-				resourceRootFolder);
-		f = new File(resourceRootFolder + "form/");
-		if (f.exists() == false) {
-			logger.error("Forms folder {} not found. No forms are processed",
-					f.getPath());
-		} else {
-
-			for (final File file : f.listFiles()) {
-				final String fn = file.getName();
-				if (fn.endsWith(EXT_FRM) == false) {
-					logger.debug("Skipping non-form file {} ", fn);
-					continue;
-				}
-				logger.info("file: {}", fn);
-				emitForm(file, generatedSourceRootFolder, tsRootFolder, app,
-						javaRootPackage, tsImportPrefix, recs);
-			}
-		}
-
-		logger.debug("Going to process sqls under folder {}sql/",
-				resourceRootFolder);
-		f = new File(resourceRootFolder + "sql/");
-		if (f.exists() == false) {
-			logger.error("Sql folder {} not found. No sqls processed",
-					f.getPath());
-		} else {
-
-			for (final File file : f.listFiles()) {
-				final String fn = file.getName();
-				if (fn.endsWith(EXT_SQL) == false) {
-					logger.debug("Skipping non-sql file {} ", fn);
-					continue;
-				}
-				logger.info("file: {}", fn);
-				emitSql(file, generatedSourceRootFolder, app.valueSchemas,
-						javaRootPackage);
-			}
-		}
-	}
-
-	private static void emitForm(final File file,
-			final String generatedSourceRootFolder, final String tsOutputFolder,
-			final Application app, final String rootPackageName,
-			final String tsImportPrefix, final Map<String, Record> records) {
-		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT_FRM.length());
-		logger.debug("Going to generate Form " + fn);
-		final Form form = Util.loadJson(file.getPath(), Form.class);
-		if (form == null) {
-			logger.error("Form {} not generated", fn);
-			return;
-		}
-
-		if (!fn.equals(form.name)) {
-			logger.error(
-					"File {} contains form named {}. It is mandatory to use form name same as the filename",
-					fn, form.name);
-			return;
-		}
-		Record record = null;
-		record = records.get(form.recordName);
-		if (record == null) {
-			logger.error(
-					"Form {} uses record {}, but that record is not defined",
-					form.name, form.recordName);
-			return;
-		}
-		form.initialize(record);
-		final StringBuilder sbf = new StringBuilder();
-
-		final String cls = Util.toClassName(fn);
-		form.emitJavaForm(sbf, rootPackageName);
-		final String outPrefix = generatedSourceRootFolder + "form/" + cls;
-		Util.writeOut(outPrefix + "Form.java", sbf);
-
-		sbf.setLength(0);
-		form.emitTs(sbf, app.valueLists, tsImportPrefix);
-		Util.writeOut(tsOutputFolder + fn + "Form.ts", sbf);
-
-	}
-
-	/**
-	 * @param files
-	 * @param generatedSourceRootFolder
-	 * @param tsOutputFolder
-	 * @param valueSchemas
-	 * @param app
-	 * @param rootPackageName
-	 * @param tsImportPrefix
-	 */
-	private static Record emitRecord(final File file,
-			final String generatedSourceRootFolder, final String tsOutputFolder,
-			final Map<String, ValueSchema> valueSchemas, final Application app,
-			final String packageName, final String tsImportPrefix) {
-		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT_REC.length());
-		logger.debug("Going to generate record " + fn);
-		final Record record = Util.loadJson(file.getPath(), Record.class);
-		if (record == null) {
-			logger.error("Record {} not generated. ", fn);
-			return null;
-		}
-		if (!fn.equals(record.name)) {
-			logger.error(
-					"File {} contains record named {}. It is mandatory to use record name same as the filename",
-					fn, record.name);
-			return null;
-		}
-
-		record.init(fn, valueSchemas);
-
-		final String outNamePrefix = generatedSourceRootFolder + "rec/"
-				+ Util.toClassName(fn);
-		/*
-		 * Record.java
-		 */
-		final StringBuilder sbf = new StringBuilder();
-		record.emitJavaClass(sbf, packageName);
-		String outName = outNamePrefix + "Record.java";
-		Util.writeOut(outName, sbf);
-
-		/*
-		 * dbTable.java
-		 */
-		sbf.setLength(0);
-		record.emitJavaTableClass(sbf, packageName);
-		if (sbf.length() > 0) {
-			outName = outNamePrefix + "Table.java";
-			Util.writeOut(outName, sbf);
-		}
-		return record;
-	}
-
-	private static void emitSql(final File file,
-			final String generatedSourceRootFolder,
-			final Map<String, ValueSchema> valueSchemas,
-			final String packageName) {
-		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT_SQL.length());
-		logger.debug("Going to generate Sql " + fn);
-		final Sql sql = Util.loadJson(file.getPath(), Sql.class);
-		if (sql == null) {
-			logger.error("Sql {} not generated.", fn);
-			return;
-		}
-		sql.init(valueSchemas);
-		final String cls = Util.toClassName(fn) + "Sql";
-		final StringBuilder sbf = new StringBuilder();
-		sql.emitJava(sbf, packageName, cls,
-				Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
-		final String outName = generatedSourceRootFolder + "sql/"
-				+ Util.toClassName(fn) + "Sql.java";
-		Util.writeOut(outName, sbf);
-
-	}
-
-	private static boolean createOutputFolders(final String root,
-			final String[] folders) {
-		boolean allOk = true;
-		for (final String folder : folders) {
-			if (!ensureFolder(new File(root + folder))) {
-				allOk = false;
-			}
-		}
-		return allOk;
+						+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsOutputFolder");
 	}
 
 	private static boolean ensureFolder(final File f) {
@@ -595,6 +95,316 @@ public class Generator {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 *
+	 * @param inputRootFolder
+	 *            folder where application.xlsx file, and spec folder are
+	 *            located. e.g.
+	 * @param javaRootFolder
+	 *            java source folder where the sources are to be generated. null
+	 *            if java is not to be generated
+	 * @param javaRootPackage
+	 *            root
+	 * @param tsRootFolder
+	 *            folder where generated ts files are to be saved. null to not
+	 *            generate TS code.
+	 */
+	public static void generate(final String inputRootFolder,
+			final String javaRootFolder, final String javaRootPackage,
+			final String tsRootFolder) {
+
+		if (javaRootFolder == null && tsRootFolder == null) {
+			logger.error(
+					"Both javaRootFolder and tsRootFolder are null. Nothing to generate");
+			return;
+		}
+
+		/**
+		 * we need the folder to end with '/'
+		 */
+		String inputRoot = inputRootFolder.endsWith(FOLDER)
+				? inputRootFolder
+				: inputRootFolder + FOLDER;
+
+		String javaRoot = null;
+		if (javaRootFolder != null) {
+			javaRoot = javaRootFolder.endsWith(FOLDER)
+					? javaRootFolder
+					: javaRootFolder + FOLDER;
+			javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
+		}
+		String tsRoot = null;
+		if (tsRootFolder != null) {
+			tsRoot = tsRootFolder.endsWith(FOLDER)
+
+					? tsRootFolder
+					: tsRootFolder + FOLDER;
+		}
+		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage,
+				tsRoot);
+		gen.go();
+
+	}
+
+	/*
+	 * instance is private, to be used by the static class only. we used
+	 * instance to avoid passing large number of parameters across static
+	 * functions
+	 */
+
+	private final String inputRoot;
+	private final String javaOutputRoot;
+	private final String packageName;
+	private final String tsOutputRoot;
+	private final boolean toGenerateJava;
+	private final boolean toGenerateTs;
+
+	private Application app;
+	private Map<String, Record> records;
+
+	private Generator(String inputRoot, String javaOutputRoot,
+			String packageName, String tsOutputRoot) {
+		this.inputRoot = inputRoot;
+		this.javaOutputRoot = javaOutputRoot;
+		this.packageName = packageName;
+		this.tsOutputRoot = tsOutputRoot;
+		this.toGenerateJava = javaOutputRoot != null;
+		this.toGenerateTs = tsOutputRoot != null;
+	}
+
+	private void go() {
+		String fileName = this.inputRoot + Conventions.App.APP_FILE;
+
+		this.app = Util.loadJson(fileName, Application.class);
+		if (this.app == null) {
+			logger.error("Exception while trying to read file {}", fileName);
+			return;
+		}
+		this.app.initialize();
+
+		/*
+		 * ensure all output folders are clean and ready
+		 */
+		if (!createOutputFolders()) {
+			return;
+		}
+
+		/*
+		 * generate project level components like data types
+		 */
+		if (this.toGenerateJava) {
+			app.generateJava(this.javaOutputRoot, this.packageName);
+		}
+		if (this.toGenerateTs) {
+			app.generateTs(this.tsOutputRoot, CORE_NAME);
+			fileName = this.inputRoot + Conventions.App.MESSAGES_FILE;
+			MessageMap messages = Util.loadJson(fileName, MessageMap.class);
+			if (messages != null) {
+				messages.generateTs(this.tsOutputRoot, CORE_NAME);
+			}
+
+		}
+
+		this.generateRecords();
+
+		if (this.toGenerateJava) {
+			this.generateForms();
+			this.generateSqls();
+		}
+	}
+
+	private boolean createOutputFolders() {
+		boolean allOk = true;
+		if (this.toGenerateJava) {
+			for (final String folder : JAVA_FOLDERS) {
+				if (!ensureFolder(new File(this.javaOutputRoot + folder))) {
+					allOk = false;
+				}
+			}
+		}
+		if (this.toGenerateTs) {
+
+			for (final String folder : TS_FOLDERS) {
+				if (!ensureFolder(new File(this.tsOutputRoot + folder))) {
+					allOk = false;
+				}
+			}
+		}
+		return allOk;
+	}
+
+	private void generateForms() {
+		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_FORM;
+		File folder = new File(folderName);
+		if (folder.exists() == false) {
+			logger.error("Forms folder {} not found. No forms are processed",
+					folderName);
+			return;
+		}
+
+		logger.info("Going to process forms under folder {}", folderName);
+
+		String javaFolder = this.javaOutputRoot
+				+ Conventions.App.FOLDER_NAME_FORM + '/';
+
+		for (final File file : folder.listFiles()) {
+			String fn = file.getName();
+			if (fn.endsWith(Conventions.App.EXTENSION_FORM) == false) {
+				logger.debug("Skipping non-form file {} ", fn);
+				continue;
+			}
+			logger.info("processing form : {}", fn);
+
+			fn = fn.substring(0,
+					fn.length() - Conventions.App.EXTENSION_FORM.length());
+			final Form form = Util.loadJson(file.getPath(), Form.class);
+			if (form == null) {
+				logger.error("Form {} not generated", fn);
+				return;
+			}
+
+			if (!fn.equals(form.name)) {
+				logger.error(
+						"Form name {} does not match with its file named {}",
+						form.name, fn);
+				return;
+			}
+
+			Record record = this.records.get(form.recordName);
+			if (record == null) {
+				logger.error(
+						"Form {} uses record {}, but that record is not defined",
+						form.name, form.recordName);
+				return;
+			}
+
+			form.initialize(record);
+			form.generateJava(javaFolder, this.packageName);
+		}
+	}
+
+	private void generateRecords() {
+		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_RECORD;
+		File folder = new File(folderName);
+		if (folder.exists() == false) {
+			logger.error(
+					"Records folder {} not found. No Records are processed",
+					folderName);
+			return;
+		}
+
+		logger.info("Going to process records under folder {}", folderName);
+
+		this.records = new HashMap<>();
+		String javaFolder = null;
+		String tsFolder = null;
+		StringBuilder allForms = new StringBuilder();
+		StringBuilder imports = new StringBuilder();
+		if (this.javaOutputRoot != null) {
+			javaFolder = this.javaOutputRoot
+					+ Conventions.App.FOLDER_NAME_RECORD + '/';
+		}
+
+		if (this.tsOutputRoot != null) {
+			// note that a record is generated as a form on the client side
+			tsFolder = this.tsOutputRoot + Conventions.App.FOLDER_NAME_FORM
+					+ '/';
+			imports.append("import { Forms } from '").append(CORE_NAME)
+					.append("';\n");
+			allForms.append("\nexport const allForms: Forms = {");
+		}
+
+		for (final File file : folder.listFiles()) {
+			String fn = file.getName();
+			if (fn.endsWith(Conventions.App.EXTENSION_RECORD) == false) {
+				logger.debug("Skipping non-record file {} ", fn);
+				continue;
+			}
+			logger.info("processing record : {}", fn);
+
+			fn = fn.substring(0,
+					fn.length() - Conventions.App.EXTENSION_RECORD.length());
+			final Record record = Util.loadJson(file.getPath(), Record.class);
+			if (record == null) {
+				logger.error("Record {} not generated", fn);
+				return;
+			}
+
+			if (!fn.equals(record.name)) {
+				logger.error(
+						"Record name {} does not match with its file named {}",
+						record.name, fn);
+				return;
+			}
+
+			record.init(fn, this.app.valueSchemas);
+
+			this.records.put(record.name, record);
+			if (this.toGenerateJava) {
+				record.generateJava(javaFolder, packageName);
+			}
+
+			if (this.toGenerateTs) {
+				final boolean done = record.generateTs(tsFolder, CORE_NAME);
+				if (done) {
+					imports.append("\nimport { ").append(fn)
+							.append("Form } from './form/").append(fn)
+							.append(".form';");
+					allForms.append("\n\t").append(fn).append(": ").append(fn)
+							.append("Form,");
+				}
+			}
+		}
+
+		if (this.tsOutputRoot != null) {
+			imports.append('\n').append(allForms).append("\n};\n");
+			Util.writeOut(this.tsOutputRoot + "allForms.ts", imports);
+		}
+	}
+
+	private void generateSqls() {
+		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_SQL;
+		File folder = new File(folderName);
+		if (folder.exists() == false) {
+			logger.error("Sqls folder {} not found. No Sqls are processed",
+					folderName);
+			return;
+		}
+
+		logger.info("Going to process SQLs under folder {}", folderName);
+
+		String javaFolder = this.javaOutputRoot
+				+ Conventions.App.FOLDER_NAME_SQL;
+		String javaPackage = this.packageName + ".sql";
+
+		for (final File file : folder.listFiles()) {
+			String fn = file.getName();
+			if (fn.endsWith(Conventions.App.EXTENSION_SQL) == false) {
+				logger.debug("Skipping non-sql file {} ", fn);
+				continue;
+			}
+			logger.info("processing sql : {}", fn);
+
+			fn = fn.substring(0,
+					fn.length() - Conventions.App.EXTENSION_SQL.length());
+			final Sql sql = Util.loadJson(file.getPath(), Sql.class);
+			if (sql == null) {
+				logger.error("Sql {} not generated", fn);
+				return;
+			}
+
+			if (!fn.equals(sql.name)) {
+				logger.error(
+						"Record name {} does not match with its file named {}",
+						sql.name, fn);
+				return;
+			}
+
+			sql.init(this.app.valueSchemas);
+			sql.generateJava(javaFolder, javaPackage);
+		}
 	}
 
 }

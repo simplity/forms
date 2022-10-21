@@ -25,7 +25,6 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputArray;
@@ -42,7 +41,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class LinkMetaData {
-	private static final Logger logger = LoggerFactory.getLogger(LinkMetaData.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(LinkMetaData.class);
 	/**
 	 * non-null unique across all fields of the form
 	 */
@@ -86,10 +86,13 @@ public class LinkMetaData {
 	 */
 
 	/**
+	 * true inly if meta data exists, and the two records are db records
+	 */
+	private boolean isDbLink;
+	/**
 	 * in case the records are to be linked, then we need the where clause where
 	 * the column names come from the linked record, while the values for them
-	 * come from the parent record
-	 * e.g. childCol1=? and childCll2=?
+	 * come from the parent record e.g. childCol1=? and childCll2=?
 	 */
 	private String linkWhereClause;
 
@@ -122,8 +125,9 @@ public class LinkMetaData {
 	 * @param childLinkNames
 	 * @param isTabular
 	 */
-	public LinkMetaData(final String linkName, final String linkFormName, final int minRows, final int maxRows,
-			final String errorMessageId, final String[] parentLinkNames, final String[] childLinkNames,
+	public LinkMetaData(final String linkName, final String linkFormName,
+			final int minRows, final int maxRows, final String errorMessageId,
+			final String[] parentLinkNames, final String[] childLinkNames,
 			final boolean isTabular) {
 		this.linkName = linkName;
 		this.linkFormName = linkFormName;
@@ -149,11 +153,14 @@ public class LinkMetaData {
 	 */
 	void init(final Record parentRec, final Record childRec) {
 		if (this.parentLinkNames == null || this.childLinkNames == null) {
-			logger.info("Linked form has no deign-tim elink parameters. No auto operations possible..");
+			logger.info(
+					"Linked form has no deign-time link parameters. No auto operations possible..");
 			return;
 		}
-		if (parentRec instanceof DbRecord == false || childRec instanceof DbRecord == false) {
-			logger.warn("Linked form defined for non-db record. No auto operations possible..");
+		if (parentRec instanceof DbRecord == false
+				|| childRec instanceof DbRecord == false) {
+			logger.warn(
+					"Linked form defined for non-db record. No auto operations possible..");
 			return;
 		}
 
@@ -167,12 +174,14 @@ public class LinkMetaData {
 		this.linkWhereParams = new FieldMetaData[nbr];
 
 		for (int i = 0; i < nbr; i++) {
-			final DbField parentField = parentRecord.fetchField(this.parentLinkNames[i]);
+			final DbField parentField = parentRecord
+					.fetchField(this.parentLinkNames[i]);
 			/*
 			 * child field name is not verified during generation... we may get
 			 * run-time exception
 			 */
-			final DbField childField = childRecord.fetchField(this.childLinkNames[i]);
+			final DbField childField = childRecord
+					.fetchField(this.childLinkNames[i]);
 			if (childField == null) {
 				throw new RuntimeException("Field " + this.childLinkNames[i]
 						+ " is defined as childLinkName, but is not defined as a field in the linked form "
@@ -188,9 +197,16 @@ public class LinkMetaData {
 		}
 
 		this.linkWhereClause = sbf.toString();
-		this.deleteSql = "delete from " + childRecord.dba.getNameInDb() + this.linkWhereClause;
+		this.deleteSql = "delete from " + childRecord.dba.getNameInDb()
+				+ this.linkWhereClause;
+		this.isDbLink = true;
 	}
 
+	private void noDb() {
+		logger.error(
+				"Link is not designed for db operation on form {}. Database operation not done",
+				this.linkFormName);
+	}
 	/**
 	 * our current design is to write to the serializer directly
 	 *
@@ -201,12 +217,14 @@ public class LinkMetaData {
 	 * @return true if read was ok. false in in case of any validation error
 	 * @throws SQLException
 	 */
-	public boolean read(final DbRecord parentRec, final Form<?> form, final ISerializer writer,
-			final ReadonlyHandle handle) throws SQLException {
-		if (this.parentLinkNames == null) {
-			throw new ApplicationError(
-					"Form linkage has no design-time link names. read operation is not possible on the linked from");
+	public boolean read(final DbRecord parentRec, final Form<?> form,
+			final ISerializer writer, final ReadonlyHandle handle)
+			throws SQLException {
+		if (!this.isDbLink) {
+			this.noDb();
+			return false;
 		}
+
 		final Object[] values = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
@@ -214,7 +232,8 @@ public class LinkMetaData {
 		final Field[] fields = thisRecord.fetchFields();
 		if (this.isTabular) {
 			writer.beginArray();
-			for (final Object[] row : thisRecord.filter(this.linkWhereClause, values, handle)) {
+			for (final Object[] row : thisRecord.filter(this.linkWhereClause,
+					values, handle)) {
 				writer.beginObject();
 				writer.fields(fields, row);
 				form.readLinkedForms(row, writer, handle);
@@ -241,9 +260,11 @@ public class LinkMetaData {
 		return values;
 	}
 
-	private void copyParentKeys(final Record parentRec, final Record thisRecord) {
+	private void copyParentKeys(final Record parentRec,
+			final Record thisRecord) {
 		for (int i = 0; i < this.childIndexes.length; i++) {
-			thisRecord.assignValue(this.childIndexes[i], parentRec.fetchValue(this.parentIndexes[i]));
+			thisRecord.assignValue(this.childIndexes[i],
+					parentRec.fetchValue(this.parentIndexes[i]));
 		}
 	}
 
@@ -257,28 +278,35 @@ public class LinkMetaData {
 	 *         case, the transaction is to be rolled back;
 	 * @throws SQLException
 	 */
-	public boolean save(final DbRecord parentRec, final Form<?> form, final IInputObject inputObject,
-			final ReadWriteHandle handle, final IServiceContext ctx) throws SQLException {
-		if (this.parentLinkNames == null) {
-			throw new ApplicationError(
-					"Form linkage has no design-time link names. save operation not possible on the linked form");
+	public boolean save(final DbRecord parentRec, final Form<?> form,
+			final IInputObject inputObject, final ReadWriteHandle handle,
+			final IServiceContext ctx) throws SQLException {
+		if (!this.isDbLink) {
+			this.noDb();
+			return false;
 		}
+
 		final DbRecord thisRecord = (DbRecord) form.record;
 		if (this.isTabular) {
 			final IInputArray arr = inputObject.getArray(this.linkName);
 			if (arr == null) {
 				if (this.minRows == 0) {
-					logger.info("Input not received, but it is optional. No data saved for linked form.");
+					logger.info(
+							"Input not received, but it is optional. No data saved for linked form.");
 					return true;
 				}
-				ctx.addMessage(Message.newFieldError(this.linkName, Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(this.linkName,
+						Message.FIELD_REQUIRED, ""));
 				return false;
 			}
 
 			final int nbr = arr.length();
-			if (nbr < this.minRows || (this.maxRows > 0 && nbr > this.maxRows)) {
+			if (nbr < this.minRows
+					|| (this.maxRows > 0 && nbr > this.maxRows)) {
 				ctx.addMessage(Message.newFieldError(this.linkName,
-						"a min of " + this.minRows + " and a max of " + this.maxRows + " rows expected", ""));
+						"a min of " + this.minRows + " and a max of "
+								+ this.maxRows + " rows expected",
+						""));
 				return false;
 			}
 
@@ -298,15 +326,18 @@ public class LinkMetaData {
 		final IInputObject obj = inputObject.getObject(this.linkName);
 		if (obj == null) {
 			if (this.minRows > 0) {
-				ctx.addMessage(Message.newFieldError(this.linkName, Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(this.linkName,
+						Message.FIELD_REQUIRED, ""));
 				return false;
 			}
-			logger.info("Input not received, but it is optional. No data saved for linked form.");
+			logger.info(
+					"Input not received, but it is optional. No data saved for linked form.");
 			return true;
 		}
 
 		if (!thisRecord.parse(obj, true, ctx, this.linkName, 0)) {
-			logger.error("INput data had errors for linked form {}", this.linkName);
+			logger.error("INput data had errors for linked form {}",
+					this.linkName);
 			return false;
 		}
 
@@ -322,11 +353,11 @@ public class LinkMetaData {
 	 * @return true if all OK.
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbRecord parentRec, final Form<?> form, final ReadWriteHandle handle)
-			throws SQLException {
-		if (this.parentLinkNames == null) {
-			throw new ApplicationError(
-					"Form linkage has no design-time link names. delete on linked form not possible");
+	public boolean delete(final DbRecord parentRec, final Form<?> form,
+			final ReadWriteHandle handle) throws SQLException {
+		if (!this.isDbLink) {
+			this.noDb();
+			return false;
 		}
 
 		handle.write(this.deleteSql, this.getWhereValues(parentRec));

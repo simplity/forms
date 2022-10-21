@@ -41,7 +41,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class JettyHandler extends AbstractHandler {
-	private static final Logger logger = LoggerFactory.getLogger(JettyHandler.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(JettyHandler.class);
 	private static final int STATUS_METHOD_NOT_ALLOWED = 405;
 	/**
 	 * resource name for the mapping of url paths to service
@@ -49,10 +50,13 @@ public class JettyHandler extends AbstractHandler {
 	private static final String URL_PATH_MAPPING_RES_NAME = "/paths.json";
 
 	@Override
-	public void handle(final String target, final Request baseRequest, final HttpServletRequest request,
-			final HttpServletResponse response) throws IOException, ServletException {
+	public void handle(final String target, final Request baseRequest,
+			final HttpServletRequest request,
+			final HttpServletResponse response)
+			throws IOException, ServletException {
 		final String method = baseRequest.getMethod().toUpperCase();
-		logger.info("Received request path:{} and method {}", baseRequest.getPathInfo(), method);
+		logger.info("Received request path:{} and method {}",
+				baseRequest.getPathInfo(), method);
 		final long start = System.currentTimeMillis();
 		final Agent agent = Agent.getAgent();
 		agent.setOptions(baseRequest, response);
@@ -62,7 +66,8 @@ public class JettyHandler extends AbstractHandler {
 		} else if (method.equals("OPTIONS")) {
 			logger.info("Got a pre-flight request. responding generously.. ");
 		} else {
-			logger.error("Rejected a request with method {}", baseRequest.getMethod());
+			logger.error("Rejected a request with method {}",
+					baseRequest.getMethod());
 			response.setStatus(STATUS_METHOD_NOT_ALLOWED);
 		}
 
@@ -72,8 +77,7 @@ public class JettyHandler extends AbstractHandler {
 
 	/**
 	 * start jetty server on port 8080. To be extended to get run-time parameter
-	 * for port, and error handling if port is in-use etc..
-	 * <br/>
+	 * for port, and error handling if port is in-use etc.. <br/>
 	 * Simply invoke this as java app to run the server (of course the class
 	 * path etc.. are to be taken care of)
 	 *
@@ -83,13 +87,17 @@ public class JettyHandler extends AbstractHandler {
 	public static void main(final String[] args) throws Exception {
 		App.bootstrap();
 
-		//REST client capability is added here.
-		//TODO: this should be delegated to config
-		IRestAdapter parser = RestAdapter.fromJsonResource(URL_PATH_MAPPING_RES_NAME);
-		if(parser == null) {
-			logger.info("Resource {} not found or has errors. URLPaths will no tbe parsed for REST features.", URL_PATH_MAPPING_RES_NAME);
-		}else {
-			logger.info("URL Paths will be parsed for parameters and service names");
+		// REST client capability is added here.
+		// TODO: this should be delegated to config
+		IRestAdapter parser = RestAdapter
+				.fromJsonResource(URL_PATH_MAPPING_RES_NAME);
+		if (parser == null) {
+			logger.info(
+					"Resource {} not found or has errors. URLPaths will no tbe parsed for REST features.",
+					URL_PATH_MAPPING_RES_NAME);
+		} else {
+			logger.info(
+					"URL Paths will be parsed for parameters and service names");
 			Agent.setRestAdapter(parser);
 		}
 		final Server server = new Server(8080);
@@ -100,18 +108,17 @@ public class JettyHandler extends AbstractHandler {
 	}
 
 	/**
-	 * start jetty server on port 8080. To be extended to get run-time parameter
-	 * for port, and error handling if port is in-use etc..
-	 * <br/>
-	 * Simply invoke this as java app to run the server (of course the class
-	 * path etc.. are to be taken care of)
+	 * method to be invoked by app-code to start the server
 	 *
 	 * @param port
 	 * @param bootStrapBeforeRunning
+	 *            if true, then the app should provide the bootStrapper class
+	 *            name in the
 	 *
 	 * @throws Exception
 	 */
-	public static void serve(final int port, final boolean bootStrapBeforeRunning) throws Exception {
+	public static void serve(final int port,
+			final boolean bootStrapBeforeRunning) throws Exception {
 		if (bootStrapBeforeRunning) {
 			App.bootstrap();
 		}

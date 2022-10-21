@@ -52,6 +52,8 @@ public class DbField extends Field {
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client
+	 * @param isList
+	 *            is this a comma-separated list of values?
 	 * @param defaultValue
 	 *            value to be used in case the client has not sent a value for
 	 *            this. This e is used ONLY if isRequired is false. That is,
@@ -69,9 +71,13 @@ public class DbField extends Field {
 	 * @param fieldType
 	 *            db field type. non-null
 	 */
-	public DbField(final String fieldName, final int index, final DataType dataType, final String defaultValue,
-			final String messageId, final String valueListName, final String columnName, final FieldType fieldType) {
-		super(fieldName, index, dataType, defaultValue, messageId, valueListName, fieldType.isRequired());
+	public DbField(final String fieldName, final int index,
+			final DataType dataType, final boolean isList,
+			final String defaultValue, final String messageId,
+			final String valueListName, final String columnName,
+			final FieldType fieldType) {
+		super(fieldName, index, dataType, isList, defaultValue, messageId,
+				valueListName, fieldType.isRequired());
 		this.columnName = columnName;
 		this.fieldType = fieldType;
 	}
@@ -95,7 +101,8 @@ public class DbField extends Field {
 	 * @return true if this column is part of the primary key
 	 */
 	public boolean isPrimaryKey() {
-		return this.fieldType == FieldType.PrimaryKey || this.fieldType == FieldType.GeneratedPrimaryKey;
+		return this.fieldType == FieldType.PrimaryKey
+				|| this.fieldType == FieldType.GeneratedPrimaryKey;
 	}
 
 	/**
@@ -109,7 +116,8 @@ public class DbField extends Field {
 	 * @return true if this field is user id, like createdBy and modifiedBy.
 	 */
 	public boolean isUserId() {
-		return this.fieldType == FieldType.ModifiedBy || this.fieldType == FieldType.CreatedBy;
+		return this.fieldType == FieldType.ModifiedBy
+				|| this.fieldType == FieldType.CreatedBy;
 	}
 
 	/**
@@ -124,8 +132,9 @@ public class DbField extends Field {
 	 * @return true if all OK. false if an error message is addedd to the
 	 *         context
 	 */
-	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
+	public boolean validate(final Object[] data, final boolean forInsert,
+			final IServiceContext ctx, final String tableName,
+			final int rowNbr) {
 		final int idx = this.getIndex();
 		final Object val = data[idx];
 
@@ -133,15 +142,15 @@ public class DbField extends Field {
 		/*
 		 * tenant key is ignored from the client, and populated from the context
 		 */
-		case TenantKey:
+		case TenantKey :
 			data[idx] = ctx.getTenantId();
 			return true;
 
 		/*
 		 * user id is also populated from the context
 		 */
-		case CreatedBy:
-		case ModifiedBy:
+		case CreatedBy :
+		case ModifiedBy :
 			data[idx] = ctx.getUserId();
 			return true;
 
@@ -149,14 +158,15 @@ public class DbField extends Field {
 		 * generated primary key is set as "optional". However this is required
 		 * if the input is for an update operation
 		 */
-		case GeneratedPrimaryKey:
+		case GeneratedPrimaryKey :
 			if (forInsert == false && val == null) {
-				ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
+				ctx.addMessage(
+						Message.newValidationError(this, tableName, rowNbr));
 				return false;
 			}
 			return true;
 
-		default:
+		default :
 			return true;
 
 		}

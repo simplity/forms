@@ -21,11 +21,10 @@
  */
 package org.simplity.fm.core.datatypes;
 
-
 /**
  * class that restricts possible valid values that a field can have. Used for
  * parsing and validating a field value coming from a non-reliable source
- * 
+ *
  * @author simplity.org
  *
  */
@@ -53,24 +52,82 @@ public abstract class DataType {
 
 	/**
 	 * @param value
-	 *            non-null. generic object to be  to be parsed and validated. 
+	 *            non-null. generic object to be to be parsed and validated.
 	 * @return null if the validation fails. object of the right type for the
 	 *         field.
 	 */
-	
+
 	public abstract Object parse(Object value);
 	/**
 	 * @param value
-	 *            non-null. value to be parsed and validated into the right type after
-	 *            validation
+	 *            non-null. value to be parsed and validated into the right type
+	 *            after validation
 	 * @return null if the validation fails. object of the right type for the
 	 *         field.
 	 */
 	public abstract Object parse(String value);
 	/**
+	 * @param value
+	 *            non-null. String with comma separated values
+	 * @return null if the validation fails.
+	 */
+	public ParsedList parseList(String value) {
+		String[] texts = value.split(",");
+		Object[] vals = new Object[texts.length];
+
+		// we expect this to be a small array, and hence no optimization
+		String textValue = null;
+		for (int i = 0; i < texts.length; i++) {
+			Object val = this.parse(texts[i]);
+			if (val == null) {
+				return null;
+			}
+			vals[i] = val;
+			if (textValue == null) {
+				textValue = val.toString();
+			} else {
+				textValue += ',' + val.toString();
+			}
+		}
+		return new ParsedList(textValue, vals);
+	}
+	/**
 	 * @return the name
 	 */
 	public String getName() {
 		return this.name;
+	}
+
+	/**
+	 * immutable data structure to manage value-lists. Has the text-version as
+	 * well as an array of the value of the right type
+	 *
+	 * @author simplity.org
+	 *
+	 */
+	public class ParsedList {
+		/**
+		 * text that is a has the comma separated list of values
+		 */
+		public final String textValue;
+
+		/**
+		 * array that has the right-types values
+		 */
+		public final Object[] valueList;
+
+		/**
+		 * immutable, and hence the values for all the members are to be
+		 * supplied on instantiation
+		 *
+		 * @param textValue
+		 *            non-null
+		 * @param valueList
+		 *            non-null
+		 */
+		public ParsedList(String textValue, Object[] valueList) {
+			this.textValue = textValue;
+			this.valueList = valueList;
+		}
 	}
 }

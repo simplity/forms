@@ -388,62 +388,6 @@ public class Util {
 		sbf.append(prefix).append(att).append(": '").append(val).append("',");
 	}
 	/**
-	 * parse the Json member as a Map. Add the key/index as a field for the
-	 * parsed object
-	 *
-	 * @param map
-	 *            non-null map to which this collection is to be parsed into
-	 * @param parentJson
-	 *            json that is to optionally contain JsonObject as member with
-	 *            this name
-	 * @param memberName
-	 *            name with which to find the json for the ,ap to be parsed
-	 * @param field
-	 *            to which the key/index is to be set to. null if this is not
-	 *            required. use getField() to get this
-	 * @throws IOException
-	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	static void addToMap(final Map map, final JsonReader reader,
-			final Class cls) throws IOException {
-		logger.debug("Started parsing map of class {}", cls.getName());
-		final int nbr = map.size();
-		int idx = nbr - 1;
-		reader.beginObject();
-		while (true) {
-			idx++;
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				logger.debug("{} objects parsed", (nbr - idx));
-				reader.endObject();
-				return;
-			}
-
-			final String key = reader.nextName();
-			final Object value = GSON.fromJson(reader, cls);
-			if (value instanceof IInitializer) {
-				((IInitializer) value).initialize(key, idx);
-			}
-			map.put(key, value);
-		}
-	}
-
-	/**
-	 * create an instance of the object and load its attributes from JSON
-	 *
-	 * @param reader
-	 *            must be ready to read the object (typically after a
-	 *            reader.nextName()
-	 * @param cls
-	 * @return object instance. null in case of any issues in creating and
-	 *         populating the object
-	 */
-	static <T extends Object> T objectFromJson(final JsonReader reader,
-			final Class<T> cls) {
-		return GSON.fromJson(reader, cls);
-	}
-
-	/**
 	 *
 	 * @param <T>
 	 *            type of object to be loaded
@@ -453,7 +397,7 @@ public class Util {
 	 *            class of the object to be loaded
 	 * @return loaded object instance, or null in case of any error
 	 */
-	public static <T extends Object> T loadJson(String fileName, Class<T> cls) {
+	public static <T> T loadJson(String fileName, Class<T> cls) {
 		File f = new File(fileName);
 		if (f.exists() == false) {
 			logger.error("project configuration file {} not found. Aborting..",
@@ -472,55 +416,6 @@ public class Util {
 
 	}
 	/**
-	 * parse and return a map
-	 *
-	 * @param reader
-	 * @param cls
-	 * @throws IOException
-	 */
-	static <T extends Object> void loadMap(final Map<String, T> map,
-			final JsonReader reader, final Class<T> cls) throws IOException {
-		logger.debug("Started loading instances of {} into a map",
-				cls.getName());
-		final int nbr = map.size();
-		int idx = nbr - 1;
-		reader.beginObject();
-		while (true) {
-			idx++;
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				reader.endObject();
-				logger.debug("{} objects parsed", (idx - nbr));
-				return;
-			}
-
-			final String key = reader.nextName();
-			T value = GSON.fromJson(reader, cls);
-			if (value instanceof IInitializer) {
-				((IInitializer) value).initialize(key, idx);
-			}
-			map.put(key, value);
-		}
-	}
-
-	/**
-	 * extract entries of the form {"att": "value", "att2": "avlue2"... } into
-	 * the map
-	 *
-	 * @param map
-	 * @param reader
-	 * @throws IOException
-	 */
-	static void loadStringMap(final Map<String, String> map,
-			final JsonReader reader) throws IOException {
-		reader.beginObject();
-		while (reader.peek() != JsonToken.END_OBJECT) {
-			map.put(reader.nextName(), reader.nextString());
-		}
-		reader.endObject();
-	}
-
-	/**
 	 * An object may want to initialize itself after setting all the attributes
 	 */
 	interface IInitializer {
@@ -536,29 +431,6 @@ public class Util {
 		 *            would like to make use of it and hence this
 		 */
 		void initialize(String name, int idx);
-	}
-
-	/**
-	 * object populates itself from a its JSON representation.
-	 */
-	interface ISelfLoader {
-		/**
-		 *
-		 * @param reader
-		 *            is positioned at begin_object (it is not consumed. only
-		 *            name is consumed) caller is expected to consume the object
-		 *            and return
-		 * @param key
-		 *            name that is already parsed
-		 * @param idx
-		 *            0-based index of this member. this is generally not the
-		 *            right thing to do in a json because the order of
-		 *            attributes is not significant.However,in our design, we
-		 *            would like to make use of it and hence this
-		 * @throws IOException
-		 */
-		void fromJson(JsonReader reader, String key, int idx)
-				throws IOException;
 	}
 
 	/**

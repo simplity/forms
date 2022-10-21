@@ -25,6 +25,7 @@ package org.simplity.fm.gen;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.FieldType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,8 @@ class Field {
 
 	String name;
 	String fieldType = "optionalData";
-	String dbColumnName;
+	String nameInDb;
+	boolean isList;
 	String valueSchema;
 	String errorId;
 	String defaultValue;
@@ -55,7 +57,7 @@ class Field {
 	String placeHolder;
 	String hint;
 	boolean renderInList;
-	boolean renderInSave;
+	boolean hideInSave;
 
 	// synthetic attributes
 	boolean isRequired;
@@ -93,8 +95,7 @@ class Field {
 				|| this.fieldTypeEnum == FieldType.PrimaryKey;
 	}
 
-	void emitJavaCode(final StringBuilder sbf, final String schemasName,
-			final boolean isDb) {
+	void emitJavaCode(final StringBuilder sbf, final boolean isDb) {
 		sbf.append("\n\t\t\tnew ");
 		if (isDb) {
 			sbf.append("Db");
@@ -105,12 +106,15 @@ class Field {
 		sbf.append(C).append(this.index);
 		// 3. schema name. All Schema names are statically defined in the main
 		// class. e.g. DataTypes.schemaName
-		sbf.append(C).append(schemasName).append('.').append(this.valueSchema);
-		// 4. default value as string
+		sbf.append(C).append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+				.append('.').append(this.valueSchema);
+		// 4. isList as boolean
+		sbf.append(C).append(this.isList);
+		// 5. default value as string
 		sbf.append(C).append(Util.qoutedString(this.defaultValue));
-		// 5. error id
+		// 6. error id
 		sbf.append(C).append(Util.qoutedString(this.errorId));
-		// 6. listName as string, null if not required
+		// 7. listName as string, null if not required
 		/*
 		 * list is handled by inter-field in case key is specified
 		 */
@@ -123,7 +127,7 @@ class Field {
 		// additional parameters for a DbField
 		if (isDb) {
 			// 7. column Name
-			sbf.append(C).append(Util.qoutedString(this.dbColumnName));
+			sbf.append(C).append(Util.qoutedString(this.nameInDb));
 			// 8. columnType as Enum
 			sbf.append(C).append("FieldType.")
 					.append(this.fieldTypeEnum.name());
@@ -169,7 +173,7 @@ class Field {
 	public void emitFormTs(final StringBuilder sbf) {
 		sbf.append("\n\t\t").append(this.name).append(": {");
 		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
-		sbf.append(BEGIN).append("dataType: '").append(this.valueSchema)
+		sbf.append(BEGIN).append("valueSchema: '").append(this.valueSchema)
 				.append(END);
 		sbf.append(BEGIN).append("valueType: '")
 				.append(this.schemaInstance.getValueType()).append(END);
@@ -191,9 +195,6 @@ class Field {
 		Util.addAttrTs(sbf, BEGIN, "listKeyName", this.listKey);
 		if (this.renderInList) {
 			sbf.append(BEGIN).append("renderInList : true,");
-		}
-		if (this.renderInSave) {
-			sbf.append(BEGIN).append("renderInSave : true,");
 		}
 		if (this.fieldTypeEnum == FieldType.PrimaryKey
 				|| this.fieldTypeEnum == FieldType.OptionalData

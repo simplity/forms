@@ -123,19 +123,19 @@ public class ValueSchema implements Util.IInitializer {
 					.append(C);
 		}
 		if (this.maxLength != 0) {
-			sbf.append(",\n\t\tmaxLength: ").append(this.maxLength).append(C);
+			sbf.append("\n\t\tmaxLength: ").append(this.maxLength).append(C);
 		}
 		if (this.minLength != 0) {
-			sbf.append(",\n\t\tminLength: ").append(this.minLength).append(C);
+			sbf.append("\n\t\tminLength: ").append(this.minLength).append(C);
 		}
 		if (this.maxValue != 0) {
-			sbf.append(",\n\t\tmaxValue: ").append(this.maxValue).append(C);
+			sbf.append("\n\t\tmaxValue: ").append(this.maxValue).append(C);
 		}
 		if (this.minValue != 0) {
-			sbf.append(",\n\t\tminValue: ").append(this.minValue).append(C);
+			sbf.append("\n\t\tminValue: ").append(this.minValue).append(C);
 		}
 		if (this.nbrFractions != 0) {
-			sbf.append(",\n\t\tnbrFractions: ").append(this.nbrFractions)
+			sbf.append("\n\t\tnbrFractions: ").append(this.nbrFractions)
 					.append(C);
 		}
 

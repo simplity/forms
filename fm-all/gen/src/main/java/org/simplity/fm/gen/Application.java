@@ -158,8 +158,8 @@ public class Application {
 		sbf.append("\n\t\t}\n\t}");
 
 		sbf.append("\n\n@Override");
-		sbf.append("\n\tpublic DataType getDataType(String name) {");
-		sbf.append("\n\t\treturn this.typesMap.get(name);");
+		sbf.append("\n\tpublic DataType getDataType(String typeName) {");
+		sbf.append("\n\t\treturn this.typesMap.get(typeName);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
@@ -198,8 +198,9 @@ public class Application {
 	private void generateTsForSchemas(final String folder, String coreName) {
 		logger.info("Generatng TS code for value schemas ...");
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { DataTypes } from '").append(coreName).append("';");
-		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
+		sbf.append("import { ValueSchemas } from '").append(coreName)
+				.append("';");
+		sbf.append("\n\nexport const allValueSchemas: ValueSchemas = {");
 
 		for (ValueSchema vs : this.valueSchemas.values()) {
 			vs.emitTs(sbf);
@@ -207,7 +208,7 @@ public class Application {
 
 		sbf.append("\n}\n\n");
 
-		String fn = folder + "allDataTypes.ts";
+		String fn = folder + "allValueSchemas.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated", fn);
 

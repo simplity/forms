@@ -31,7 +31,11 @@
       "items": {
         "uniqueItems": true,
         "enum": ["get", "create", "update", "filter", "delete"]
-      }
+      },
+    "isExposedToClient": {
+    	"description": "Is this data strucrure part of onput/output API for srvices. Used by the generator for generating client-side components.",
+		"type": "boolean"
+    }
     },
     "fields": {
       "type": "object",
