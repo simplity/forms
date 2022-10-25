@@ -1,0 +1,124 @@
+{
+	"invalidPaths": {
+		"p1": { 
+			"basePath": "app",
+			"serviceNamePrefix": "prefix1",
+			"pathss": {
+				"a": {"": "serivice1"}
+			}
+		},
+		"p2": { 
+			"basePath": "app"
+		},
+		"p3": { 
+			"serviceNamePrefix": "prefix1"
+		},
+		"p4": {
+			"a": "b"
+		},
+		"p5": {
+			"basePath": "b"
+		}		
+	},
+	"validPathsWithErrors":{
+		"p1" :{
+			"a/b": {"": "s1"},
+			"a/{b}":{"":  "someService"}
+		},
+		"p2": {
+			"a/b/{c}": {"": "s1"},
+			"a/b/{notC}" : {"":  "someService"}
+		},
+		"p3": {
+			"a/b": {"a":  "aService"},
+			"a/b/": {"a":  "b"}
+		},
+		"p4": {
+			"a/b": {"a":  ["aService"]}
+		},
+		"p5": {
+			"a/b": {"a":  {"a": 123}}
+		},
+		"p6": {
+			"a/b": {"a":  true}
+		},
+		"p7": {
+			"a/b/": {"a":  123}
+		}
+	},
+	
+	"pathsWithPrefixes":{
+		"basePath": "app/module/",
+		"serviceNamePrefix": "a.b.",
+		"paths": {
+			"p1/p2": {"": "s"}
+		}
+	},
+
+	
+	"testPaths": {
+		"a": {"": "defaultService", "get": "gets", "put": "puts"},
+		"a/b/": {"get": "getb"},
+		"a/c/{f1}": {"": "c"},
+		"a/c/{f1}/d/{f2}": {"": "d"}
+	},
+	
+	"testData": [
+	{
+		"path": "a",
+		"method": "get",
+		"service": "gets",
+		"data": {}
+	},{
+		"path": "a",
+		"method": "put",
+		"service": "puts",
+		"data": {}
+	},{
+		"path": "a",
+		"method": "anythingOtherThanGetAndPut",
+		"service": "defaultService",
+		"data": {}
+	},{
+		"path": "a/d",
+		"method": "get",
+		"service": "",
+		"data": {}
+	},{
+		"path": "a/d/",
+		"method": "junk",
+		"service": "",
+		"data": {}
+	},{
+		"path": "b",
+		"method": "get",
+		"service": "",
+		"data": {}
+	},{
+		"path": "a/b",
+		"method": "get",
+		"service": "getb",
+		"data": {}
+	},{
+		"path": "a/b/",
+		"method": "get",
+		"service": "getb",
+		"data": {}
+	},{
+		"path": "a/b",
+		"method": "put",
+		"service": "",
+		"data": {}
+	},{
+		"path": "a/c/v1/",
+		"method": "junk",
+		"service": "c",
+		"data": {"f1": "v1"}
+	},{
+		"path": "a/c/v1/d/2",
+		"method": "junk",
+		"service": "d",
+		"data": {"f1": "v1", "f2": "2"}
+	}
+	]
+}
