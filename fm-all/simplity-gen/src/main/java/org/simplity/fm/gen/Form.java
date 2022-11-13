@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class Form {
 	protected static final Logger logger = LoggerFactory.getLogger(Form.class);
 
-	String name;
+	String formName;
 	String recordName;
 	/*
 	 * used only for the client as of now. We are worried that careless
@@ -72,7 +72,7 @@ public class Form {
 			final FieldType ct = f.fieldTypeEnum;
 			if (ct == FieldType.PrimaryKey
 					|| ct == FieldType.GeneratedPrimaryKey) {
-				this.keyFieldNames.add(f.name);
+				this.keyFieldNames.add(f.fieldName);
 			}
 		}
 
@@ -98,12 +98,12 @@ public class Form {
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = packageName + ".form";
-		final String qual = Util.getClassQualifier(this.name);
+		final String qual = Util.getClassQualifier(this.formName);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
 		sbf.append("package ").append(pck).append(";\n");
-		Util.emitImport(sbf, App.class);
+		Util.emitImport(sbf, AppManager.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkMetaData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
@@ -111,11 +111,11 @@ public class Form {
 		sbf.append("\nimport ").append(packageName).append(".rec.")
 				.append(recordClass).append(';');
 
-		final String cls = Util.toClassName(this.name) + "Form";
+		final String cls = Util.toClassName(this.formName) + "Form";
 		/*
 		 * class declaration
 		 */
-		sbf.append("\n/** class for form ").append(this.name)
+		sbf.append("\n/** class for form ").append(this.formName)
 				.append("  */\npublic class ");
 		sbf.append(cls).append(" extends Form<").append(recordClass)
 				.append("> {");
@@ -125,14 +125,14 @@ public class Form {
 		/*
 		 * protected static final Field[] FIELDS = {.....};
 		 */
-		sbf.append(p).append("String NAME = \"").append(this.name)
+		sbf.append(p).append("String NAME = \"").append(this.formName)
 				.append("\";");
 		/*
 		 * protected static final String RECORD = "....";
 		 */
 		sbf.append(p).append(recordClass).append(" RECORD = (")
 				.append(recordClass);
-		sbf.append(") App.getApp().getCompProvider().getRecord(\"")
+		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"")
 				.append(this.recordName).append("\");");
 
 		/*

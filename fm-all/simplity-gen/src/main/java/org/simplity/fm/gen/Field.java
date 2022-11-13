@@ -40,8 +40,9 @@ class Field {
 	private static final Map<String, FieldType> fieldTypes = createMap();
 	private static final Logger logger = LoggerFactory.getLogger(Field.class);
 	private static final String C = ", ";
+	private static final char SINGLEQUOTE = '\'';
 
-	String name;
+	String fieldName;
 	String fieldType = "optionalData";
 	String nameInDb;
 	boolean isList;
@@ -73,11 +74,11 @@ class Field {
 			if (this.valueSchema == null) {
 				logger.error(
 						"Field {} has not defined a value-schema. A Default is assumed.",
-						this.name);
+						this.fieldName);
 			} else {
 				logger.error(
 						"Field {} has specified {} as value-schema, but it is not defined. A default text-schema is used instead",
-						this.valueSchema, this.name);
+						this.valueSchema, this.fieldName);
 			}
 			this.schemaInstance = ValueSchema.DEFAULT_SCHEMA;
 			this.valueSchema = this.schemaInstance.name;
@@ -87,7 +88,7 @@ class Field {
 		if (fieldTypeEnum == null) {
 			logger.error(
 					"{} is an invalid fieldType for field {}. optional data is  assumed",
-					this.fieldType, this.name);
+					this.fieldType, this.fieldName);
 			this.fieldType = "optionalData";
 			this.fieldTypeEnum = FieldType.OptionalData;
 		}
@@ -101,7 +102,7 @@ class Field {
 			sbf.append("Db");
 		}
 		// 1. name
-		sbf.append("Field(\"").append(this.name).append('"');
+		sbf.append("Field(\"").append(this.fieldName).append('"');
 		// 2. index
 		sbf.append(C).append(this.index);
 		// 3. schema name. All Schema names are statically defined in the main
@@ -171,8 +172,8 @@ class Field {
 	 * @param sbf
 	 */
 	public void emitFormTs(final StringBuilder sbf) {
-		sbf.append("\n\t\t").append(this.name).append(": {");
-		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
+		sbf.append("\n\t\t").append(this.fieldName).append(": {");
+		sbf.append(BEGIN).append("name: '").append(this.fieldName).append(END);
 		sbf.append(BEGIN).append("valueSchema: '").append(this.valueSchema)
 				.append(END);
 		sbf.append(BEGIN).append("valueType: '")
@@ -181,7 +182,7 @@ class Field {
 				.append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
-			lbl = Util.toLabel(this.name);
+			lbl = Util.toLabel(this.fieldName);
 		}
 		Util.addAttrTs(sbf, BEGIN, "label", lbl);
 		Util.addAttrTs(sbf, BEGIN, "defaultValue", this.defaultValue);
@@ -208,5 +209,105 @@ class Field {
 			Util.addAttrTs(sbf, BEGIN, "renderType", rt);
 		}
 		sbf.append("\n\t\t}");
+	}
+
+	/**
+	 *
+	 * @param string
+	 *            builder to which SQL is emitted
+	 */
+	void emitSql(StringBuilder sbf, StringBuilder dataSbf,
+			StringBuilder valSbf) {
+		sbf.append(this.nameInDb);
+		dataSbf.append(this.nameInDb);
+		valSbf.append(this.schemaInstance.getDefaultConstant());
+		switch (this.fieldTypeEnum) {
+		case CreatedAt :
+		case ModifiedAt :
+			sbf.append(" DATETIME NOT NULL");
+			return;
+
+		case CreatedBy :
+		case ModifiedBy :
+		case TenantKey :
+			sbf.append(" INTEGER NOT NULL");
+			return;
+
+		case GeneratedPrimaryKey :
+			sbf.append(" INTEGER GENERATED ALWAYS AS IDENTITY");
+			return;
+
+		case OptionalData :
+		case PrimaryKey :
+		case RequiredData :
+			break;
+		}
+
+		switch (this.schemaInstance.valueTypeEnum) {
+		case Boolean :
+			sbf.append(" BOOLEAN NOT NULL DEFAULT FALSE");
+			return;
+
+		case Date :
+			sbf.append(" DATE ");
+			if (this.isRequired) {
+				sbf.append("NOT NULL ");
+			}
+			if (this.defaultValue != null) {
+				sbf.append("DEFAULT DATE ");
+				if (this.defaultValue.equalsIgnoreCase("today")) {
+					sbf.append("CURRENT_DATE ");
+				} else {
+					sbf.append(SINGLEQUOTE).append(this.defaultValue)
+							.append("' ");
+				}
+			}
+			return;
+
+		case Decimal :
+			// DECIMAL(max-digits,nbr-decimals)
+			sbf.append(" DECIMAL(");
+			sbf.append(this.schemaInstance.maxLength - 1);
+			sbf.append(',').append(this.schemaInstance.nbrFractions)
+					.append(") NOT NULL DEFAULT 0");
+			return;
+
+		case Integer :
+			sbf.append(" INTEGER NULL DEFAULT ");
+			if (this.defaultValue != null) {
+				sbf.append(this.defaultValue);
+			} else {
+				sbf.append('0');
+			}
+			return;
+
+		case Text :
+			sbf.append(" CHARACTER VARYING NOT NULL DEFAULT '");
+			if (this.defaultValue != null) {
+				sbf.append(this.defaultValue);
+			}
+			sbf.append(SINGLEQUOTE);
+			return;
+
+		case Timestamp :
+			sbf.append(" TIMESTAMP ");
+			if (this.isRequired) {
+				sbf.append("NOT NULL ");
+			}
+			if (this.defaultValue != null) {
+				sbf.append("DEFAULT TIMESTAMP ");
+				if (this.defaultValue.equalsIgnoreCase("now")) {
+					sbf.append("CURRENT_TIMESTAMP ");
+				} else {
+					sbf.append(SINGLEQUOTE).append(this.defaultValue)
+							.append(SINGLEQUOTE);
+				}
+			}
+			return;
+		}
+	}
+
+	boolean isColumn() {
+		return this.nameInDb != null;
 	}
 }

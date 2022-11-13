@@ -1,5 +1,8 @@
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
+
 import org.simplity.fm.core.datatypes.ValueType;
 
 /**
@@ -20,6 +23,7 @@ public class ValueSchema implements Util.IInitializer {
 	String valueType;
 	String name;
 	String errorId;
+	String dbType;
 
 	// text specific
 	String pattern;
@@ -42,7 +46,8 @@ public class ValueSchema implements Util.IInitializer {
 	public void initialize(final String nam, final int idx) {
 		this.name = nam;
 		try {
-			this.valueTypeEnum = ValueType.valueOf(this.valueType);
+			this.valueTypeEnum = ValueType
+					.valueOf(Util.toClassName(this.valueType));
 		} catch (IllegalArgumentException | NullPointerException e) {
 			// defaults to text
 		}
@@ -177,5 +182,28 @@ public class ValueSchema implements Util.IInitializer {
 		vs.valueType = "text";
 		vs.valueTypeEnum = ValueType.Text;
 		return vs;
+	}
+
+	/**
+	 *
+	 * @return sql constant for this type
+	 */
+	public String getDefaultConstant() {
+		switch (this.valueTypeEnum) {
+		case Boolean :
+			return "false";
+		case Decimal :
+		case Integer :
+			return "0";
+		case Date :
+			return " DATE '" + LocalDate.now().toString() + "'";
+		case Text :
+			return "''";
+		case Timestamp :
+			return " TIMESTAMP '" + Instant.now().toString() + "'";
+		default :
+			return "''";
+
+		}
 	}
 }

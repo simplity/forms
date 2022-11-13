@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.conf.defalt;
 
-import org.simplity.fm.core.conf.IAccessController;
+import org.simplity.fm.core.infra.IAccessController;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 

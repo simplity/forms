@@ -33,9 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.serialize.IInputArray;
-import org.simplity.fm.core.serialize.IInputObject;
-import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.service.IInputArray;
+import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
@@ -95,7 +95,9 @@ public class Record {
 	 */
 	public Record(final Field[] fields, final Object[] values) {
 		this.metaData = new RecordMetaData(fields);
-		this.fieldValues = values == null ? this.metaData.getDefaultValues() : values;
+		this.fieldValues = values == null
+				? this.metaData.getDefaultValues()
+				: values;
 	}
 
 	/**
@@ -103,7 +105,9 @@ public class Record {
 	 */
 	protected Record(final RecordMetaData recordMeta, final Object[] values) {
 		this.metaData = recordMeta;
-		this.fieldValues = values == null ? recordMeta.getDefaultValues() : values;
+		this.fieldValues = values == null
+				? recordMeta.getDefaultValues()
+				: values;
 	}
 
 	/**
@@ -164,10 +168,9 @@ public class Record {
 	 *
 	 * @param idx
 	 *            must be a valid index, failing which null is returned
-	 * @return
-	 *         null if the index is invalid, or the value is null. Otherwise one
-	 *         of the standard instances viz: String, Long,
-	 *         Double, Boolean, LocalData, Instant
+	 * @return null if the index is invalid, or the value is null. Otherwise one
+	 *         of the standard instances viz: String, Long, Double, Boolean,
+	 *         LocalData, Instant
 	 */
 	public Object fetchValue(final int idx) {
 		try {
@@ -426,8 +429,8 @@ public class Record {
 	 *            name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of double type. false otherwise,
-	 *         and the value is not set
+	 * @return true if field exists, and is of double type. false otherwise, and
+	 *         the value is not set
 	 */
 	protected boolean assignDecimlValue(final int idx, final double value) {
 		final Field field = this.metaData.getField(idx);
@@ -461,8 +464,7 @@ public class Record {
 	 *
 	 * @param idx
 	 * @return value of the field as instant of time. null if the field is not
-	 *         an instant.
-	 *         field, or it has null value
+	 *         an instant. field, or it has null value
 	 */
 	protected Instant fetchTimestampValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -515,8 +517,9 @@ public class Record {
 	}
 
 	private void logError(final int idx) {
-		logger.error("Invalid index {} used for setting value in a record with {} values", idx,
-				this.metaData.getFields().length);
+		logger.error(
+				"Invalid index {} used for setting value in a record with {} values",
+				idx, this.metaData.getFields().length);
 	}
 
 	/**
@@ -531,7 +534,8 @@ public class Record {
 	 * @return true if all ok. false if any error message is added to the
 	 *         context
 	 */
-	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert,
+			final IServiceContext ctx) {
 		return this.parse(inputObject, forInsert, ctx, null, 0);
 	}
 
@@ -554,12 +558,14 @@ public class Record {
 	 * @return true if all ok. false if any error message is added to the
 	 *         context
 	 */
-	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert,
+			final IServiceContext ctx, final String tableName,
+			final int rowNbr) {
 		boolean ok = true;
 		for (final Field field : this.metaData.getFields()) {
 			final String value = inputObject.getString(field.getName());
-			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName, rowNbr)) {
+			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName,
+					rowNbr)) {
 				ok = false;
 			}
 		}
@@ -568,7 +574,9 @@ public class Record {
 		if (vals != null) {
 			for (final IValidation vln : vals) {
 				if (vln.isValid(this, ctx) == false) {
-					logger.error("field {} failed an inter-field validaiton associated with it", vln.getFieldName());
+					logger.error(
+							"field {} failed an inter-field validaiton associated with it",
+							vln.getFieldName());
 					ok = false;
 				}
 			}
@@ -589,8 +597,9 @@ public class Record {
 	 * @param ctx
 	 * @return list of parsed data rows. null in case of any error.
 	 */
-	public List<? extends Record> parseTable(final IInputObject inputObject, final String memberName,
-			final boolean forInsert, final IServiceContext ctx) {
+	public List<? extends Record> parseTable(final IInputData inputObject,
+			final String memberName, final boolean forInsert,
+			final IServiceContext ctx) {
 		final List<Record> list = new ArrayList<>();
 		final IInputArray arr = inputObject.getArray(memberName);
 		if (arr == null) {
@@ -617,17 +626,18 @@ public class Record {
 	}
 
 	/**
-	 * @param writer
+	 * @param outData
 	 * @throws IOException
 	 */
-	protected void serializeRows(final ISerializer writer, final Object[][] rows) throws IOException {
+	protected void serializeRows(final IOutputData outData,
+			final Object[][] rows) throws IOException {
 		if (rows == null || rows.length == 0) {
 			return;
 		}
 		for (final Object[] row : rows) {
-			writer.beginObject();
-			writer.fields(this.fetchFields(), row);
-			writer.endObject();
+			outData.beginObject();
+			outData.addFields(this.fetchFields(), row);
+			outData.endObject();
 		}
 	}
 
@@ -637,7 +647,8 @@ public class Record {
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
 	public Record makeACopy() {
-		return this.newInstance(Arrays.copyOf(this.fieldValues, this.fieldValues.length));
+		return this.newInstance(
+				Arrays.copyOf(this.fieldValues, this.fieldValues.length));
 	}
 
 	/**

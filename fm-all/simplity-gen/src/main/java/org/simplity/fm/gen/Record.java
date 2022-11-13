@@ -39,7 +39,7 @@ import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.RecordMetaData;
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
@@ -68,7 +68,7 @@ class Record {
 	/*
 	 * fields that are read directly from json
 	 */
-	String name;
+	String recordName;
 	String nameInDb;
 	boolean useTimestampCheck;
 	boolean isVisibleToClient;
@@ -102,12 +102,12 @@ class Record {
 	boolean isUpdatable;
 
 	public void init(String nam, Map<String, ValueSchema> schemas) {
-		if (this.name.equals(nam) == false) {
+		if (this.recordName.equals(nam) == false) {
 			logger.error(
 					"File named {}.rec has a record named {}, violating the convention of having the same name. File name ignored",
-					nam, this.name);
+					nam, this.recordName);
 		}
-		this.className = Util.toClassName(this.name)
+		this.className = Util.toClassName(this.recordName)
 				+ Conventions.App.RECORD_CLASS_SUFIX;
 		/*
 		 * we want to check for duplicate definition of standard fields
@@ -127,11 +127,11 @@ class Record {
 			}
 
 			field.init(idx, schemas);
-			Field existing = this.fieldsMap.put(field.name, field);
+			Field existing = this.fieldsMap.put(field.fieldName, field);
 			if (existing != null) {
 				logger.error(
 						"Field {} is a duplicate in record {}. Generated Code will have compilation errors",
-						field.name, this.name);
+						field.fieldName, this.recordName);
 			}
 
 			if (field.listName != null) {
@@ -143,12 +143,12 @@ class Record {
 				if (field.nameInDb == null) {
 					logger.warn(
 							"{} is not linked to a db-column. No I/O happens on this field.",
-							field.name);
+							field.fieldName);
 					continue;
 				}
 				logger.error(
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
-						field.name, field.nameInDb);
+						field.fieldName, field.nameInDb);
 				ft = FieldType.OptionalData;
 			}
 
@@ -157,7 +157,7 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error(
 							"{} is defined as a generated primary key, but {} is also defined as a primary key.",
-							keyList.get(0).name, field.name);
+							keyList.get(0).fieldName, field.fieldName);
 				} else {
 					keyList.add(field);
 				}
@@ -167,12 +167,12 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error(
 							"Only one generated key please. Found {} as well as {} as generated primary keys.",
-							field.name, keyList.get(0).name);
+							field.fieldName, keyList.get(0).fieldName);
 				} else {
 					if (keyList.size() > 0) {
 						logger.error(
 								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
-								field.name, keyList.get(0).name);
+								field.fieldName, keyList.get(0).fieldName);
 						keyList.clear();
 					}
 					keyList.add(field);
@@ -184,14 +184,14 @@ class Record {
 				if (field.valueSchema.equals("tenantKey") == false) {
 					logger.error(
 							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
-							field.name, field.valueSchema);
+							field.fieldName, field.valueSchema);
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
 				} else {
 					logger.error(
 							"Both {} and {} are marked as tenantKey. Tenant key has to be unique.",
-							field.name, this.tenantField.name);
+							field.fieldName, this.tenantField.fieldName);
 				}
 				break;
 
@@ -201,7 +201,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as createdAt but {} and {} are marked",
-							field.name, createdAt.name);
+							field.fieldName, createdAt.fieldName);
 				}
 				break;
 
@@ -211,7 +211,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as createdBy but {} and {} are marked",
-							field.name, createdBy.name);
+							field.fieldName, createdBy.fieldName);
 				}
 				break;
 
@@ -224,7 +224,7 @@ class Record {
 				} else {
 					logger.error(
 							"{} and {} are both defined as lastModifiedAt!!",
-							field.name, this.timestampField.name);
+							field.fieldName, this.timestampField.fieldName);
 				}
 				break;
 
@@ -234,7 +234,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as modifiedBy but {} and {} are marked",
-							field.name, modifiedBy.name);
+							field.fieldName, modifiedBy.fieldName);
 				}
 				break;
 
@@ -267,7 +267,7 @@ class Record {
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = javaPackage + ".rec";
-		final String qual = Util.getClassQualifier(this.name);
+		final String qual = Util.getClassQualifier(this.recordName);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
@@ -280,7 +280,7 @@ class Record {
 		 */
 		Util.emitImport(sbf, LocalDate.class);
 		Util.emitImport(sbf, Instant.class);
-		Util.emitImport(sbf, IInputObject.class);
+		Util.emitImport(sbf, IInputData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, RecordMetaData.class);
 		if (isDb) {
@@ -319,7 +319,7 @@ class Record {
 		 */
 
 		sbf.append("\n\n/**\n * class that represents structure of ")
-				.append(this.name);
+				.append(this.recordName);
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(this.className)
 				.append(" extends ");
@@ -334,7 +334,7 @@ class Record {
 
 		sbf.append(
 				"\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
-		sbf.append(this.name).append("\", FIELDS, VALIDS);");
+		sbf.append(this.recordName).append("\", FIELDS, VALIDS);");
 
 		if (isDb) {
 			this.emitDbSpecific(sbf);
@@ -515,14 +515,14 @@ class Record {
 				if (f == null) {
 					logger.error(
 							"DbField {} specifies {} as listKey, but that field is not defined",
-							field.name, field.listKey);
+							field.fieldName, field.listKey);
 					continue;
 				}
 
 				sbf.append("new DependentListValidation(").append(field.index);
 				sbf.append(C).append(f.index);
 				sbf.append(C).append(Util.qoutedString(field.listName));
-				sbf.append(C).append(Util.qoutedString(field.name));
+				sbf.append(C).append(Util.qoutedString(field.fieldName));
 				sbf.append(C).append(Util.qoutedString(field.errorId));
 				sbf.append(")");
 				sbf.append(sufix);
@@ -700,11 +700,11 @@ class Record {
 		 *
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
-		final String c = Util.toClassName(this.name);
+		final String c = Util.toClassName(this.recordName);
 		final String recCls = c + "Record";
 		final String cls = c + "Table";
 		String pck = generatedPackage + ".rec";
-		final String qual = Util.getClassQualifier(this.name);
+		final String qual = Util.getClassQualifier(this.recordName);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
@@ -720,7 +720,7 @@ class Record {
 		 */
 
 		sbf.append("\n\n/**\n * class that represents an array of records of ")
-				.append(this.name);
+				.append(this.recordName);
 		sbf.append("\n */");
 		sbf.append("\npublic class ").append(cls).append(" extends DbTable<")
 				.append(recCls).append("> {");
@@ -733,6 +733,55 @@ class Record {
 				.append(recCls).append("());\n\t}");
 
 		sbf.append("\n}\n");
+	}
+
+	/**
+	 *
+	 * @param createSbf
+	 * @param dataSbf
+	 * @return true if sql is emitted, false otherwise
+	 */
+	public boolean emitSql(final StringBuilder createSbf,
+			final StringBuilder dataSbf) {
+		if (this.nameInDb == null) {
+			return false;
+		}
+		createSbf.append("\n\nCREATE TABLE ").append(this.nameInDb)
+				.append("(\n\t");
+		dataSbf.append("\n\nINSERT INTO ").append(this.nameInDb).append(" (");
+		StringBuilder valSbf = new StringBuilder("\nVALUES (");
+		boolean isFirst = true;
+		for (Field field : this.fields) {
+			if (!field.isColumn()) {
+				continue;
+			}
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				createSbf.append(",\n\t");
+				dataSbf.append(", ");
+				valSbf.append(", ");
+			}
+			field.emitSql(createSbf, dataSbf, valSbf);
+		}
+
+		if (this.keyFields != null && this.generatedKeyField == null) {
+			createSbf.append(",\n\tPRIMARY KEY(");
+			isFirst = true;
+			for (Field field : this.keyFields) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
+					createSbf.append(',');
+				}
+				createSbf.append(field.fieldName);
+			}
+			createSbf.append(')');
+		}
+		createSbf.append("\n);");
+
+		dataSbf.append(") ").append(valSbf.toString()).append(");");
+		return true;
 	}
 
 	private static final char Q = '\'';
@@ -752,14 +801,14 @@ class Record {
 		}
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append("import { Form } from '").append(tsImport).append("';");
-		sbf.append("\nexport const ").append(this.name)
+		sbf.append("\nexport const ").append(this.recordName)
 				.append("Form: Form = {");
-		sbf.append("\n\tname: '").append(this.name).append("',");
+		sbf.append("\n\tname: '").append(this.recordName).append("',");
 		sbf.append("\n\tvalidOperations: {");
 		if (this.operations == null || this.operations.length == 0) {
 			logger.warn(
 					"No operatins are allowed for record {}. Client app will not be able to use auto-service for this record",
-					this.name);
+					this.recordName);
 		} else {
 			for (final String oper : this.operations) {
 				if (oper == null) {
@@ -777,7 +826,7 @@ class Record {
 		for (final Field field : this.fields) {
 			field.emitFormTs(sbf);
 			sbf.append(',');
-			names.append(Q).append(field.name).append(Q).append(',');
+			names.append(Q).append(field.fieldName).append(Q).append(',');
 		}
 		sbf.setLength(sbf.length() - 1);
 		names.setLength((names.length() - 1));
@@ -785,16 +834,16 @@ class Record {
 		sbf.append("\n\tfieldNames: [").append(names.toString()).append("]");
 		if (this.keyFields != null && this.keyFields.length > 0) {
 			// we generally have only one key field
-			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].name)
+			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].fieldName)
 					.append(Q);
 			for (int i = 1; i < this.keyFields.length; i++) {
-				sbf.append(",'").append(this.keyFields[i].name).append(Q);
+				sbf.append(",'").append(this.keyFields[i].fieldName).append(Q);
 			}
 			sbf.append("]");
 		}
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.name + ".form.ts", sbf);
+		Util.writeOut(folderName + this.recordName + ".form.ts", sbf);
 
 		return true;
 	}

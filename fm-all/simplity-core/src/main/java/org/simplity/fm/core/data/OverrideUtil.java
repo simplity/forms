@@ -24,10 +24,9 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.ApplicationError;
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.rdb.RdbDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,15 +39,17 @@ import com.google.gson.Gson;
  *
  */
 public class OverrideUtil {
-	private static final Logger logger = LoggerFactory.getLogger(OverrideUtil.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(OverrideUtil.class);
 	private static final String READ_OVR = "select forms, records from st_overrides where id=?";
-	private static final ValueType[] OVR_TYPES = { ValueType.Text, ValueType.Text };
+	private static final ValueType[] OVR_TYPES = {ValueType.Text,
+			ValueType.Text};
 	private static final String UPDATE_OVR = "update st_overrides set forms=?, records=? where id=?";
 	private static final String INSERT_OVR = "insert into st_overrides (forms, records, id) values (?,?,?)";
 	private static final String DELETE_OVR = "delete from st_overrides where id=?";
 
 	private static final String READ_REC = "select json from st_rec_overrides where id=? and name=?";
-	private static final ValueType[] REC_TYPES = { ValueType.Text };
+	private static final ValueType[] REC_TYPES = {ValueType.Text};
 	private static final String UPDATE_REC = "update st_rec_overrides set json=? where id=? and name=?";
 	private static final String INSERT_REC = "insert into st_rec_overrides(json, id, name) values(?,?,?)";
 	private static final String DELETE_REC = "delete from st_rec_overrides where id=? and name=?";
@@ -89,13 +90,14 @@ public class OverrideUtil {
 	 * @return overrides, or null if no overrides defined for this id
 	 */
 	public static Overrides getOverides(final String id) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { id };
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {id};
 		final Overrides[] overs = new Overrides[1];
 
 		try {
 			driver.read(handle -> {
-				final Object[] result = handle.read(READ_OVR, values, OVR_TYPES);
+				final Object[] result = handle.read(READ_OVR, values,
+						OVR_TYPES);
 				if (result == null) {
 					logger.info("No overrides for key {}", id);
 				} else {
@@ -118,8 +120,9 @@ public class OverrideUtil {
 	 * @param overs
 	 */
 	public static void saveOverides(final String id, final Overrides overs) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { String.join(COMMA, overs.forms), String.join(COMMA, overs.records), id };
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {String.join(COMMA, overs.forms),
+				String.join(COMMA, overs.records), id};
 
 		try {
 			driver.readWrite(handle -> {
@@ -155,8 +158,8 @@ public class OverrideUtil {
 	 * @param id
 	 */
 	public static void deleteOverides(final String id) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { id };
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {id};
 
 		try {
 			driver.readWrite(handle -> {
@@ -164,7 +167,8 @@ public class OverrideUtil {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
-					logger.warn("delete from st_overrides faield for id {} failed. Probably it was not there.");
+					logger.warn(
+							"delete from st_overrides faield for id {} failed. Probably it was not there.");
 				}
 				/*
 				 * in any case we commit
@@ -182,9 +186,10 @@ public class OverrideUtil {
 	 * @param recordName
 	 * @param recordJson
 	 */
-	public static void saveRecord(final String id, final String recordName, final String recordJson) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { recordJson, id, recordName };
+	public static void saveRecord(final String id, final String recordName,
+			final String recordJson) {
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {recordJson, id, recordName};
 
 		try {
 			driver.readWrite(handle -> {
@@ -215,7 +220,8 @@ public class OverrideUtil {
 	 * @param id
 	 * @param override
 	 */
-	public static void saveRecord(final String id, final RecordOverride override) {
+	public static void saveRecord(final String id,
+			final RecordOverride override) {
 		saveRecord(id, override.name, new Gson().toJson(override));
 	}
 
@@ -225,8 +231,8 @@ public class OverrideUtil {
 	 * @param recordName
 	 */
 	public static void deleteRecord(final String id, final String recordName) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { id, recordName };
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {id, recordName};
 
 		try {
 			driver.readWrite(handle -> {
@@ -234,7 +240,8 @@ public class OverrideUtil {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
-					logger.warn("delete from st_rec_overrides faield for id {} failed. Probably it was not there.");
+					logger.warn(
+							"delete from st_rec_overrides faield for id {} failed. Probably it was not there.");
 				}
 				return true;
 			});
@@ -249,14 +256,16 @@ public class OverrideUtil {
 	 * @param recordName
 	 * @return instance of record override. null if this is not found.
 	 */
-	public static RecordOverride getRecord(final String id, final String recordName) {
-		final IDbDriver driver = App.getApp().getDbDriver();
-		final Object[] values = { id, recordName };
+	public static RecordOverride getRecord(final String id,
+			final String recordName) {
+		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
+		final Object[] values = {id, recordName};
 		final String[] texts = new String[1];
 
 		try {
 			driver.read(handle -> {
-				final Object[] result = handle.read(READ_REC, values, REC_TYPES);
+				final Object[] result = handle.read(READ_REC, values,
+						REC_TYPES);
 				if (result != null) {
 					texts[0] = (String) result[0];
 				}

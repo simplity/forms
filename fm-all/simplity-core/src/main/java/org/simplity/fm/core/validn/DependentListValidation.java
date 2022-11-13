@@ -23,7 +23,7 @@
 package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 
@@ -50,7 +50,8 @@ public class DependentListValidation implements IValidation {
 	 * @param messageId
 	 *
 	 */
-	public DependentListValidation(final int fieldIndex, final int parentFieldIndex, final String listName,
+	public DependentListValidation(final int fieldIndex,
+			final int parentFieldIndex, final String listName,
 			final String fieldName, final String messageId) {
 		this.fieldIndex = fieldIndex;
 		this.parentFieldIndex = parentFieldIndex;
@@ -70,7 +71,8 @@ public class DependentListValidation implements IValidation {
 			return true;
 		}
 
-		final IValueList vl = App.getApp().getCompProvider().getValueList(this.listName);
+		final IValueList vl = AppManager.getAppInfra().getCompProvider()
+				.getValueList(this.listName);
 		if (vl == null) {
 			return true;
 		}

@@ -8,7 +8,7 @@ import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.RecordMetaData;
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.example.gen.DefinedDataTypes;
@@ -84,7 +84,7 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<StudentAssessmentDetailRecord> parseTable(
-			final IInputObject inputObject, String memberName,
+			final IInputData inputObject, String memberName,
 			final boolean forInsert, final IServiceContext ctx) {
 		return (List<StudentAssessmentDetailRecord>) super.parseTable(
 				inputObject, memberName, forInsert, ctx);

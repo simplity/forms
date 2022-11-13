@@ -29,12 +29,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.IApp;
 
 /**
  * This is the entry point for <code>Agent</code> from a web-server (http-server
- * or servlet container like Tomcat or Jetty)
- * <br/>
+ * or servlet container like Tomcat or Jetty) <br/>
  * <br/>
  * Our design is to have just one entry point for a web-app. We do not use REST
  * path standards. Instead, a service oriented approach is used , more like an
@@ -44,24 +43,16 @@ import org.simplity.fm.core.app.App;
  * @author simplity.org
  *
  */
-@WebServlet(value = { "/a" })
+@WebServlet(value = {"/a"})
 public class Servlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 	protected static final int STATUS_METHOD_NOT_ALLOWED = 405;
 
-	@Override
-	public void init() throws ServletException {
-		super.init();
-		App.bootstrap();
-	}
+	private final HttpAgent agent;
 
-	@Override
-	public void destroy() {
-		super.destroy();
-		/*
-		 * we will certainly have something to do in the future..
-		 */
+	Servlet(IApp app, IRestAdapter adapter) {
+		this.agent = new HttpAgent(app, adapter);
 	}
 
 	/**
@@ -69,46 +60,53 @@ public class Servlet extends HttpServlet {
 	 * environment. We have a ready response
 	 */
 	@Override
-	protected void doOptions(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doOptions(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
-		Agent.getAgent().setOptions(req, resp);
+		this.agent.setOptions(req, resp);
 	}
 
 	/*
 	 * we allow get, post and options. Nothing else
 	 */
 	@Override
-	protected void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doDelete(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
 		resp.setStatus(STATUS_METHOD_NOT_ALLOWED);
 	}
 
 	@Override
-	protected void doPut(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doPut(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
 		resp.setStatus(STATUS_METHOD_NOT_ALLOWED);
 	}
 
 	@Override
-	protected void doHead(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doHead(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
 		resp.setStatus(STATUS_METHOD_NOT_ALLOWED);
 	}
 
 	@Override
-	protected void doTrace(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doTrace(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
 		resp.setStatus(STATUS_METHOD_NOT_ALLOWED);
 	}
 
 	@Override
-	protected void doPost(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doPost(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
-		Agent.getAgent().serve(req, resp);
+		this.agent.serve(req, resp);
 	}
 
 	@Override
-	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+	protected void doGet(final HttpServletRequest req,
+			final HttpServletResponse resp)
 			throws ServletException, IOException {
 		resp.setStatus(STATUS_METHOD_NOT_ALLOWED);
 	}

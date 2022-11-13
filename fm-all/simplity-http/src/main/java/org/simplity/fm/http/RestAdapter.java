@@ -21,31 +21,33 @@
 */
 
 package org.simplity.fm.http;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.IoUtil;
+import org.simplity.fm.core.json.JsonUtil;
+import org.simplity.fm.core.service.IInputData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-
 /**
-* tree representation of all valid pats for which service names are mapped
-*
-* @author simplity.org
-*
-*/
-public class RestAdapter implements IRestAdapter{
+ * tree representation of all valid pats for which service names are mapped
+ *
+ * @author simplity.org
+ *
+ */
+public class RestAdapter implements IRestAdapter {
 	/**
 	 * conventions used for tags in the JSON
 	 */
 	/**
-	 * tag name in the Paths JSONif all paths have a common base/prefix, use this tag to specify the
-	 * common part, and specify individual paths without this
+	 * tag name in the Paths JSONif all paths have a common base/prefix, use
+	 * this tag to specify the common part, and specify individual paths without
+	 * this
 	 */
 	public static final String BASE_PATH = "basePath";
 	/**
@@ -59,39 +61,53 @@ public class RestAdapter implements IRestAdapter{
 	public static final String SERVICE_NAME_PREFIX = "serviceNamePrefix";
 
 	/**
-	 * list of services. If SERVICE_NAME_PREFIX is used, each attribute name
-	 * in this list is prefixed to get the fully-qualified name
+	 * list of services. If SERVICE_NAME_PREFIX is used, each attribute name in
+	 * this list is prefixed to get the fully-qualified name
 	 */
 	public static final String SERVICES = "services";
-	
+
 	/**
 	 * load paths from a json resource
+	 *
 	 * @param resourceName
 	 * @return null in case of any error
 	 */
-	public static RestAdapter fromJsonResource(String resourceName) {
-		JsonObject json = IoUtil.readJsonResource(resourceName);
-		if(json == null) {
+	public static RestAdapter fromResource(String resourceName) {
+		IInputData input = null;
+
+		try (Reader reader = IoUtil.getReader(resourceName)) {
+			if (reader == null) {
+				return null;
+			}
+			input = JsonUtil.newInputObject(reader);
+		} catch (UnsupportedEncodingException e) {
+			logger.error("Resource {}  is not in UTF-8 form.", resourceName);
+		} catch (IOException e) {
+			logger.error("I/O error while reading resource {} : {}",
+					resourceName, e.getMessage());
+		}
+		if (input == null) {
 			logger.error("Resource {} could not be read as a json.");
 			return null;
 		}
-		
-		return fromJson(json);
-		
+
+		return fromInputData(input);
+
 	}
 
 	/**
 	 * load paths from a json resource
+	 *
 	 * @param json
 	 * @return null in case of any error
 	 */
-	public static RestAdapter fromJson(JsonObject json) {
+	public static RestAdapter fromInputData(IInputData json) {
 		RestAdapter paths = new RestAdapter();
-		if(paths.addPaths(json)) {
+		if (paths.addPaths(json)) {
 			return paths;
 		}
 		return null;
-		
+
 	}
 
 	static final Logger logger = LoggerFactory.getLogger(RestAdapter.class);
@@ -124,7 +140,8 @@ public class RestAdapter implements IRestAdapter{
 	 * @return true if the mapping got added. False in case this path is a
 	 *         duplicate, and hence ignored
 	 */
-	private boolean addPath(String path, JsonObject services, String servicePrefix) {
+	private boolean addPath(String path, IInputData services,
+			String servicePrefix) {
 		String[] parts = path.split(PATH_SEP_STR);
 		Node node = this.rootNode;
 		for (String part : parts) {
@@ -144,8 +161,9 @@ public class RestAdapter implements IRestAdapter{
 				node = node.setPathChild(part);
 			}
 			if (node == null) {
-				logger.error("child node was not created for path part {}. Path {} not added to paths collection", part,
-						path);
+				logger.error(
+						"child node was not created for path part {}. Path {} not added to paths collection",
+						part, path);
 				return false;
 			}
 		}
@@ -165,44 +183,34 @@ public class RestAdapter implements IRestAdapter{
 	 *            non-null.
 	 * @return true if paths got added. false othrwise
 	 */
-	private boolean addPaths(JsonObject json) {
-		JsonElement ele = json.get(BASE_PATH);
-		String pathPrefix = ele == null ? null : ele.getAsString();
-		
-		ele = json.get(SERVICE_NAME_PREFIX);
-		String servicePrefix = ele == null ? null : ele.getAsString();
-		
-		ele = json.get(PATHS);
-		JsonObject paths;
-		if (ele == null) {
-			//we also allow the root itself being path
-			if(pathPrefix != null || servicePrefix != null) {
+	private boolean addPaths(IInputData json) {
+		String pathPrefix = json.getString(BASE_PATH);
+
+		String servicePrefix = json.getString(SERVICE_NAME_PREFIX);
+
+		IInputData paths = json.getData(PATHS);
+		if (paths == null) {
+			// we also allow the root itself being path
+			if (pathPrefix != null || servicePrefix != null) {
 				logger.warn("No paths found in json");
 				return false;
 			}
-				paths = json;
-
-		}else {
-			if(!ele.isJsonObject()) {
-				logger.warn("paths element is not an object in the json");
-				return false;
-			}
-			paths = (JsonObject)ele;
+			paths = json;
 		}
 
 		int nbr = 0;
 		int nok = 0;
-		for (String key : paths.keySet()) {
+		for (String key : paths.getMemberNames()) {
 			String aPath = key;
 			if (pathPrefix != null) {
 				aPath = pathPrefix + aPath;
 			}
-			
-			JsonElement el = paths.get(key);
+
+			IInputData el = paths.getData(key);
 			boolean ok = false;
-			if(el.isJsonObject()) {
-				ok = this.addPath(aPath, el.getAsJsonObject(), servicePrefix);
-			}else {
+			if (el != null) {
+				ok = this.addPath(aPath, el, servicePrefix);
+			} else {
 				logger.error("path element {} is not an object", key);
 			}
 			if (ok) {
@@ -211,7 +219,7 @@ public class RestAdapter implements IRestAdapter{
 				nok++;
 			}
 		}
-		
+
 		if (nok > 0) {
 			logger.error("{} paths not added because of errors.", nok);
 		}
@@ -238,7 +246,7 @@ public class RestAdapter implements IRestAdapter{
 	 *         mapped
 	 */
 	@Override
-	public String parsePath(String path, String method, JsonObject fields) {
+	public String parsePath(String path, String method, IInputData fields) {
 		if (path == null || path.isEmpty()) {
 			return null;
 		}
@@ -280,7 +288,7 @@ public class RestAdapter implements IRestAdapter{
 	 * @param fields
 	 * @return
 	 */
-	private Node findNodeForPath(String path, JsonObject fields) {
+	private Node findNodeForPath(String path, IInputData fields) {
 		Node node = this.rootNode;
 		if (node.isLeaf()) {
 			logger.info("We have an empty list of paths!!");
@@ -299,14 +307,15 @@ public class RestAdapter implements IRestAdapter{
 				/*
 				 * this is not a valid path
 				 */
-				logger.warn("Path {} is invalid starting at token {}", path, part);
+				logger.warn("Path {} is invalid starting at token {}", path,
+						part);
 				return null;
 			}
 			/*
 			 * is this a field to be picked-up
 			 */
 			if (child.isFieldChild() && fields != null) {
-				fields.addProperty(child.getName(), part);
+				fields.addValue(child.getName(), part);
 			}
 			node = child;
 		}
@@ -316,12 +325,12 @@ public class RestAdapter implements IRestAdapter{
 }
 
 /**
-* this class is exclusively used by PathTree, but is not an inner class. Hence
-* we have put this inside this compilation unit
-*
-* @author simplity.org
-*
-*/
+ * this class is exclusively used by PathTree, but is not an inner class. Hence
+ * we have put this inside this compilation unit
+ *
+ * @author simplity.org
+ *
+ */
 class Node {
 	private static final String DUPLICATE = "Duplicate path-service mapping detected at path-part {} and ignored";
 	private static final String DEFAULT_METHOD = "*";
@@ -330,8 +339,8 @@ class Node {
 	 */
 	private final String name;
 	/**
-	 * non-null if the next part of the path is a field. null if the next part if
-	 * non-field part, or if this is the leaf node
+	 * non-null if the next part of the path is a field. null if the next part
+	 * if non-field part, or if this is the leaf node
 	 */
 	private Node fieldChild;
 	/**
@@ -405,7 +414,9 @@ class Node {
 	 */
 	Node setFieldChild(String field) {
 		if (this.children != null) {
-			RestAdapter.logger.error("Node at {} already has path-children, and hence a field child is invalid.", this.name);
+			RestAdapter.logger.error(
+					"Node at {} already has path-children, and hence a field child is invalid.",
+					this.name);
 			return null;
 		}
 		if (this.fieldChild == null) {
@@ -431,7 +442,8 @@ class Node {
 	 */
 	Node setPathChild(String pathPart) {
 		if (this.fieldChild != null) {
-			RestAdapter.logger.error("Node at {} already has a field-child named {}. Path child naemd {} can not be added.",
+			RestAdapter.logger.error(
+					"Node at {} already has a field-child named {}. Path child naemd {} can not be added.",
 					this.name, this.fieldChild.name, pathPart);
 			return null;
 		}
@@ -475,33 +487,27 @@ class Node {
 	 * @param servicePrefix
 	 *            if non-null, this is prefixed for each service name
 	 */
-	boolean setServices(JsonObject services, String servicePrefix) {
+	boolean setServices(IInputData services, String servicePrefix) {
 		if (this.defaultService != null || this.services != null) {
 			RestAdapter.logger.error(DUPLICATE, this.name);
 			return false;
 		}
-		Set<String> methods = services.keySet();
+		Set<String> methods = services.getMemberNames();
 		this.services = new HashMap<>();
 		for (String method : methods) {
-			JsonElement ele = services.get(method);
-			String service = null;
-			if(ele.isJsonPrimitive()) {
-				JsonPrimitive p = ele.getAsJsonPrimitive();
-				if(p.isString()) {
-					service = p.getAsString();
-				}
-			}
-			if(service == null) {
-				RestAdapter.logger.error("Invalid serviceName for method {}", method);
+			String service = services.getString(method);
+			if (service == null) {
+				RestAdapter.logger.error("Invalid serviceName for method {}",
+						method);
 				return false;
 			}
 			if (servicePrefix != null) {
 				service = servicePrefix + service;
 			}
-			if(method.equals(DEFAULT_METHOD)) {
+			if (method.equals(DEFAULT_METHOD)) {
 				this.defaultService = service;
-			}else {
-				if(this.services == null) {
+			} else {
+				if (this.services == null) {
 					this.services = new HashMap<>();
 				}
 				this.services.put(method.toLowerCase(), service);
@@ -518,8 +524,8 @@ class Node {
 	String getService(String method) {
 		if (method == null || method.isEmpty()) {
 			if (this.defaultService == null) {
-				RestAdapter.logger
-						.info("No method specified and this path has no default service.");
+				RestAdapter.logger.info(
+						"No method specified and this path has no default service.");
 			}
 			return this.defaultService;
 		}
@@ -537,7 +543,9 @@ class Node {
 		 * go for default
 		 */
 		if (this.defaultService == null) {
-			RestAdapter.logger.info("No service attached to method {}, and there is no default service", method);
+			RestAdapter.logger.info(
+					"No service attached to method {}, and there is no default service",
+					method);
 		}
 		return this.defaultService;
 	}
@@ -549,4 +557,3 @@ class Node {
 		return this.parent;
 	}
 }
-

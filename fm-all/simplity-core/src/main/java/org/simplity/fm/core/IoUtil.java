@@ -21,11 +21,9 @@ package org.simplity.fm.core;
 * SOFTWARE.
 */
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -34,18 +32,13 @@ import java.io.UnsupportedEncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
-
 /**
-* @author simplity.org
-*
-*/
+ * @author simplity.org
+ *
+ */
 public class IoUtil {
 	private static final Logger logger = LoggerFactory.getLogger(IoUtil.class);
-	
+
 	private static final String CHAR_ENCODING = "UTF-8";
 
 	/**
@@ -91,13 +84,13 @@ public class IoUtil {
 	 * @return text content of the resource. null in case of any error
 	 */
 	public static String readResource(String fileOrResourceName) {
-		try (InputStream stream = getStream(fileOrResourceName)) {
-			if (stream != null) {
-				return readerToText(new InputStreamReader(stream, CHAR_ENCODING));
+		try (Reader reader = getReader(fileOrResourceName)) {
+			if (reader != null) {
+				return readerToText(reader);
 			}
 		} catch (Exception e) {
-			logger.error("Exception while reading resource {} using. Error: {}", fileOrResourceName,
-					e.getMessage());
+			logger.error("Exception while reading resource {} using. Error: {}",
+					fileOrResourceName, e.getMessage());
 		}
 		return null;
 	}
@@ -108,61 +101,46 @@ public class IoUtil {
 	 * @param fileOrResourceName
 	 *            should be valid file-path, like c:/a/b/c.xxx, or a resource
 	 *            path like /a/b/c.xxx
-	 * @return stream, or null in case of any trouble creating one
+	 * @return reader, or null in case of any trouble creating one
 	 */
-	public static InputStream getStream(String fileOrResourceName) {
+	public static Reader getReader(String fileOrResourceName) {
 		logger.info("Loading resource {}", fileOrResourceName);
 		/*
 		 * in production, it is a resource, and hence we try that first
 		 */
 		ClassLoader loader = Thread.currentThread().getClass().getClassLoader();
-		if(loader == null) {
+		if (loader == null) {
 			loader = IoUtil.class.getClassLoader();
 			logger.info("Loader used is {}", loader);
 		}
-		if(loader == null) {
+		if (loader == null) {
 			logger.error("Loader is not found!!!!");
 			return null;
 		}
+
 		InputStream stream = loader.getResourceAsStream(fileOrResourceName);
-		//InputStream stream = Thread.currentThread().getClass().getClassLoader().getResourceAsStream(fileOrResourceName);
-		if (stream != null) {
-			return stream;
-		}
-		File file = new File(fileOrResourceName);
-		if (file.exists()) {
+		// InputStream stream =
+		// Thread.currentThread().getClass().getClassLoader().getResourceAsStream(fileOrResourceName);
+		if (stream == null) {
+			File file = new File(fileOrResourceName);
+			if (file.exists() == false) {
+				return null;
+			}
+
 			try {
-				return new FileInputStream(file);
+				stream = new FileInputStream(file);
 			} catch (Exception e) {
 				logger.error(
 						"Resource {} is intepreted as a file that was located on the file system, but error while creating stream from that file. Error: {}",
 						fileOrResourceName, e.getMessage());
+				return null;
 			}
+		}
+		try {
+			return new InputStreamReader(stream, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
 		}
 		return null;
 	}
-	
-	/**
-	 * read a json resource into a JSONObject
-	 * @param fileOrResourceName
-	 * @return json object, or null in case of any error
-	 */
-	public static JsonObject readJsonResource(String fileOrResourceName) {
-		InputStream stream = getStream(fileOrResourceName);
-		if(stream == null) {
-			logger.error("Unable to get a handle to resource {}", fileOrResourceName);
-			return null;
-		}
-		try(JsonReader reader = new JsonReader(new InputStreamReader(stream))){
-			JsonElement ele = new JsonParser().parse(reader);
-			if(ele.isJsonObject()) {
-				return ele.getAsJsonObject();
-			}
-			logger.error("resource {} has an invalid json object", fileOrResourceName);
-		}catch (IOException e) {
-			logger.error("I/O error while reading resource {}", fileOrResourceName);
-		}
-		return null;
-	}
-}
 
+}

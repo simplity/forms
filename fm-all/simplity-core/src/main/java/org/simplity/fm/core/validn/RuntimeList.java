@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -43,7 +43,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class RuntimeList implements IValueList {
-	protected static final Logger logger = LoggerFactory.getLogger(RuntimeList.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(RuntimeList.class);
 	protected String name;
 	protected String listSql;
 	protected String allSql;
@@ -67,7 +68,9 @@ public class RuntimeList implements IValueList {
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		if (this.hasKey) {
 			if (key == null) {
-				logger.error("ist {} requires value for its key. Value not receoved", this.name);
+				logger.error(
+						"ist {} requires value for its key. Value not receoved",
+						this.name);
 				return null;
 			}
 		}
@@ -76,7 +79,9 @@ public class RuntimeList implements IValueList {
 			try {
 				l = Long.parseLong(key.toString());
 			} catch (final Exception e) {
-				logger.error("Key should be numeric value for list {} but we got {}", this.name, key);
+				logger.error(
+						"Key should be numeric value for list {} but we got {}",
+						this.name, key);
 				return null;
 			}
 		}
@@ -84,7 +89,7 @@ public class RuntimeList implements IValueList {
 		final List<Object[]> result = new ArrayList<>();
 		final RuntimeList that = this;
 		try {
-			App.getApp().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
 
 				handle.read(new IDbReader() {
 					@Override
@@ -93,7 +98,8 @@ public class RuntimeList implements IValueList {
 					}
 
 					@Override
-					public void setParams(final PreparedStatement ps) throws SQLException {
+					public void setParams(final PreparedStatement ps)
+							throws SQLException {
 						int posn = 1;
 						if (that.hasKey) {
 							if (that.keyIsNumeric) {
@@ -110,7 +116,8 @@ public class RuntimeList implements IValueList {
 					}
 
 					@Override
-					public boolean readARow(final ResultSet rs) throws SQLException {
+					public boolean readARow(final ResultSet rs)
+							throws SQLException {
 						final Object[] row = new Object[2];
 						if (RuntimeList.this.valueIsNumeric) {
 							row[0] = rs.getLong(1);
@@ -127,18 +134,21 @@ public class RuntimeList implements IValueList {
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ",
+					this.name, msg);
 			return null;
 		}
 		if (result.size() == 0) {
-			logger.warn("No data found for list {} with key {}", this.name, key);
+			logger.warn("No data found for list {} with key {}", this.name,
+					key);
 			return new Object[0][];
 		}
 		return result.toArray(new Object[0][]);
 	}
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+	public boolean isValid(final Object fieldValue, final Object keyValue,
+			final IServiceContext ctx) {
 		if (this.hasKey) {
 			if (keyValue == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -149,7 +159,7 @@ public class RuntimeList implements IValueList {
 		final boolean[] result = new boolean[1];
 
 		try {
-			App.getApp().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
 				handle.read(new IDbReader() {
 					@Override
 					public String getPreparedStatement() {
@@ -157,7 +167,8 @@ public class RuntimeList implements IValueList {
 					}
 
 					@Override
-					public void setParams(final PreparedStatement ps) throws SQLException {
+					public void setParams(final PreparedStatement ps)
+							throws SQLException {
 						if (RuntimeList.this.valueIsNumeric) {
 							ps.setLong(1, (Long) fieldValue);
 						} else {
@@ -173,7 +184,8 @@ public class RuntimeList implements IValueList {
 					}
 
 					@Override
-					public boolean readARow(final ResultSet rs) throws SQLException {
+					public boolean readARow(final ResultSet rs)
+							throws SQLException {
 						result[0] = true;
 						return false;
 					}
@@ -182,7 +194,8 @@ public class RuntimeList implements IValueList {
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ",
+					this.name, msg);
 			return false;
 		}
 		return result[0];
@@ -200,7 +213,7 @@ public class RuntimeList implements IValueList {
 		final Map<String, String> result = new HashMap<>();
 
 		try {
-			App.getApp().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
 				handle.read(new IDbReader() {
 
 					@Override
@@ -209,14 +222,16 @@ public class RuntimeList implements IValueList {
 					}
 
 					@Override
-					public void setParams(final PreparedStatement ps) throws SQLException {
+					public void setParams(final PreparedStatement ps)
+							throws SQLException {
 						if (RuntimeList.this.isTenantSpecific) {
 							ps.setLong(1, (long) ctx.getTenantId());
 						}
 					}
 
 					@Override
-					public boolean readARow(final ResultSet rs) throws SQLException {
+					public boolean readARow(final ResultSet rs)
+							throws SQLException {
 						final String id = rs.getString(1);
 						final String nam = rs.getString(2);
 						final String key = rs.getString(3);
@@ -227,7 +242,8 @@ public class RuntimeList implements IValueList {
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ",
+					this.name, msg);
 		}
 		return result;
 	}

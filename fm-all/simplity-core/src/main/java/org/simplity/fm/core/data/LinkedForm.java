@@ -24,12 +24,12 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.ApplicationError;
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.serialize.IInputObject;
-import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -63,14 +63,14 @@ public class LinkedForm<T extends Record> {
 	 *
 	 * @param parentRec
 	 *            parent record
-	 * @param writer
+	 * @param outData
 	 *            to which data is to be serialized to
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void read(final DbRecord parentRec, final ISerializer writer,
+	public void read(final DbRecord parentRec, final IOutputData outData,
 			final ReadonlyHandle handle) throws SQLException {
-		this.linkMeta.read(parentRec, this.form, writer, handle);
+		this.linkMeta.read(parentRec, this.form, outData, handle);
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class LinkedForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbRecord parentRec,
-			final IInputObject inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
@@ -98,7 +98,7 @@ public class LinkedForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbRecord parentRec,
-			final IInputObject inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
@@ -143,7 +143,7 @@ public class LinkedForm<T extends Record> {
 	@SuppressWarnings("unchecked")
 	public void override(final Record parent, final IServiceContext ctx) {
 		final String formName = this.form.getName();
-		this.form = (Form<T>) App.getApp().getCompProvider().getForm(formName,
-				ctx);
+		this.form = (Form<T>) AppManager.getAppInfra().getCompProvider()
+				.getForm(formName, ctx);
 	}
 }

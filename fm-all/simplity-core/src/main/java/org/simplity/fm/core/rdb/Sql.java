@@ -25,8 +25,8 @@ package org.simplity.fm.core.rdb;
 import java.io.StringWriter;
 
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.serialize.ISerializer;
-import org.simplity.fm.core.serialize.gson.JsonSerializer;
+import org.simplity.fm.core.json.JsonUtil;
+import org.simplity.fm.core.service.IOutputData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +48,10 @@ public abstract class Sql {
 	 */
 	public String showDetails() {
 		final StringWriter sw = new StringWriter();
-		final ISerializer writer = new JsonSerializer(sw);
-		writer.beginObject();
-		writer.fields(this.inputData);
-		writer.endObject();
-		return "SQL= " + this.sqlText + "\n" + writer.toString();
+		final IOutputData outData = JsonUtil.newOutputData(sw);
+		outData.beginObject();
+		outData.addRecord(this.inputData);
+		outData.endObject();
+		return "SQL= " + this.sqlText + "\n" + outData.toString();
 	}
 }

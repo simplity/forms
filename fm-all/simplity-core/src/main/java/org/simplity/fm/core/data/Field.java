@@ -22,9 +22,9 @@
 
 package org.simplity.fm.core.data;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.ApplicationError;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
@@ -131,7 +131,7 @@ public class Field {
 		if (valueListName == null) {
 			this.valueList = null;
 		} else {
-			this.valueList = App.getApp().getCompProvider()
+			this.valueList = AppManager.getAppInfra().getCompProvider()
 					.getValueList(valueListName);
 		}
 	}
@@ -299,13 +299,13 @@ public class Field {
 		this.isRequired = over.isRequired;
 
 		if (over.dataType != null && over.dataType.isEmpty() == false) {
-			final DataType dt = App.getApp().getCompProvider()
+			final DataType dt = AppManager.getAppInfra().getCompProvider()
 					.getDataType(over.dataType);
 			if (dt.getValueType() != this.getValueType()) {
 				throw new ApplicationError(
 						"Field {} is of data type {}. It can not be overrideen with data type '{}' because its value type is different");
 			}
-			this.dataType = App.getApp().getCompProvider()
+			this.dataType = AppManager.getAppInfra().getCompProvider()
 					.getDataType(over.dataType);
 		}
 
@@ -318,7 +318,7 @@ public class Field {
 		}
 
 		if (over.listName != null && over.listName.isEmpty() == false) {
-			this.valueList = App.getApp().getCompProvider()
+			this.valueList = AppManager.getAppInfra().getCompProvider()
 					.getValueList(over.listName);
 		}
 	}

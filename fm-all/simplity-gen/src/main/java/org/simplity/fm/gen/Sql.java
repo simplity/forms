@@ -419,12 +419,12 @@ public class Sql {
 			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name,
+				logger.error("Field {} has an invalid data type of {}", f.fieldName,
 						f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 			}
-			final String nam = f.name;
+			final String nam = f.fieldName;
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
@@ -448,13 +448,13 @@ public class Sql {
 			String typ = "unknownBecauseOfUnknownDataType";
 			String get = typ;
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name,
+				logger.error("Field {} has an invalid data type of {}", f.fieldName,
 						f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 				get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
 			}
-			final String nam = f.name;
+			final String nam = f.fieldName;
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)

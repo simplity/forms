@@ -176,6 +176,11 @@ public class Conventions {
 		 */
 		public static final String ERROR_AUTH_REQUIRED = "authRequired";
 
+		/**
+		 * User has to be authenticated before requesting this service
+		 */
+		public static final String ERROR_INTERNAL = "internalError";
+
 	}
 
 	/**

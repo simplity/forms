@@ -26,7 +26,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Map;
 
-import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.TransactionHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
@@ -48,9 +48,10 @@ public class Uploader {
 	 * @return info about what happened
 	 * @throws SQLException
 	 */
-	public UploadResult upload(final IUploadClient client, final IServiceContext ctx) throws SQLException {
+	public UploadResult upload(final IUploadClient client,
+			final IServiceContext ctx) throws SQLException {
 		final Worker worker = new Worker(client, ctx);
-		App.getApp().getDbDriver().transact(handle -> {
+		AppManager.getAppInfra().getDbDriver().transact(handle -> {
 			worker.transact(handle);
 		});
 		return worker.getResult();
@@ -63,7 +64,8 @@ public class Uploader {
 	 *
 	 * @return info about what happened
 	 */
-	public UploadResult validate(final IUploadClient client, final IServiceContext ctx) {
+	public UploadResult validate(final IUploadClient client,
+			final IServiceContext ctx) {
 		final Worker worker = new Worker(client, ctx);
 		worker.validate();
 		return worker.getResult();
@@ -77,16 +79,19 @@ public class Uploader {
 		private int nbrRows = 0;
 		private int nbrErrors = 0;
 
-		protected Worker(final IUploadClient client, final IServiceContext ctx) {
+		protected Worker(final IUploadClient client,
+				final IServiceContext ctx) {
 			this.client = client;
 			this.ctx = ctx;
 		}
 
 		protected UploadResult getResult() {
-			return new UploadResult(this.startedAt, this.doneAt, this.nbrRows, this.nbrErrors, this.ctx.getMessages());
+			return new UploadResult(this.startedAt, this.doneAt, this.nbrRows,
+					this.nbrErrors, this.ctx.getMessages());
 		}
 
-		protected void transact(final TransactionHandle handle) throws SQLException {
+		protected void transact(final TransactionHandle handle)
+				throws SQLException {
 			this.startedAt = Instant.now();
 			while (true) {
 				final Map<String, String> input = this.client.nextRow(this.ctx);

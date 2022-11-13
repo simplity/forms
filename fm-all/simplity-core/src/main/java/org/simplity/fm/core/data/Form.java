@@ -25,13 +25,13 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.ApplicationError;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.serialize.IInputObject;
-import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public abstract class Form<T extends Record> {
 	 * record that this form is based on
 	 */
 	protected T record;
-	
+
 	/**
 	 * is this form open to guests
 	 */
@@ -75,7 +75,8 @@ public abstract class Form<T extends Record> {
 	protected final LinkedForm<?>[] linkedForms;
 	private final boolean isDb;
 
-	protected Form(final String name, final T record, final boolean[] operations, final LinkedForm<?>[] linkedForms) {
+	protected Form(final String name, final T record,
+			final boolean[] operations, final LinkedForm<?>[] linkedForms) {
 		this.name = name;
 		this.record = record;
 		this.operations = operations;
@@ -108,16 +109,17 @@ public abstract class Form<T extends Record> {
 	 *
 	 * @param rawData
 	 *            for the record for this form
-	 * @param writer
+	 * @param outData
 	 *            to which the read rows are to be serialized into
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void readLinkedForms(final Object[] rawData, final ISerializer writer, final ReadonlyHandle handle)
+	public void readLinkedForms(final Object[] rawData,
+			final IOutputData outData, final ReadonlyHandle handle)
 			throws SQLException {
 		if (this.linkedForms != null) {
 			for (final LinkedForm<?> link : Form.this.linkedForms) {
-				link.read((DbRecord) this.record, writer, handle);
+				link.read((DbRecord) this.record, outData, handle);
 			}
 		}
 	}
@@ -132,9 +134,11 @@ public abstract class Form<T extends Record> {
 	 * @return true record with parsed values. null if any input fails
 	 *         validation.
 	 */
-	public boolean parseKeys(final IInputObject inputObject, final IServiceContext ctx) {
+	public boolean parseKeys(final IInputData inputObject,
+			final IServiceContext ctx) {
 		if (!this.isDb) {
-			logger.error("This form is based on {} that is not a DbRecord. Keys can not be parsed");
+			logger.error(
+					"This form is based on {} that is not a DbRecord. Keys can not be parsed");
 			return false;
 		}
 		return ((DbRecord) this.record).parseKeys(inputObject, ctx);
@@ -148,30 +152,34 @@ public abstract class Form<T extends Record> {
 	 */
 	public IService getService(final IoType operation) {
 		if (!this.operations[operation.ordinal()]) {
-			logger.info("{} operation is not allowed on record {}", operation, this.name);
+			logger.info("{} operation is not allowed on record {}", operation,
+					this.name);
 			return null;
 		}
 
 		String serviceName = operation.name();
-		serviceName = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.name;
+		serviceName = serviceName.substring(0, 1).toLowerCase()
+				+ serviceName.substring(1) + '_' + this.name;
 
 		/*
 		 * forms with links require form-based service
 		 */
 		if (this.linkedForms != null) {
 			switch (operation) {
-			case Get:
+			case Get :
 				return new Reader(serviceName);
-			case Create:
+			case Create :
 				return new Creater(serviceName);
-			case Update:
+			case Update :
 				return new Updater(serviceName);
-			case Delete:
+			case Delete :
 				return new Deleter(serviceName);
-			case Filter:
+			case Filter :
 				return new Filter(serviceName);
-			default:
-				throw new ApplicationError("Form needs to be designed for operation " + operation.name());
+			default :
+				throw new ApplicationError(
+						"Form needs to be designed for operation "
+								+ operation.name());
 			}
 		}
 
@@ -184,8 +192,7 @@ public abstract class Form<T extends Record> {
 
 		/*
 		 * there is very little we can do as an auto-service. Just for
-		 * testing/development purpose??
-		 * we will add other features on
+		 * testing/development purpose?? we will add other features on
 		 */
 
 		final String sn = serviceName;
@@ -199,14 +206,18 @@ public abstract class Form<T extends Record> {
 			}
 
 			@Override
-			public void serve(final IServiceContext ctx, final IInputObject inputPayload) throws Exception {
+			public void serve(final IServiceContext ctx,
+					final IInputData inputPayload) throws Exception {
 				rec.parse(inputPayload, forInsert, ctx, null, 0);
 				if (ctx.allOk()) {
-					logger.info("Service " + sn + " succeeded in parsing input. Same is set as response");
+					logger.info("Service " + sn
+							+ " succeeded in parsing input. Same is set as response");
 					ctx.setAsResponse(rec);
 					return;
 				}
-				logger.error("Validation failed for service {} and operation {}", sn, operation.name());
+				logger.error(
+						"Validation failed for service {} and operation {}", sn,
+						operation.name());
 			}
 
 			@Override
@@ -241,14 +252,15 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			if (!Form.this.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
 				return;
 			}
 
 			final DbRecord rec = (DbRecord) Form.this.record;
-			App.getApp().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -258,14 +270,14 @@ public abstract class Form<T extends Record> {
 				 * instead of storing data and then serializing it, we have
 				 * designed this service to serialize data then-and-there
 				 */
-				final ISerializer writer = ctx.getSerializer();
-				writer.beginObject();
-				writer.fields(rec);
+				final IOutputData outData = ctx.getOutputData();
+				outData.beginObject();
+				outData.addRecord(rec);
 
 				for (final LinkedForm<?> link : Form.this.linkedForms) {
-					link.read(rec, writer, handle);
+					link.read(rec, outData, handle);
 				}
-				writer.endObject();
+				outData.endObject();
 			});
 		}
 	}
@@ -277,13 +289,14 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
 				return;
 			}
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (!rec.insert(handle)) {
 					logger.error("Insert operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -292,7 +305,8 @@ public abstract class Form<T extends Record> {
 				for (final LinkedForm<?> lf : Form.this.linkedForms) {
 					if (!lf.insert(rec, payload, handle, ctx)) {
 						logger.error("Insert operation failed for linked form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(
+								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 					}
 				}
@@ -308,14 +322,15 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, false, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
 				return;
 			}
 
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (!rec.update(handle)) {
 					logger.error("update operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -324,7 +339,8 @@ public abstract class Form<T extends Record> {
 				for (final LinkedForm<?> lf : Form.this.linkedForms) {
 					if (!lf.update(rec, payload, handle, ctx)) {
 						logger.error("Update operation failed for linked form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(
+								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 
 					}
@@ -341,14 +357,15 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
 				return;
 			}
 
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (!rec.delete(handle)) {
 					logger.error("Delete operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -358,7 +375,8 @@ public abstract class Form<T extends Record> {
 				for (final LinkedForm<?> lf : Form.this.linkedForms) {
 					if (!lf.delete(rec, handle, ctx)) {
 						logger.error("Insert operation failed for linked form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(
+								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 					}
 				}
@@ -374,44 +392,47 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 
 			if (filter == null) {
-				logger.error("Error while parsing filter conditions from the input payload");
+				logger.error(
+						"Error while parsing filter conditions from the input payload");
 				return;
 			}
 
-			App.getApp().getDbDriver().read(handle -> {
-				final List<Object[]> list = rec.dba.filter(filter.getWhereClause(), filter.getWhereParamValues(),
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
+				final List<Object[]> list = rec.dba.filter(
+						filter.getWhereClause(), filter.getWhereParamValues(),
 						handle);
 				/*
 				 * instead of storing data and then serializing it, we have
 				 * designed this service to serialize data then-and-there
 				 */
-				final ISerializer writer = ctx.getSerializer();
-				writer.beginObject();
-				writer.name(Conventions.Request.TAG_LIST);
-				writer.beginArray();
+				final IOutputData outData = ctx.getOutputData();
+				outData.beginObject();
+				outData.addName(Conventions.Request.TAG_LIST);
+				outData.beginArray();
 
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				} else {
 					for (final Object[] row : list) {
 						final DbRecord r = rec.newInstance(row);
-						writer.beginObject();
-						writer.fields(r);
+						outData.beginObject();
+						outData.addRecord(r);
 						for (final LinkedForm<?> link : Form.this.linkedForms) {
-							link.read(r, writer, handle);
+							link.read(r, outData, handle);
 						}
-						writer.endObject();
+						outData.endObject();
 					}
 				}
 
-				writer.endArray();
-				writer.endObject();
+				outData.endArray();
+				outData.endObject();
 			});
 		}
 	}
@@ -429,7 +450,8 @@ public abstract class Form<T extends Record> {
 	@SuppressWarnings("unchecked")
 	public void override(final IServiceContext ctx) {
 		final String recordName = this.record.fetchName();
-		this.record = (T) App.getApp().getCompProvider().getRecord(recordName, ctx);
+		this.record = (T) AppManager.getAppInfra().getCompProvider()
+				.getRecord(recordName, ctx);
 		if (this.linkedForms != null) {
 			for (final LinkedForm<?> lf : this.linkedForms) {
 				lf.override(this.record, ctx);

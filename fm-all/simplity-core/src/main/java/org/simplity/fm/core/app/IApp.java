@@ -22,36 +22,17 @@
 
 package org.simplity.fm.core.app;
 
-import org.simplity.fm.core.conf.IAccessController;
-import org.simplity.fm.core.conf.ICompProvider;
-import org.simplity.fm.core.conf.IExceptionListener;
-import org.simplity.fm.core.conf.IRequestLogger;
-import org.simplity.fm.core.conf.IServiceContextFactory;
-import org.simplity.fm.core.conf.ISessionCache;
-import org.simplity.fm.core.conf.ITexter;
-import org.simplity.fm.core.data.IDbDriver;
-import org.simplity.fm.core.conf.IEmailer;
+import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.IServiceResponse;
 
 /**
- * Represents an application. Configuration details are loaded at boot time.
- * Other components are located and loaded at run time on a need basis.
+ * App is the highest level component that responds to service requests. It uses
+ * other components to process the request and return a response
  *
  * @author simplity.org
  *
  */
 public interface IApp {
-	/**
-	 * @return max number of rows to be returned by by filter service. 0 implies
-	 *         no such limit to be set.
-	 */
-	int getMaxRowsToExtractFromDb();
-
-	/**
-	 * @return Simplity recommends using empty string instead of null in db
-	 *         columns that are optional VARCHARS.
-	 */
-	boolean treatNullAsEmptyString();
-
 	/**
 	 *
 	 * @return non-null unique name assigned to this app.
@@ -59,60 +40,42 @@ public interface IApp {
 	String getName();
 
 	/**
-	 * get component provider
+	 * is the app available to non-authenticated users?
 	 *
-	 * @return non-null component provider. throws ApplicationError if component
-	 *         provider is not set-up for this app.
+	 * @return true if at least one service can be responded without
+	 *         authentication. false if every service requires authentication
 	 */
-	ICompProvider getCompProvider();
+	boolean guestsOk();
+
+	/**
+	 * whether this server serves services only inside of a session. Relevant
+	 * only if guestsOk is true. If guests are not OK, then the server will
+	 * always use session
+	 *
+	 * @return true if session is a must while requesting any service. false if
+	 *         session is optional. However, a given service may require session
+	 */
+	boolean requireSession();
+
+	/**
+	 * Create a session that can be used for subsequent requests. Relevant if
+	 * requireSession() returns true.
+	 *
+	 * @param userId
+	 *            null for a guest, if guests are ok.
+	 * @param password
+	 *            null for guests, if guests are ok.
+	 * @return sessionId that should be turned in for service requests
+	 */
+	String createSession(String userId, String password);
 
 	/**
 	 *
-	 * @return non-null driver. throws ApplicationError if DBDriver is not set
-	 *         for this app.
+	 * @param request
+	 *            as per schema for RequestData, that has details like
+	 *            sessionId, serviceId and input data
+	 * @return non-null response to the request
 	 */
-	IDbDriver getDbDriver();
+	IServiceResponse serve(IInputData request);
 
-	/**
-	 *
-	 * @return the access controllers
-	 */
-	IAccessController getAccessController();
-
-	/**
-	 *
-	 * @return the exception listener
-	 */
-	IExceptionListener getExceptionListener();
-
-	/**
-	 *
-	 * @return the session cache
-	 */
-	ISessionCache getSessionCache();
-
-	/**
-	 *
-	 * @return the request logger
-	 */
-	IRequestLogger getRequestLogger();
-
-	/**
-	 *
-	 * @return the utility to send text messages to mobile phones
-	 */
-	ITexter getTexter();
-	
-	/**
-	 *
-	 * @return the utility to send eamails
-	 */
-	IEmailer getEmailer();
-
-	/**
-	 *
-	 * @return the factory that creates a service context for the service to be
-	 *         called based on the inputs available
-	 */
-	IServiceContextFactory getContextFactory();
 }

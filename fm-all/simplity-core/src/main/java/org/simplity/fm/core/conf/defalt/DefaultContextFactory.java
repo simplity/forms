@@ -23,9 +23,9 @@
 package org.simplity.fm.core.conf.defalt;
 
 import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.conf.IServiceContextFactory;
-import org.simplity.fm.core.serialize.ISerializer;
-import org.simplity.fm.core.service.DefaultContext;
+import org.simplity.fm.core.infra.IServiceContextFactory;
+import org.simplity.fm.core.service.DefaultServiceContext;
+import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -35,8 +35,14 @@ import org.simplity.fm.core.service.IServiceContext;
 public class DefaultContextFactory implements IServiceContextFactory {
 
 	@Override
-	public IServiceContext newContext(final UserContext session, final ISerializer output) {
-		return new DefaultContext(session, output);
+	public IServiceContext newContext(final UserContext session,
+			final IOutputData outData) {
+		return new DefaultServiceContext(session, outData);
+	}
+
+	@Override
+	public IServiceContext newSessionLessContext(IOutputData outData) {
+		return new DefaultServiceContext(null, outData);
 	}
 
 }

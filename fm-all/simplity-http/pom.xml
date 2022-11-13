@@ -12,7 +12,7 @@
 		<dependency>
 			<groupId>org.simplity.fm</groupId>
 			<artifactId>simplity-core</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>

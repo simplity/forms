@@ -486,7 +486,7 @@ public class Util {
 			ValueSchema vs = f.schemaInstance;
 			String typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 			String get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
-			final String nam = f.name;
+			final String nam = f.fieldName;
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);

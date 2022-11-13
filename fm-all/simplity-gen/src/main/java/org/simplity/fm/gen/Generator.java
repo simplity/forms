@@ -39,7 +39,7 @@ public class Generator {
 
 	private static final String FOLDER = "/";
 
-	private static final String CORE_NAME = "simplity-client";
+	private static final String CLIENT_PACKAGE_NAME = "simplity-client";
 
 	private static final String[] JAVA_FOLDERS = {
 			Conventions.App.FOLDER_NAME_RECORD,
@@ -48,6 +48,10 @@ public class Generator {
 	private static final String[] TS_FOLDERS = {
 			Conventions.App.FOLDER_NAME_FORM};
 
+	private static final String CREATE_SQL_COMMENT = "-- This file has the sql to create tables. It includes command to create primary keys.\n"
+			+ "-- It is intended to be included in a sql after the script that would delete tables.\n";
+	private static final String DATA_SQL_COMMENT = "-- This fiel has the template for inserting rows into the tables.\n"
+			+ "-- user has to edit it a copy of this to add actual data column values";
 	/**
 	 *
 	 * @param args
@@ -110,7 +114,7 @@ public class Generator {
 	 * @param tsRootFolder
 	 *            folder where generated ts files are to be saved. null to not
 	 *            generate TS code.
-	 * @return true if all OK. false in case of any error. Notet
+	 * @return true if all OK. false in case of any error.
 	 */
 	public static boolean generate(final String inputRootFolder,
 			final String javaRootFolder, final String javaRootPackage,
@@ -159,6 +163,7 @@ public class Generator {
 	private final String javaOutputRoot;
 	private final String packageName;
 	private final String tsOutputRoot;
+	private final String sqlOutputRoot;
 	private final boolean toGenerateJava;
 	private final boolean toGenerateTs;
 
@@ -170,6 +175,7 @@ public class Generator {
 	private Generator(String inputRoot, String javaOutputRoot,
 			String packageName, String tsOutputRoot) {
 		this.inputRoot = inputRoot;
+		this.sqlOutputRoot = inputRoot + "dbSqls/";
 		this.javaOutputRoot = javaOutputRoot;
 		this.packageName = packageName;
 		this.tsOutputRoot = tsOutputRoot;
@@ -204,12 +210,13 @@ public class Generator {
 					app.generateJava(this.javaOutputRoot, this.packageName));
 		}
 		if (this.toGenerateTs) {
-			this.accumulate(app.generateTs(this.tsOutputRoot, CORE_NAME));
+			this.accumulate(
+					app.generateTs(this.tsOutputRoot, CLIENT_PACKAGE_NAME));
 			fileName = this.inputRoot + Conventions.App.MESSAGES_FILE;
 			MessageMap messages = Util.loadJson(fileName, MessageMap.class);
 			if (messages != null) {
-				this.accumulate(
-						messages.generateTs(this.tsOutputRoot, CORE_NAME));
+				this.accumulate(messages.generateTs(this.tsOutputRoot,
+						CLIENT_PACKAGE_NAME));
 			}
 		}
 
@@ -233,6 +240,10 @@ public class Generator {
 					this.allOk = false;
 				}
 			}
+			if (!ensureFolder(new File(this.sqlOutputRoot))) {
+				this.allOk = false;
+			}
+
 		}
 		if (this.toGenerateTs) {
 
@@ -274,10 +285,10 @@ public class Generator {
 				return;
 			}
 
-			if (!fn.equals(form.name)) {
+			if (!fn.equals(form.formName)) {
 				logger.error(
 						"Form name {} does not match with its file named {}",
-						form.name, fn);
+						form.formName, fn);
 				return;
 			}
 
@@ -285,7 +296,7 @@ public class Generator {
 			if (record == null) {
 				logger.error(
 						"Form {} uses record {}, but that record is not defined",
-						form.name, form.recordName);
+						form.formName, form.recordName);
 				return;
 			}
 
@@ -311,17 +322,20 @@ public class Generator {
 		String tsFolder = null;
 		StringBuilder allForms = new StringBuilder();
 		StringBuilder imports = new StringBuilder();
-		if (this.javaOutputRoot != null) {
+		StringBuilder createSqls = new StringBuilder(CREATE_SQL_COMMENT);
+		StringBuilder dataSqls = new StringBuilder(DATA_SQL_COMMENT);
+
+		if (this.toGenerateJava) {
 			javaFolder = this.javaOutputRoot
 					+ Conventions.App.FOLDER_NAME_RECORD + '/';
 		}
 
-		if (this.tsOutputRoot != null) {
+		if (this.toGenerateTs) {
 			// note that a record is generated as a form on the client side
 			tsFolder = this.tsOutputRoot + Conventions.App.FOLDER_NAME_FORM
 					+ '/';
-			imports.append("import { Forms } from '").append(CORE_NAME)
-					.append("';\n");
+			imports.append("import { Forms } from '")
+					.append(CLIENT_PACKAGE_NAME).append("';\n");
 			allForms.append("\nexport const allForms: Forms = {");
 		}
 
@@ -341,22 +355,24 @@ public class Generator {
 				return;
 			}
 
-			if (!fn.equals(record.name)) {
+			if (!fn.equals(record.recordName)) {
 				logger.error(
 						"Record name {} does not match with its file named {}",
-						record.name, fn);
+						record.recordName, fn);
 				return;
 			}
 
 			record.init(fn, this.app.valueSchemas);
 
-			this.records.put(record.name, record);
+			this.records.put(record.recordName, record);
 			if (this.toGenerateJava) {
 				record.generateJava(javaFolder, packageName);
+				record.emitSql(createSqls, dataSqls);
 			}
 
 			if (this.toGenerateTs) {
-				final boolean done = record.generateTs(tsFolder, CORE_NAME);
+				final boolean done = record.generateTs(tsFolder,
+						CLIENT_PACKAGE_NAME);
 				if (done) {
 					imports.append("\nimport { ").append(fn)
 							.append("Form } from './form/").append(fn)
@@ -367,7 +383,12 @@ public class Generator {
 			}
 		}
 
-		if (this.tsOutputRoot != null) {
+		if (this.toGenerateJava) {
+			imports.append('\n').append(allForms).append("\n};\n");
+			Util.writeOut(this.sqlOutputRoot + "createTables.sql", createSqls);
+			Util.writeOut(this.sqlOutputRoot + "addData.sql", dataSqls);
+		}
+		if (this.toGenerateTs) {
 			imports.append('\n').append(allForms).append("\n};\n");
 			Util.writeOut(this.tsOutputRoot + "allForms.ts", imports);
 		}

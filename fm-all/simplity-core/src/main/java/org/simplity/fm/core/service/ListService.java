@@ -24,9 +24,7 @@ package org.simplity.fm.core.service;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.serialize.IInputObject;
-import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ListService implements IService {
 	private static final ListService instance = new ListService();
-	protected static final Logger logger = LoggerFactory.getLogger(ListService.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(ListService.class);
 
 	/**
 	 *
@@ -59,52 +58,62 @@ public class ListService implements IService {
 	}
 
 	@Override
-	public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+	public void serve(final IServiceContext ctx, final IInputData payload)
+			throws Exception {
 		final String listName = payload.getString("list");
 		if (listName == null || listName.isEmpty()) {
-			ctx.addMessage(Message.newError("list is required for listService"));
+			ctx.addMessage(
+					Message.newError("list is required for listService"));
 			return;
 		}
-		final IValueList list = App.getApp().getCompProvider().getValueList(listName);
+		final IValueList list = AppManager.getAppInfra().getCompProvider()
+				.getValueList(listName);
 		if (list == null) {
-			ctx.addMessage(Message.newError("list " + listName + " is not configured"));
+			ctx.addMessage(Message
+					.newError("list " + listName + " is not configured"));
 			return;
 		}
 		String key = null;
 		if (list.isKeyBased()) {
 			key = payload.getString("key");
 			if (key == null || key.isEmpty()) {
-				ctx.addMessage(Message.newError("list " + listName + " requires value for key. But it is missing in the request"));
+				ctx.addMessage(Message.newError("list " + listName
+						+ " requires value for key. But it is missing in the request"));
 				return;
 			}
 		}
 		Object[][] result = list.getList(key, ctx);
 		if (result == null) {
-			ctx.addMessage(Message.newError("Error while getting values for list " + listName + " for key " + key));
+			ctx.addMessage(
+					Message.newError("Error while getting values for list "
+							+ listName + " for key " + key));
 			result = new Object[0][];
-		}else  if (result.length == 0) {
-			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
+		} else if (result.length == 0) {
+			logger.warn(
+					"List {} has no values for key {}. sending an empty response",
+					listName, key);
 		}
-		writeOut(ctx.getSerializer(), result);
+		writeOut(ctx.getOutputData(), result);
 	}
 
-	private static void writeOut(final ISerializer writer, final Object[][] rows) {
-		writer.beginObject();
-		writer.name(Conventions.Request.TAG_LIST);
-		writer.beginArray();
+	private static void writeOut(final IOutputData data,
+			final Object[][] rows) {
+		data.beginObject();
+		data.addName(Conventions.Request.TAG_LIST);
+		data.beginArray();
 		for (final Object[] row : rows) {
-			writer.beginObject();
+			data.beginObject();
 
-			writer.name("value");
-			writer.primitiveObject(row[0]);
+			data.addName("value");
+			data.addPrimitive(row[0]);
 
-			writer.name("text");
-			writer.value(row[1].toString());
+			data.addName("text");
+			data.addValue(row[1].toString());
 
-			writer.endObject();
+			data.endObject();
 		}
-		writer.endArray();
-		writer.endObject();
+		data.endArray();
+		data.endObject();
 	}
 
 	@Override

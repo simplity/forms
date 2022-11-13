@@ -36,7 +36,7 @@ import org.simplity.fm.core.rdb.IDbWriter;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RowProcessor;
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -820,7 +820,7 @@ public class Dba {
 	 * @param ctx
 	 * @return
 	 */
-	boolean parseKeys(final IInputObject inputObject, final Object[] fieldValues, final IServiceContext ctx) {
+	boolean parseKeys(final IInputData inputObject, final Object[] fieldValues, final IServiceContext ctx) {
 
 		if (this.tenantField != null) {
 			fieldValues[this.tenantField.getIndex()] = ctx.getTenantId();
@@ -870,7 +870,7 @@ public class Dba {
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error
 	 */
-	public ParsedFilter parseFilter(final IInputObject json, final IServiceContext ctx) {
+	public ParsedFilter parseFilter(final IInputData json, final IServiceContext ctx) {
 		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
 	}
 

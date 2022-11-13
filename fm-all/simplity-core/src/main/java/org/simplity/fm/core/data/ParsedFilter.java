@@ -31,7 +31,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 class ParsedFilter {
-	private static final Logger logger = LoggerFactory.getLogger(ParsedFilter.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(ParsedFilter.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
 	private static final String BETWEEN = " BETWEEN ? and ?";
@@ -55,7 +56,8 @@ class ParsedFilter {
 	final private String whereClause;
 	final private Object[] whereParamValues;
 
-	ParsedFilter(final String whereClauseStartingWithWhere, final Object[] whereParamValues) {
+	ParsedFilter(final String whereClauseStartingWithWhere,
+			final Object[] whereParamValues) {
 		this.whereClause = whereClauseStartingWithWhere;
 		this.whereParamValues = whereParamValues;
 	}
@@ -68,22 +70,29 @@ class ParsedFilter {
 		return this.whereParamValues;
 	}
 
-	static ParsedFilter parse(final IInputObject inputObject, final DbField[] fields, final DbField tenantField,
+	static ParsedFilter parse(final IInputData inputObject,
+			final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
-		IInputObject conditions = inputObject.getObject(Conventions.Request.TAG_CONDITIONS);
+		IInputData conditions = inputObject
+				.getData(Conventions.Request.TAG_CONDITIONS);
 		if (conditions == null || conditions.isEmpty()) {
-			logger.warn("payload for filter has no conditions. All rows will be filtered");
+			logger.warn(
+					"payload for filter has no conditions. All rows will be filtered");
 			conditions = null;
 		}
 
 		/*
 		 * sort order
 		 */
-		final IInputObject sorts = inputObject.getObject(Conventions.Request.TAG_SORT);
+		final IInputData sorts = inputObject
+				.getData(Conventions.Request.TAG_SORT);
 
-		final int maxRows = (int) inputObject.getLong(Conventions.Request.TAG_MAX_ROWS);
+		final int maxRows = (int) inputObject
+				.getLong(Conventions.Request.TAG_MAX_ROWS);
 		if (maxRows != 0) {
-			logger.info("Number of max rows is set to {}. It is ignored as of now.", maxRows);
+			logger.info(
+					"Number of max rows is set to {}. It is ignored as of now.",
+					maxRows);
 		}
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
@@ -102,7 +111,8 @@ class ParsedFilter {
 		}
 
 		if (conditions != null) {
-			final boolean ok = parseConditions(map, conditions, ctx, values, sql);
+			final boolean ok = parseConditions(map, conditions, ctx, values,
+					sql);
 			if (!ok) {
 				return null;
 			}
@@ -114,10 +124,12 @@ class ParsedFilter {
 
 		if (sorts != null) {
 			boolean isFirst = true;
-			for (final String f : sorts.names()) {
-				final DbField field = map.get(f);
+
+			for (final String memberName : sorts.getMemberNames()) {
+				final DbField field = map.get(memberName);
 				if (field == null) {
-					logger.error("{} is not a field in the form. Sort order ignored");
+					logger.error(
+							"{} is not a field in the form. Sort order ignored");
 					continue;
 				}
 				if (isFirst) {
@@ -127,7 +139,7 @@ class ParsedFilter {
 					sql.append(", ");
 				}
 				sql.append(field.getColumnName());
-				final String order = sorts.getString(f);
+				final String order = sorts.getString(memberName);
 				if (order != null && order.toLowerCase().startsWith("d")) {
 					sql.append(" DESC ");
 				}
@@ -157,29 +169,37 @@ class ParsedFilter {
 		return new ParsedFilter(sqlText, values.toArray(new Object[0]));
 	}
 
-	private static boolean parseConditions(final Map<String, DbField> fields, final IInputObject object,
-			final IServiceContext ctx, final List<Object> values, final StringBuilder sql) {
+	private static boolean parseConditions(final Map<String, DbField> fields,
+			final IInputData object, final IServiceContext ctx,
+			final List<Object> values, final StringBuilder sql) {
 
 		/*
-		 * fairly long inside the loop for each field. But it is just
-		 * serial code. Hence left it that way
+		 * fairly long inside the loop for each field. But it is just serial
+		 * code. Hence left it that way
 		 */
-		for (final String fieldName : object.names()) {
+		for (final String fieldName : object.getMemberNames()) {
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
-				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
+				logger.warn(
+						"Input has value for a field named {} that is not part of this form",
+						fieldName);
 				continue;
 			}
 
-			final IInputObject node = object.getObject(fieldName);
+			final IInputData node = object.getData(fieldName);
 			if (node == null) {
-				logger.error("Filter condition for field {} should be an object, but it is {}", fieldName, node);
+				logger.error(
+						"Filter condition for field {} should be an object, but it is {}",
+						fieldName, node);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-			final String condnText = node.getString(Conventions.Request.TAG_FILTER_COMP);
+			final String condnText = node
+					.getString(Conventions.Request.TAG_FILTER_COMP);
 			if (condnText == null || condnText.isEmpty()) {
-				logger.error("comp is missing for a filter condition for field {}", fieldName);
+				logger.error(
+						"comp is missing for a filter condition for field {}",
+						fieldName);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
@@ -198,7 +218,8 @@ class ParsedFilter {
 			}
 			String value2 = null;
 			if (condn == FilterCondition.Between) {
-				value2 = node.getString(Conventions.Request.TAG_FILTER_VALUE_TO);
+				value2 = node
+						.getString(Conventions.Request.TAG_FILTER_VALUE_TO);
 				if (value2 == null || value2.isEmpty()) {
 					logger.error("valueTo is missing for a filter condition");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -219,10 +240,12 @@ class ParsedFilter {
 			 * complex ones first.. we have to append ? to sql, and add type and
 			 * value to the lists for each case
 			 */
-			if ((condn == FilterCondition.Contains || condn == FilterCondition.StartsWith)) {
+			if ((condn == FilterCondition.Contains
+					|| condn == FilterCondition.StartsWith)) {
 				if (vt != ValueType.Text) {
-					logger.error("Condition {} is not a valid for field {} which is of value type {}", condn, fieldName,
-							vt);
+					logger.error(
+							"Condition {} is not a valid for field {} which is of value type {}",
+							condn, fieldName, vt);
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return false;
 				}
@@ -242,8 +265,11 @@ class ParsedFilter {
 				for (final String part : value.split(",")) {
 					obj = vt.parse(part.trim());
 					if (obj == null) {
-						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						logger.error(
+								"{} is not a valid value for value type {} for field {}",
+								value, vt, fieldName);
+						ctx.addMessage(
+								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 					}
 					if (firstOne) {
@@ -260,7 +286,9 @@ class ParsedFilter {
 
 			obj = vt.parse(value);
 			if (obj == null) {
-				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
+				logger.error(
+						"{} is not a valid value for value type {} for field {}",
+						value, vt, fieldName);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
@@ -271,7 +299,9 @@ class ParsedFilter {
 					obj2 = vt.parse(value2);
 				}
 				if (obj2 == null) {
-					logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
+					logger.error(
+							"{} is not a valid value for value type {} for field {}",
+							value2, vt, fieldName);
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return false;
 				}
@@ -295,6 +325,7 @@ class ParsedFilter {
 	 * @return string that is escaped for a LIKE sql operation.
 	 */
 	private static String escapeLike(final String string) {
-		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
+		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD)
+				.replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
 	}
 }

@@ -2,16 +2,16 @@ package org.simplity.fm.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.io.Reader;
 
 import org.junit.jupiter.api.Test;
 import org.simplity.fm.core.IoUtil;
+import org.simplity.fm.core.json.JsonUtil;
+import org.simplity.fm.core.service.IInputData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 /**
  *
@@ -22,20 +22,21 @@ public class PathsTest {
 	private static final Logger logger = LoggerFactory
 			.getLogger(PathsTest.class);
 	private static final String RES_NAME = "paths.json";
-	private JsonObject invalidPaths;
-	private JsonObject validPathsWithErrors;
-	private JsonObject pathsWithPrefixes;
-	private JsonObject testPaths;
-	private JsonArray testData;
+	private IInputData invalidPaths;
+	private IInputData validPathsWithErrors;
+	private IInputData pathsWithPrefixes;
+	private IInputData testPaths;
+	private IInputData testData;
 	PathsTest() {
-		JsonObject json = IoUtil.readJsonResource(RES_NAME);
-		this.invalidPaths = json.get("invalidPaths").getAsJsonObject();
-		this.validPathsWithErrors = json.get("validPathsWithErrors")
-				.getAsJsonObject();
-		this.pathsWithPrefixes = json.get("pathsWithPrefixes")
-				.getAsJsonObject();
-		this.testPaths = json.get("testPaths").getAsJsonObject();
-		this.testData = json.get("testData").getAsJsonArray();
+		try (Reader reader = IoUtil.getReader(RES_NAME)) {
+			IInputData data = JsonUtil.newInputObject(reader);
+			this.invalidPaths = data.getData("invalidPaths");
+			this.validPathsWithErrors = data.getData("validPathsWithErrors");
+			this.pathsWithPrefixes = data.getData("pathsWithPrefixes");
+			this.testPaths = data.getData("testPaths");
+			this.testData = data.getData("testData");
+		} catch (IOException e) {
+		}
 	}
 
 	@Test
@@ -46,39 +47,42 @@ public class PathsTest {
 		// this.shouldExtractFieldsAndMapService();
 	}
 	private void shouldNotParseInvalidJsons() {
-		this.invalidPaths.entrySet().forEach(entry -> {
-			logger.info("checking invalid paths: {}", entry.getKey());
-			assertNull(RestAdapter.fromJson((JsonObject) entry.getValue()));
+		this.invalidPaths.getMemberNames().forEach(key -> {
+			logger.info("checking invalid paths: {}", key);
+			assertNull(RestAdapter.fromInputData(this.invalidPaths));
 		});
 	}
 
 	private void shouldParseWithErrors() {
-		this.validPathsWithErrors.entrySet().forEach(entry -> {
-			logger.info("checking paths with error : {}", entry.getKey());
-			assertNull(RestAdapter.fromJson((JsonObject) entry.getValue()));
+		this.validPathsWithErrors.getMemberNames().forEach(key -> {
+			logger.info("checking paths with error : {}", key);
+			assertNull(RestAdapter.fromInputData(this.invalidPaths));
 		});
 	}
 
+	@SuppressWarnings("unused")
 	private void shouldApplyPrefixes() {
-		RestAdapter paths = RestAdapter.fromJson(this.pathsWithPrefixes);
+		RestAdapter paths = RestAdapter.fromInputData(this.pathsWithPrefixes);
 		String serviceName = paths.parsePath("app/module/p1/p2", "get",
-				new JsonObject());
+				JsonUtil.newInputObject());
 		assertEquals("a.b.s", serviceName);
 
-		serviceName = paths.parsePath("p1/p2", "get", new JsonObject());
+		serviceName = paths.parsePath("p1/p2", "get",
+				JsonUtil.newInputObject());
 		assertNull(serviceName);
 	}
 
+	@SuppressWarnings("unused")
 	private void shouldExtractFieldsAndMapService() {
-		RestAdapter paths = RestAdapter.fromJson(this.testPaths);
-		this.testData.forEach(entry -> {
-			JsonObject data = new JsonObject();
-			JsonObject attrs = entry.getAsJsonObject();
-			String path = attrs.get("path").getAsString();
+		RestAdapter paths = RestAdapter.fromInputData(this.testPaths);
+		this.testData.getMemberNames().forEach(key -> {
+			IInputData data = JsonUtil.newInputObject();
+			IInputData attrs = this.testData.getData(key);
+			String path = attrs.getString("path");
 			logger.info("testing path: {}", path);
-			String method = attrs.get("method").getAsString();
-			String service = attrs.get("service").getAsString();
-			JsonObject expectedData = attrs.get("data").getAsJsonObject();
+			String method = attrs.getString("method");
+			String service = attrs.getString("service");
+			IInputData expectedData = attrs.getData("data");
 
 			String result = paths.parsePath(path, method, data);
 			if (service.isEmpty()) {
@@ -86,23 +90,7 @@ public class PathsTest {
 			} else {
 				assertEquals(service, result);
 			}
-			assertTrue(objectsAreSame(data, expectedData));
+			assertEquals(data, expectedData);
 		});
-	}
-
-	private static boolean objectsAreSame(JsonObject j1, JsonObject j2) {
-		if (j1.size() != j2.size()) {
-			return false;
-		}
-		boolean[] ok = {true};
-		j1.entrySet().forEach(entry -> {
-			JsonElement ele = j2.getAsJsonPrimitive(entry.getKey());
-			if (ele == null || ele.getAsString()
-					.equals(entry.getValue().getAsString()) == false) {
-				ok[0] = false;
-				return;
-			}
-		});
-		return ok[0];
 	}
 }

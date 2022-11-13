@@ -22,10 +22,8 @@
 
 package org.simplity.fm.core;
 
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.AppConfigProvider;
-import org.simplity.fm.core.app.App.Config;
-import org.simplity.fm.core.conf.IDbConnectionFactory;
+import org.simplity.fm.core.app.AppConfigInfo;
+import org.simplity.fm.core.infra.IDbConnectionFactory;
 import org.simplity.fm.core.rdb.DefaultConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +34,17 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class Bootstrapper implements AppConfigProvider {
-	private static final Logger logger = LoggerFactory.getLogger(Bootstrapper.class);
+public class Bootstrapper {
+	private static final Logger logger = LoggerFactory
+			.getLogger(Bootstrapper.class);
 	private static final String APP_NAME = "simplityExample";
 
-	@Override
-	public Config getConfig() {
-		final App.Config config = new Config();
+	/**
+	 *
+	 * @return COnfig
+	 */
+	public AppConfigInfo getConfig() {
+		final AppConfigInfo config = new AppConfigInfo();
 		config.appName = APP_NAME;
 		/*
 		 * so long as you keep this class in the rot package, it is safe to use
@@ -67,7 +69,9 @@ public class Bootstrapper implements AppConfigProvider {
 	private static IDbConnectionFactory dbSetupWithConString() {
 		final String conString = "Get it from wherever you are to get it, but never hard code in the code here";
 		final String driverName = "driver name for the vendor/provider of JDBC you are using";
-		logger.info("Setting up db with driver name = {} and connectionString=****", driverName);
+		logger.info(
+				"Setting up db with driver name = {} and connectionString=****",
+				driverName);
 		return DefaultConnectionFactory.getFactory(conString, driverName);
 	}
 

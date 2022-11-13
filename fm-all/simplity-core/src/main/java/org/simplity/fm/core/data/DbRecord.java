@@ -25,13 +25,13 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.app.App;
-import org.simplity.fm.core.app.ApplicationError;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RecordProcessor;
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -51,25 +51,29 @@ import org.slf4j.LoggerFactory;
  *
  */
 public abstract class DbRecord extends Record {
-	protected static final Logger logger = LoggerFactory.getLogger(DbRecord.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(DbRecord.class);
 
 	protected final Dba dba;
 
-	protected DbRecord(final Dba dba, final RecordMetaData meta, final Object[] fieldValues) {
+	protected DbRecord(final Dba dba, final RecordMetaData meta,
+			final Object[] fieldValues) {
 		super(meta, fieldValues);
 		this.dba = dba;
 	}
 
 	@Override
-	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert,
+			final IServiceContext ctx, final String tableName,
+			final int rowNbr) {
 		if (!super.parse(inputObject, forInsert, ctx, tableName, rowNbr)) {
 			return false;
 		}
 		/*
 		 * validate db-specific fields
 		 */
-		return this.dba.validate(this.fieldValues, forInsert, ctx, tableName, rowNbr);
+		return this.dba.validate(this.fieldValues, forInsert, ctx, tableName,
+				rowNbr);
 	}
 
 	/**
@@ -81,7 +85,8 @@ public abstract class DbRecord extends Record {
 	 *            non-null. any validation error is added to it
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
-	public boolean parseKeys(final IInputObject inputObject, final IServiceContext ctx) {
+	public boolean parseKeys(final IInputData inputObject,
+			final IServiceContext ctx) {
 		return this.dba.parseKeys(inputObject, this.fieldValues, ctx);
 	}
 
@@ -108,7 +113,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void readOrFail(final ReadonlyHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
-			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Read failed for " + this.fetchName()
+					+ this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -131,17 +137,17 @@ public abstract class DbRecord extends Record {
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
-	public List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values,
-			final ReadonlyHandle handle) throws SQLException {
+	public List<Object[]> filter(final String whereClauseStartingWithWhere,
+			final Object[] values, final ReadonlyHandle handle)
+			throws SQLException {
 		return this.dba.filter(whereClauseStartingWithWhere, values, handle);
 	}
 
 	/**
 	 * use filter-criterion, but only one row is expected, and hence read it
-	 * into this record.
-	 * This API is meant for utility programs,and not for end-programmers.
-	 * filter-sqls are a better choice for end-programmers as they provide
-	 * type-safe way to set/get values
+	 * into this record. This API is meant for utility programs,and not for
+	 * end-programmers. filter-sqls are a better choice for end-programmers as
+	 * they provide type-safe way to set/get values
 	 *
 	 * @param whereClauseStartingWithWhere
 	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
@@ -156,9 +162,11 @@ public abstract class DbRecord extends Record {
 	 * @return true if the first row is read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] values,
-			final ReadonlyHandle handle) throws SQLException {
-		return this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle);
+	public boolean filterFirst(final String whereClauseStartingWithWhere,
+			final Object[] values, final ReadonlyHandle handle)
+			throws SQLException {
+		return this.dba.filterFirst(whereClauseStartingWithWhere, values,
+				this.fieldValues, handle);
 	}
 
 	/**
@@ -181,13 +189,16 @@ public abstract class DbRecord extends Record {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void filterFirstOrFail(final String whereClauseStartingWithWhere, final Object[] values,
-			final ReadonlyHandle handle) throws SQLException {
-		if (this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle)) {
+	public void filterFirstOrFail(final String whereClauseStartingWithWhere,
+			final Object[] values, final ReadonlyHandle handle)
+			throws SQLException {
+		if (this.dba.filterFirst(whereClauseStartingWithWhere, values,
+				this.fieldValues, handle)) {
 			return;
 		}
 
-		throw new SQLException("Filter operation is expected to get one row, but none turned-up!");
+		throw new SQLException(
+				"Filter operation is expected to get one row, but none turned-up!");
 	}
 
 	/**
@@ -213,8 +224,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void insertOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
-			throw new SQLException(
-					"Insert failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Insert failed silently for "
+					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -241,8 +252,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void updateOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
-			throw new SQLException(
-					"Update failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Update failed silently for "
+					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -264,8 +275,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void saveOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
-			throw new SQLException(
-					"Save failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Save failed silently for "
+					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 
 	}
@@ -292,8 +303,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void deleteOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
-			throw new SQLException(
-					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Delete failed silently for "
+					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -320,30 +331,35 @@ public abstract class DbRecord extends Record {
 	 * @return service if this record is designed for this operation. null
 	 *         otherwise.
 	 */
-	public IService getService(final IoType operation, final String serviceName) {
+	public IService getService(final IoType operation,
+			final String serviceName) {
 		if (!this.dba.operationAllowed(operation)) {
-			logger.info("{} operation is not allowed on record {}", operation, this.fetchName());
+			logger.info("{} operation is not allowed on record {}", operation,
+					this.fetchName());
 			return null;
 		}
 
 		String sn = serviceName;
 		if (sn == null || sn.isEmpty()) {
 			sn = operation.name();
-			sn = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.fetchName();
+			sn = serviceName.substring(0, 1).toLowerCase()
+					+ serviceName.substring(1) + '_' + this.fetchName();
 		}
 		switch (operation) {
-		case Get:
+		case Get :
 			return new Reader(sn);
-		case Create:
+		case Create :
 			return new Creater(sn);
-		case Update:
+		case Update :
 			return new Updater(sn);
-		case Delete:
+		case Delete :
 			return new Deleter(sn);
-		case Filter:
+		case Filter :
 			return new Filter(sn);
-		default:
-			throw new ApplicationError("DbRecord needs to be designed for operation " + operation.name());
+		default :
+			throw new ApplicationError(
+					"DbRecord needs to be designed for operation "
+							+ operation.name());
 		}
 	}
 
@@ -367,14 +383,15 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
 				return;
 			}
 
-			App.getApp().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -404,14 +421,15 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
 				return;
 			}
 
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (rec.insert(handle)) {
 					return true;
 				}
@@ -435,14 +453,16 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, false, ctx, null, 0)) {
-				logger.error("Error while validating data from the input payload");
+				logger.error(
+						"Error while validating data from the input payload");
 				return;
 			}
 
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (rec.update(handle)) {
 					return true;
 				}
@@ -466,14 +486,15 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
 				return;
 			}
 
-			App.getApp().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
 				if (rec.delete(handle)) {
 					return true;
 				}
@@ -498,16 +519,19 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload)
+				throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
-				logger.error("Error while parsing filter conditions from th einput payload");
+				logger.error(
+						"Error while parsing filter conditions from th einput payload");
 				return;
 			}
 			final Object[][][] result = new Object[1][][];
-			App.getApp().getDbDriver().read(handle -> {
-				final List<Object[]> list = rec.dba.filter(filter.getWhereClause(), filter.getWhereParamValues(),
+			AppManager.getAppInfra().getDbDriver().read(handle -> {
+				final List<Object[]> list = rec.dba.filter(
+						filter.getWhereClause(), filter.getWhereParamValues(),
 						handle);
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
@@ -552,7 +576,8 @@ public abstract class DbRecord extends Record {
 	 * @param rowProcessor
 	 * @throws SQLException
 	 */
-	public <T extends ReadonlyHandle> void forEach(final String whereClause, final Object[] values, final T handle,
+	public <T extends ReadonlyHandle> void forEach(final String whereClause,
+			final Object[] values, final T handle,
 			final RecordProcessor rowProcessor) throws SQLException {
 
 		this.dba.forEach(handle, whereClause, values, row -> {

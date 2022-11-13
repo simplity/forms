@@ -22,8 +22,6 @@
 
 package org.simplity.fm.core.service;
 
-import org.simplity.fm.core.serialize.IInputObject;
-
 /**
  * Interface for service. The instance is expected to be re-usable, and
  * thread-safe. (immutable). Singleton pattern is suitable or this.
@@ -45,7 +43,7 @@ public interface IService {
 	 *             so that the caller can wire exceptions to the right exception
 	 *             handler that is configured for the app
 	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+	void serve(IServiceContext ctx, IInputData inputObject) throws Exception;
 
 	/**
 	 *

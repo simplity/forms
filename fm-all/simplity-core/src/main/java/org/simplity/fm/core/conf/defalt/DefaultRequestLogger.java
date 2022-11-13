@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.conf.defalt;
 
-import org.simplity.fm.core.conf.IRequestLogger;
+import org.simplity.fm.core.infra.IRequestLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

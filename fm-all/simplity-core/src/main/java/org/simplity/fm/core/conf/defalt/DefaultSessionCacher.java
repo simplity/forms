@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.conf.ISessionCache;
+import org.simplity.fm.core.infra.ISessionCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

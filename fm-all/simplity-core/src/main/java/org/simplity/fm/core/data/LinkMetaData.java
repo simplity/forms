@@ -27,9 +27,9 @@ import java.sql.SQLException;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.serialize.IInputArray;
-import org.simplity.fm.core.serialize.IInputObject;
-import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.service.IInputArray;
+import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,13 +212,13 @@ public class LinkMetaData {
 	 *
 	 * @param parentRec
 	 * @param form
-	 * @param writer
+	 * @param outData
 	 * @param handle
 	 * @return true if read was ok. false in in case of any validation error
 	 * @throws SQLException
 	 */
 	public boolean read(final DbRecord parentRec, final Form<?> form,
-			final ISerializer writer, final ReadonlyHandle handle)
+			final IOutputData outData, final ReadonlyHandle handle)
 			throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
@@ -228,26 +228,26 @@ public class LinkMetaData {
 		final Object[] values = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
-		writer.name(this.linkName);
+		outData.addName(this.linkName);
 		final Field[] fields = thisRecord.fetchFields();
 		if (this.isTabular) {
-			writer.beginArray();
+			outData.beginArray();
 			for (final Object[] row : thisRecord.filter(this.linkWhereClause,
 					values, handle)) {
-				writer.beginObject();
-				writer.fields(fields, row);
-				form.readLinkedForms(row, writer, handle);
-				writer.endObject();
+				outData.beginObject();
+				outData.addFields(fields, row);
+				form.readLinkedForms(row, outData, handle);
+				outData.endObject();
 			}
-			writer.endArray();
+			outData.endArray();
 			return true;
 		}
 
-		writer.beginObject();
+		outData.beginObject();
 		if (thisRecord.filterFirst(this.linkWhereClause, values, handle)) {
-			writer.fields(thisRecord);
+			outData.addRecord(thisRecord);
 		}
-		writer.endObject();
+		outData.endObject();
 		return true;
 	}
 
@@ -279,7 +279,7 @@ public class LinkMetaData {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbRecord parentRec, final Form<?> form,
-			final IInputObject inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
@@ -311,7 +311,7 @@ public class LinkMetaData {
 			}
 
 			int idx = -1;
-			for (final IInputObject obj : arr) {
+			for (final IInputData obj : arr) {
 				idx++;
 				if (!thisRecord.parse(obj, true, ctx, this.linkFormName, idx)) {
 					return false;
@@ -323,7 +323,7 @@ public class LinkMetaData {
 			return true;
 		}
 
-		final IInputObject obj = inputObject.getObject(this.linkName);
+		final IInputData obj = inputObject.getData(this.linkName);
 		if (obj == null) {
 			if (this.minRows > 0) {
 				ctx.addMessage(Message.newFieldError(this.linkName,

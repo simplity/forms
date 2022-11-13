@@ -22,15 +22,10 @@
 
 package org.simplity.fm.core.data;
 
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.serialize.ISerializer;
 
 /**
  * Represents an array of <code>DbRecord</code>. This wrapper class is created
@@ -41,60 +36,17 @@ import org.simplity.fm.core.serialize.ISerializer;
  *            DbRecord rows this class is to contain
  *
  */
-public class DbTable<T extends DbRecord> implements Iterable<T> {
-	private final T record;
-	private List<Object[]> rows = new ArrayList<>();
+public class DbTable<T extends DbRecord> extends Table<DbRecord> {
+	private final T dbRecord;
 
 	/**
 	 * construct with an instance of the underlying dbRecord
 	 *
-	 * @param record
+	 * @param dbRecord
 	 */
-	public DbTable(final T record) {
-		this.record = record;
-	}
-
-	/**
-	 * add a record
-	 *
-	 * @param rec
-	 */
-	public void addRecord(final T rec) {
-		this.rows.add(rec.fieldValues.clone());
-	}
-
-	protected void addRow(final Object[] row) {
-		this.rows.add(row);
-	}
-
-	/**
-	 * clear all existing data
-	 */
-	public void clear() {
-		this.rows.clear();
-	}
-
-	/**
-	 * @return number of data rows in this data table.
-	 */
-	public int length() {
-		return this.rows.size();
-	}
-
-	/**
-	 * serialized into an array [{},{}....]
-	 *
-	 * @param writer
-	 * @throws IOException
-	 */
-	public void serializeRows(final ISerializer writer) throws IOException {
-		writer.beginArray();
-		for (final T rec : this) {
-			writer.beginObject();
-			writer.fields(rec);
-			writer.endObject();
-		}
-		writer.endArray();
+	public DbTable(final T dbRecord) {
+		super(dbRecord);
+		this.dbRecord = dbRecord;
 	}
 
 	/**
@@ -107,9 +59,11 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @return true if at least row is filtered. false if no rows.
 	 * @throws SQLException
 	 */
-	public boolean filter(final String whereClauseStartingWithWhere, final Object[] valuesForWhereClause,
-			final ReadonlyHandle handle) throws SQLException {
-		this.rows = this.record.dba.filter(whereClauseStartingWithWhere, valuesForWhereClause, handle);
+	public boolean filter(final String whereClauseStartingWithWhere,
+			final Object[] valuesForWhereClause, final ReadonlyHandle handle)
+			throws SQLException {
+		this.rows = this.dbRecord.dba.filter(whereClauseStartingWithWhere,
+				valuesForWhereClause, handle);
 		return this.rows.size() > 0;
 	}
 
@@ -123,7 +77,8 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @throws SQLException
 	 */
 	public boolean insert(final ReadWriteHandle handle) throws SQLException {
-		return this.record.dba.insertAll(handle, this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.insertAll(handle,
+				this.rows.toArray(new Object[0][]));
 	}
 
 	/**
@@ -136,7 +91,8 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @throws SQLException
 	 */
 	public boolean update(final ReadWriteHandle handle) throws SQLException {
-		return this.record.dba.updateAll(handle, this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.updateAll(handle,
+				this.rows.toArray(new Object[0][]));
 	}
 
 	/**
@@ -150,7 +106,8 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @throws SQLException
 	 */
 	public boolean save(final ReadWriteHandle handle) throws SQLException {
-		return this.record.dba.saveAll(handle, this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.saveAll(handle,
+				this.rows.toArray(new Object[0][]));
 	}
 
 	/**
@@ -160,31 +117,14 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @param idx
 	 * @return record at 0-based index. null if the index is not valid
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public T fetchRecord(final int idx) {
 		final Object[] row = this.rows.get(idx);
 		if (row == null) {
 			return null;
 		}
-		return (T) this.record.newInstance(row);
-	}
-
-	@Override
-	public Iterator<T> iterator() {
-		final List<Object[]> r = this.rows;
-		return new Iterator<T>() {
-			private int idx = 0;
-
-			@Override
-			public boolean hasNext() {
-				return this.idx < r.size();
-			}
-
-			@Override
-			public T next() {
-				return DbTable.this.fetchRecord(this.idx++);
-			}
-		};
+		return (T) this.dbRecord.newInstance(row);
 	}
 
 }

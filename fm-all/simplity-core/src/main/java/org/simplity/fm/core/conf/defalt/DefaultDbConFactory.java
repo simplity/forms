@@ -25,8 +25,8 @@ package org.simplity.fm.core.conf.defalt;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.simplity.fm.core.app.ApplicationError;
-import org.simplity.fm.core.conf.IDbConnectionFactory;
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.infra.IDbConnectionFactory;
 
 /**
  * @author simplity.org
