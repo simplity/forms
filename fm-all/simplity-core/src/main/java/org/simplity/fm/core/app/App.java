@@ -282,7 +282,7 @@ class App implements IApp, IAppInfra {
 
 				IInputData data = this.inData.getData("data");
 				if (data == null) {
-					data = JsonUtil.newInputObject();
+					data = JsonUtil.newInputData();
 				}
 
 				App.this.reqLogger.log(userId, serviceName, serviceName);

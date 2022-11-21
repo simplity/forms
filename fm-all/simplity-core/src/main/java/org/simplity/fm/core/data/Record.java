@@ -607,15 +607,15 @@ public class Record {
 			return list;
 		}
 
-		arr.forEach(ele -> {
+		for (IInputData ele : arr.toDataArray()) {
 			final Record rec = this.newInstance();
 			if (rec.parse(ele, forInsert, ctx, memberName, 0)) {
 				list.add(rec);
 			} else {
 				list.clear(); // indicate error condition
+				break;
 			}
-			return true;
-		});
+		} ;
 		/*
 		 * empty least means we encountered some error
 		 */

@@ -88,7 +88,7 @@ class ParsedFilter {
 				.getData(Conventions.Request.TAG_SORT);
 
 		final int maxRows = (int) inputObject
-				.getLong(Conventions.Request.TAG_MAX_ROWS);
+				.getInteger(Conventions.Request.TAG_MAX_ROWS);
 		if (maxRows != 0) {
 			logger.info(
 					"Number of max rows is set to {}. It is ignored as of now.",

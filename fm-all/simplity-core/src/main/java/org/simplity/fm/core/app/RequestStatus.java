@@ -15,13 +15,13 @@ public enum RequestStatus {
 		}
 	},
 	/**
-	 * Input data stream did not yield a valid data object. like invalid
-	 * Json/XML
+	 * this server does not serve this service. It may be because the service
+	 * name is invalid, or it is not accessible to this requester
 	 */
-	InvalidDataFormat {
+	NoSuchService {
 		@Override
 		public String getDescription() {
-			return "Invalid input data format";
+			return "This service either does not exist, or is not accessible to this user.";
 		}
 	},
 	/**
@@ -46,13 +46,13 @@ public enum RequestStatus {
 		}
 	},
 	/**
-	 * this server does not serve this service. It may be because the service
-	 * name is invalid, or it is not accessible to this requester
+	 * Input data stream did not yield a valid data object. like invalid
+	 * Json/XML
 	 */
-	NoSuchService {
+	InvalidDataFormat {
 		@Override
 		public String getDescription() {
-			return "This service either does not exist, or is not accessible to this user.";
+			return "Invalid input data format";
 		}
 	},
 	/**

@@ -357,9 +357,9 @@ class Record {
 				"\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<")
 				.append(this.className);
 		sbf.append(
-				"> parseTable(final IInputObject inputObject, String memberName, final boolean forInsert, final IServiceContext ctx) {");
+				"> parseTable(final IInputData inputData, String memberName, final boolean forInsert, final IServiceContext ctx) {");
 		sbf.append("\n\t\treturn (List<").append(this.className).append(
-				">) super.parseTable(inputObject, memberName, forInsert, ctx);\n\t}");
+				">) super.parseTable(inputData, memberName, forInsert, ctx);\n\t}");
 
 		/*
 		 * getters and setters

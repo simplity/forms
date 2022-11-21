@@ -100,10 +100,10 @@ class HttpAgent {
 
 		IInputData inputData = null;
 		if (req.getContentLength() == 0) {
-			inputData = JsonUtil.newInputObject();
+			inputData = JsonUtil.newInputData();
 		} else {
 			try (Reader reader = req.getReader()) {
-				inputData = JsonUtil.newInputObject(reader);
+				inputData = JsonUtil.newInputData(reader);
 			} catch (final Exception e) {
 				logger.error("Invalid data recd from client {}",
 						e.getMessage());

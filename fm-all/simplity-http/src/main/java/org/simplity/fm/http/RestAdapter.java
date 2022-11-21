@@ -79,7 +79,7 @@ public class RestAdapter implements IRestAdapter {
 			if (reader == null) {
 				return null;
 			}
-			input = JsonUtil.newInputObject(reader);
+			input = JsonUtil.newInputData(reader);
 		} catch (UnsupportedEncodingException e) {
 			logger.error("Resource {}  is not in UTF-8 form.", resourceName);
 		} catch (IOException e) {

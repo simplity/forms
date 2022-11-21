@@ -22,7 +22,6 @@
 
 package org.simplity.fm.core.service;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,6 +31,18 @@ import java.util.Set;
  *
  */
 public interface IInputData {
+
+	/**
+	 * To be used to explore data with unknown/flexible schema. Also useful in
+	 * case nulls are allowed by design. Simplity recommends using additional
+	 * data elements rather than resorting to nullable fields.
+	 *
+	 * @param name
+	 *            member name
+	 *
+	 * @return non-null value
+	 */
+	INullableValue getValue(String name);
 
 	/**
 	 *
@@ -56,7 +67,7 @@ public interface IInputData {
 	 * @return 0 if member is non-text, non-numeric. text is parsed into
 	 *         integral value
 	 */
-	long getLong(String name);
+	long getInteger(String name);
 
 	/**
 	 *
@@ -87,22 +98,6 @@ public interface IInputData {
 	 * @return true if the object has no members
 	 */
 	boolean isEmpty();
-
-	/**
-	 * inspect what type of data a member has
-	 *
-	 * @param memberName
-	 * @return non-null
-	 */
-	InputDataType getDataType(String memberName);
-
-	/**
-	 * allows exploring unknown data. Obviously, bit expensive with construction
-	 * of Map etc..
-	 *
-	 * @return member names
-	 */
-	Map<String, InputDataType> getMemberTypes();
 
 	/**
 	 * allows exploring unknown data. Obviously, bit expensive with construction

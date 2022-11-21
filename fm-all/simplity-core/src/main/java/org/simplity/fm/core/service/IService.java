@@ -36,14 +36,14 @@ public interface IService {
 	 *
 	 * @param ctx
 	 *            service context provides certain data structures and methods.
-	 * @param inputObject
+	 * @param inputData
 	 *            non-null, could be empty if no pay-load was received from the
 	 *            client
 	 * @throws Exception
 	 *             so that the caller can wire exceptions to the right exception
 	 *             handler that is configured for the app
 	 */
-	void serve(IServiceContext ctx, IInputData inputObject) throws Exception;
+	void serve(IServiceContext ctx, IInputData inputData) throws Exception;
 
 	/**
 	 *

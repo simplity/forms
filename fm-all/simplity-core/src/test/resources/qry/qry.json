@@ -1,0 +1,229 @@
+{
+  "tests": [
+    {
+      "name": "member names should not have syntax errors",
+      "data": {
+        " ": "just space",
+        " a": "begins with space",
+        "a ": "ends with space",
+        " a ": "begins and ends with space",
+        "a a": "contains space",
+        ".": "just a dot",
+        "..": "two dots",
+        ".a": "begins with a dot",
+        "a.": "ends with a dot",
+        "a.b": "contains dot",
+        "a]": "ends with close-bracket",
+        "a[]": "index missing",
+        "a[a]": "non-numeric index",
+        "a[-1]": "negative number as index"
+      }
+    },
+    {
+      "name": "member name is valid if it does not interfere with data-member and array-element notations",
+      "data": {
+        "a_-#$%b!": "no query-specific characters",
+        "[": "just open bracket",
+        "a[": "ending with an open bracket",
+        "a[b": "containing an open bracket with no closing bracket",
+        "[1]a": "valid pair but not at the end",
+        "[][[][[][[[x": "arbitrary, so long as it does not end with ]"
+      }
+    },
+    {
+      "name": "valid query strings should work",
+      "data": [
+        {
+          "qry": " true ",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "qry": "true ",
+          "type": "text",
+          "value": "true"
+        },
+        {
+          "qry": "   false",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "qry": "text",
+          "type": "text",
+          "value": "text"
+        },
+        {
+          "qry": "int",
+          "type": "integer",
+          "value": -123
+        },
+        {
+          "qry": "int",
+          "type": "text",
+          "value": "-123"
+        },
+        {
+          "qry": "decimal",
+          "type": "decimal",
+          "value": 23.45
+        },
+        {
+          "qry": "boolArr [ 0]  ",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "qry": " boolArr [ 1  ]  ",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "qry": "textArr[2]",
+          "type": "text",
+          "value": "c"
+        },
+        {
+          "qry": "textArr[3]",
+          "type": "text",
+          "value": "d"
+        },
+        {
+          "qry": "intArr[0]",
+          "type": "integer",
+          "value": 1
+        },
+        {
+          "qry": "intArr[3]",
+          "type": "integer",
+          "value": -2
+        },
+        {
+          "qry": "decimalArr[1]",
+          "type": "decimal",
+          "value": 2.0
+        },
+        {
+          "qry": "decimalArr[3]",
+          "type": "decimal",
+          "value": -2.1
+        },
+        {
+          "qry": " miniObject . boolTrue ",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "qry": "miniObject.textField",
+          "type": "text",
+          "value": "textValue"
+        },
+        {
+          "qry": "fullObject . boolArr [  3 ] ",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "qry": " fullObject. miniObject.  int345",
+          "type": "integer",
+          "value": 345
+        },
+        {
+          "qry": "arr[0][0][1].a.b.c.d",
+          "type": "integer",
+          "value": -123
+        }
+      ]
+    },
+    {
+      "name": "non-existing member-name or indexed-element should not work",
+      "data": [
+        {
+          "qry": "abcd",
+          "type": "text",
+          "desc": "not a member"
+        },
+        {
+          "qry": "boolArr",
+          "type": "text",
+          "desc": "not the right type"
+        },
+        {
+          "qry": "text.int",
+          "type": "text",
+          "desc": "text is not an object"
+        },
+        {
+          "qry": "fullObject.abcd",
+          "type": "text",
+          "desc": "valid object member with invalid member-name"
+        },
+        {
+          "qry": "fullObject.miniObject.abcd",
+          "type": "text",
+          "desc": "valid object member with invalid member-name"
+        },
+        {
+          "qry": "fullObject.boolArr",
+          "type": "integer",
+          "desc": "object and member name ok, but type not ok"
+        },
+        {
+          "qry": "fullObject[0].boolArr[1]",
+          "type": "boolean",
+          "desc": "index for an object is not valid"
+        }
+      ]
+    }
+  ],
+  "testData": {
+    "true": true,
+    "false": false,
+    "text": "text",
+    "int": -123,
+    "decimal": 23.45,
+    "boolArr": [true, false, true, false],
+    "textArr": ["a", "b", "c", "d"],
+    "intArr": [1, 2.1, -1, -2.1],
+    "decimalArr": [1.1, 2, -1.1, -2.1],
+    "miniObject": {
+      "boolTrue": true,
+      "textField": "textValue",
+      "int345": 345
+    },
+    "fullObject": {
+      "true": true,
+      "false": false,
+      "text": "text",
+      "int": 123,
+      "decimal": 23.45,
+      "boolArr": [true, false, true, false],
+      "textArr": ["a", "b", "c", "d"],
+      "intArr": [1, 2.1, -1, -2.1],
+      "decimalArr": [1.1, 2, -1.1, -2.1],
+      "miniObject": {
+        "boolTrue": true,
+        "textField": "textValue",
+        "int345": 345
+      }
+    },
+    "arr": [
+      [
+        [
+          {
+            "foo": "faa"
+          },
+          {
+            "a": {
+              "b": {
+                "c": {
+                  "d": -123
+                }
+              }
+            }
+          }
+        ]
+      ]
+    ]
+  }
+}

@@ -310,10 +310,10 @@ public class LinkMetaData {
 				return false;
 			}
 
-			int idx = -1;
-			for (final IInputData obj : arr) {
-				idx++;
-				if (!thisRecord.parse(obj, true, ctx, this.linkFormName, idx)) {
+			IInputData[] childRecs = arr.toDataArray();
+			for (int idx = 0; idx < childRecs.length; idx++) {
+				if (!thisRecord.parse(childRecs[idx], true, ctx,
+						this.linkFormName, idx)) {
 					return false;
 				}
 				this.copyParentKeys(parentRec, thisRecord);

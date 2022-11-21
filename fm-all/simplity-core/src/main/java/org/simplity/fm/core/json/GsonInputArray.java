@@ -22,28 +22,38 @@
 
 package org.simplity.fm.core.json;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.io.Reader;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.INullableValue;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 /**
- * @author simplity.org
+ * InputArray implementation using Gson. To be used inside of this package only
  *
  */
-public class GsonInputArray implements IInputArray {
+class GsonInputArray implements IInputArray {
 	private final JsonArray array;
 
 	/**
 	 * create an empty input-array
 	 */
-	public GsonInputArray() {
+	GsonInputArray() {
 		this.array = new JsonArray();
+	}
+
+	GsonInputArray(final Reader reader) throws JsonException {
+		JsonElement ele = JsonParser.parseReader(reader);
+		if (ele.isJsonArray()) {
+			this.array = ele.getAsJsonArray();
+		}
+		throw new JsonException("JSON root is not an array. it is "
+				+ (ele.isJsonObject() ? "an Object" : "a primitive or null"));
 	}
 
 	/**
@@ -51,19 +61,21 @@ public class GsonInputArray implements IInputArray {
 	 * @param array
 	 *            must be non-null
 	 */
-	public GsonInputArray(final JsonArray array) {
+	GsonInputArray(final JsonArray array) {
 		if (array == null) {
 			throw new ApplicationError(
 					"JsonInputArray requires non-null array.");
 		}
-		final int nbr = array.size();
-		for (int i = 0; i < nbr; i++) {
-			if (array.get(i).isJsonObject() == false) {
-				throw new ApplicationError(
-						"JsonInputArray contains a non-object member at " + i);
-			}
-		}
 		this.array = array;
+	}
+
+	/**
+	 *
+	 * @return underlying Json Object. This mutable, but as a rule it should not
+	 *         be modified
+	 */
+	JsonArray getJsonArray() {
+		return this.array;
 	}
 
 	@Override
@@ -72,37 +84,121 @@ public class GsonInputArray implements IInputArray {
 	}
 
 	@Override
-	public void forEach(final Function<IInputData, Boolean> fn) {
-		final boolean[] isStopped = {false};
-		this.array.forEach(ele -> {
-			if (isStopped[0]) {
-				return;
-			}
-
-			final GsonInputData obj = new GsonInputData((JsonObject) ele);
-			if (fn.apply(obj)) {
-				// true means we should continue to iterate
-			} else {
-				isStopped[0] = true;
-			}
-		});
+	public String[] toStringArray() {
+		String[] arr = new String[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.array.get(i).getAsString();
+		}
+		return arr;
 	}
 
 	@Override
-	public Iterator<IInputData> iterator() {
-		final JsonArray arr = this.array;
-		return new Iterator<>() {
-			private int idx = 0;
+	public long[] toIntegerArray() {
+		long[] arr = new long[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.array.get(i).getAsLong();
+		}
+		return arr;
+	}
 
-			@Override
-			public IInputData next() {
-				return new GsonInputData((JsonObject) arr.get(this.idx++));
-			}
+	@Override
+	public boolean[] toBooleanArray() {
+		boolean[] arr = new boolean[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.array.get(i).getAsBoolean();
+		}
+		return arr;
+	}
 
-			@Override
-			public boolean hasNext() {
-				return this.idx < arr.size();
-			}
-		};
+	@Override
+	public double[] toDecimalArray() {
+		double[] arr = new double[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.array.get(i).getAsDouble();
+		}
+		return arr;
+	}
+
+	@Override
+	public String getStringAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonNull()) {
+			return null;
+		}
+		return ele.getAsString();
+	}
+
+	@Override
+	public long getIntegerAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonNull()) {
+			return 0;
+		}
+		return ele.getAsLong();
+	}
+
+	@Override
+	public double getDecimalAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonNull()) {
+			return 0;
+		}
+		return ele.getAsDouble();
+	}
+
+	@Override
+	public boolean getBooleanAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonNull()) {
+			return false;
+		}
+		return ele.getAsBoolean();
+	}
+
+	@Override
+	public IInputArray getArrayAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonArray() == false) {
+			return null;
+		}
+		return new GsonInputArray(ele.getAsJsonArray());
+	}
+
+	@Override
+	public IInputData getDataAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		if (ele == null || ele.isJsonObject() == false) {
+			return null;
+		}
+		return new GsonInputData(ele.getAsJsonObject());
+	}
+
+	@Override
+	public IInputData[] toDataArray() {
+		IInputData[] arr = new IInputData[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.getDataAt(i);
+		}
+		return arr;
+	}
+
+	@Override
+	public IInputArray[] toArrayArray() {
+		IInputArray[] arr = new IInputArray[this.array.size()];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = this.getArrayAt(i);
+		}
+		return arr;
+	}
+
+	@Override
+	public INullableValue getValueAt(int idx) {
+		JsonElement ele = this.array.get(idx);
+		return GsonInputData.toValue(ele);
+	}
+
+	@Override
+	public String toString() {
+		return this.array.toString();
 	}
 }
