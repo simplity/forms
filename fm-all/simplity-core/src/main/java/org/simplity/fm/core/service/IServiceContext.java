@@ -83,10 +83,15 @@ public interface IServiceContext {
 	/**
 	 *
 	 * @return non-null <code>IOutputData</code> for constructing service
-	 *         output. To be used for custom-way of creating ouput instead i=of
+	 *         output. To be used for custom-way of creating output instead of
 	 *         using the methods available in this class. Once this method is
 	 *         called, this class will throw error if any attempt is made to get
-	 *         it again, or try adding output data
+	 *         it again, or try adding output data.
+	 *
+	 *         It is to be noted that the instance in the middle of an object.
+	 *         Caller should leave it at that state. That is, a beginObject() is
+	 *         already issued, and an endObject() will be issued after the api
+	 *         returns.
 	 */
 	IOutputData getOutputData();
 
@@ -224,4 +229,15 @@ public interface IServiceContext {
 	 *         overridden
 	 */
 	String getFormOverrideId(String formName);
+	/**
+	 *
+	 * @return should the user context be reset
+	 */
+	boolean toResetUserContext();
+
+	/**
+	 * mark the user context for reset so that toResetUserContext() will return
+	 * true; note that there is no argument. This action can not be reversed!!
+	 */
+	void markUserContextForReset();
 }

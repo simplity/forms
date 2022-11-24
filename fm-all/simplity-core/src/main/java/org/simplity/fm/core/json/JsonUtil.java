@@ -10,6 +10,7 @@ import org.simplity.fm.core.service.IOutputData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -71,6 +72,20 @@ public class JsonUtil {
 			return null;
 		}
 
+	}
+
+	/**
+	 *
+	 * @param fileOrResource
+	 *            from which the input data is to be created
+	 * @return null if the input is not a valid json.
+	 */
+	public static IInputData newInputData(String fileOrResource) {
+		JsonObject json = readJsonResource(fileOrResource);
+		if (json == null) {
+			return null;
+		}
+		return new GsonInputData(json);
 	}
 
 	/**
@@ -286,6 +301,44 @@ public class JsonUtil {
 		return new GsonInputArray(ele.getAsJsonArray());
 	}
 
+	/**
+	 *
+	 * @param <T>
+	 *
+	 * @param resourceOrFileName
+	 *            from which the object instance is to be loaded
+	 * @param cls
+	 *            class to be used to instantiate an object and load attributes
+	 *            from the json
+	 * @return an instance of T with its attributes loaded from the resource.
+	 *         null in case of any issue
+	 */
+	public static <T> T load(String resourceOrFileName, Class<T> cls) {
+		try (Reader reader = IoUtil.getReader(resourceOrFileName)) {
+			JsonElement ele = JsonParser.parseReader(reader);
+			return new Gson().fromJson(ele, cls);
+		} catch (Exception e) {
+			return null;
+		}
+
+	}
+
+	/**
+	 *
+	 * @param <T>
+	 *
+	 * @param inputData
+	 *            from which the object instance is to be loaded
+	 * @param cls
+	 *            class to be used to instantiate an object and load attributes
+	 *            from the json
+	 * @return an instance of T with its attributes loaded from the resource.
+	 *         null in case of any issue
+	 */
+	public static <T> T load(IInputData inputData, Class<T> cls) {
+		return new Gson().fromJson(((GsonInputData) inputData).getJsonObject(),
+				cls);
+	}
 	/**
 	 *
 	 * @param inObj

@@ -22,7 +22,10 @@
 
 package org.simplity.fm.core.app;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.util.UUID;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.UserContext;
@@ -51,7 +54,6 @@ import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.service.IServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,11 +66,21 @@ import org.slf4j.LoggerFactory;
  */
 class App implements IApp, IAppInfra {
 
+	/*
+	 * tag/property/member name
+	 */
+	private static final String TAG_SESSION_ID = "sessionId";
+	private static final String TAG_SERVICE_NAME = "serviceName";
+	private static final String TAG_STATUS = "status";
+	private static final String TAG_STATUS_DESC = "statusDescription";
+	private static final String TAG_DATA = "data";
+
 	protected static final Logger logger = LoggerFactory.getLogger(App.class);
 
 	private final String appName;
+	private final String loginServiceName;
+	private final String logoutServiceName;
 	private final boolean serveGuests;
-	private final boolean sessionIsAMust;
 	private final ICompProvider compProvider;
 	private final IAccessController guard;
 	private final IDbDriver rdbDriver;
@@ -88,7 +100,8 @@ class App implements IApp, IAppInfra {
 	App(final AppConfigInfo config) throws Exception {
 		this.appName = config.appName;
 		this.serveGuests = config.guestsOk;
-		this.sessionIsAMust = config.requireSession;
+		this.loginServiceName = config.loginServiceName;
+		this.logoutServiceName = config.loginServiceName;
 
 		String text = config.appRootPackage;
 
@@ -210,119 +223,148 @@ class App implements IApp, IAppInfra {
 	}
 
 	@Override
-	public boolean requireSession() {
-		return this.sessionIsAMust;
-	}
-
-	@Override
-	public String createSession(String userId, String password) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IServiceResponse serve(IInputData inputData) {
-		return new Assistant(inputData).serve();
-	}
-
-	class Assistant {
-		private final IInputData inData;
-		private StringWriter writer;
-		private IOutputData outData;
-
-		protected Assistant(final IInputData inData) {
-			this.inData = inData;
-		}
-
-		protected IServiceResponse serve() {
-
-			this.initOutput();
-			IServiceContext ctx = null;
-			try {
-				String serviceName = this.inData.getString("serviceName");
-				if (serviceName == null || serviceName.isEmpty()) {
-					return this
-							.errorResponse(RequestStatus.ServiceNameRequired);
-				}
-
-				UserContext utx = null;
-				String userId = null;
-				String sessionId = this.inData.getString("sessionId");
-
-				if (sessionId == null) {
-					if (App.this.sessionIsAMust) {
-						return errorResponse(RequestStatus.SessionRequired);
-					}
-					ctx = App.this.contextFactory
-							.newSessionLessContext(this.outData);
-				} else {
-					utx = App.this.cache.get(sessionId);
-					if (utx == null) {
-						return errorResponse(RequestStatus.NoSuchSession);
-					}
-					userId = utx.getUserId();
-					ctx = App.this.contextFactory.newContext(utx, this.outData);
-				}
-
-				IService service = App.this.compProvider.getService(serviceName,
-						ctx);
-
-				if (service == null) {
-					return errorResponse(RequestStatus.NoSuchService);
-				}
-
-				if (service.serveGuests() == false
-						&& (userId == null || userId.isEmpty())) {
-					return errorResponse(RequestStatus.NoSuchService);
-				}
-
-				if (App.this.guard.okToServe(service, ctx) == false) {
-					return errorResponse(RequestStatus.NoSuchService);
-				}
-
-				IInputData data = this.inData.getData("data");
-				if (data == null) {
-					data = JsonUtil.newInputData();
-				}
-
-				App.this.reqLogger.log(userId, serviceName, serviceName);
-
-				this.outData.beginObject().addName("data");
-				service.serve(ctx, inData);
-				this.outData.endObject();
-				RequestStatus status = ctx.allOk()
-						? RequestStatus.Served
-						: RequestStatus.ServedWithErrors;
-				return new ServiceResponse(status, this.writer.toString());
-
-			} catch (Exception | Error e) {
-				App.this.listener.listen(ctx, e);
-				// reset output that might have been initiated..
-				this.initOutput();
-				return errorResponse(RequestStatus.ServerError);
+	public RequestStatus serve(IInputData inData, Writer writer)
+			throws IOException {
+		IServiceContext ctx = null;
+		try {
+			String serviceName = inData.getString(TAG_SERVICE_NAME);
+			if (serviceName == null || serviceName.isEmpty()) {
+				logger.error("Attribute named {} is required for service name",
+						TAG_SERVICE_NAME);
+				return writeErrorResponse(RequestStatus.ServiceNameRequired,
+						writer);
 			}
 
-		}
-		private void initOutput() {
-			this.writer = new StringWriter();
-			this.outData = JsonUtil.newOutputData(writer);
-		}
-		private IServiceResponse errorResponse(RequestStatus status) {
+			UserContext utx = null;
+			String userId = null;
+			String sessionId = inData.getString(TAG_SESSION_ID);
+			if (sessionId != null && sessionId.isEmpty()) {
+				sessionId = null;
+			}
+			StringWriter stringWriter = new StringWriter();
+			IOutputData outData = JsonUtil.newOutputData(stringWriter);
 			outData.beginObject();
 
-			String messageId = status.getMessageId();
-			this.outData.addName("status").addValue(messageId);
-			this.outData.addName("statusDescription")
-					.addValue(status.getDescription());
+			if (sessionId == null) {
+				// login service is allowed always
+				if (this.guestsOk()
+						|| serviceName.equals(this.getLoginServiceName())) {
+					ctx = this.contextFactory.newSessionLessContext(outData);
+				} else {
+					return writeErrorResponse(RequestStatus.SessionRequired,
+							writer);
+				}
+			} else {
+				utx = this.cache.get(sessionId);
+				if (utx == null) {
+					logger.error("sessionId {} has no attached cache.",
+							sessionId);
+					return writeErrorResponse(RequestStatus.NoSuchSession,
+							writer);
+				}
+				userId = utx.getUserId();
+				ctx = this.contextFactory.newContext(utx, outData);
+			}
 
-			this.outData.addName("messages").beginArray();
-			Message.newError(messageId).toOutputData(outData);
-			this.outData.endArray();
+			IService service = this.compProvider.getService(serviceName, ctx);
 
-			this.outData.endObject();
+			if (service == null) {
+				return writeErrorResponse(RequestStatus.NoSuchService, writer);
+			}
 
-			return new ServiceResponse(status, this.writer.toString());
+			if (service.serveGuests() == false
+					&& (userId == null || userId.isEmpty())) {
+				return writeErrorResponse(RequestStatus.NoSuchService, writer);
+			}
+
+			if (this.guard.okToServe(service, ctx) == false) {
+				return writeErrorResponse(RequestStatus.NoSuchService, writer);
+			}
+
+			IInputData data = inData.getData(TAG_DATA);
+			if (data == null) {
+				data = JsonUtil.newInputData();
+			}
+
+			this.reqLogger.log(userId, serviceName, inData.toString());
+
+			outData.addName(TAG_DATA).beginObject();
+			service.serve(ctx, data);
+			outData.endObject();
+
+			RequestStatus status = ctx.allOk()
+					? RequestStatus.Served
+					: RequestStatus.ServedWithErrors;
+			outData.addName(TAG_STATUS).addValue(status.getMessageId());
+
+			if (sessionId != null && ctx.toResetUserContext()) {
+				this.cache.remove(sessionId);
+			}
+
+			UserContext newCtx = ctx.getNewUserContext();
+			if (newCtx != null) {
+				if (sessionId != null) {
+					this.cache.remove(sessionId);
+				}
+				String token = UUID.randomUUID().toString();
+				this.cache.put(token, newCtx);
+				outData.addName(TAG_SESSION_ID).addValue(token);
+			}
+
+			Message[] messages = ctx.getMessages();
+			if (messages != null && messages.length > 0) {
+				writeMessages(messages, outData);
+			}
+
+			outData.endObject();
+			writer.write(stringWriter.toString());
+			return status;
+
+		} catch (Exception | Error e) {
+			logger.error("Service {} threw an exception: " + e.getMessage());
+			e.printStackTrace();
+			this.listener.listen(ctx, e);
+			return writeErrorResponse(RequestStatus.ServerError, writer);
 		}
+
+	}
+
+	private static void writeMessages(Message[] messages, IOutputData outData) {
+		outData.addName("messages").beginArray();
+		for (Message msg : messages) {
+			msg.toOutputData(outData);
+		}
+		outData.endArray();
+	}
+
+	private static RequestStatus writeErrorResponse(RequestStatus status,
+			Writer outWriter) throws IOException {
+
+		StringWriter stringWriter = new StringWriter();
+		IOutputData outData = JsonUtil.newOutputData(stringWriter);
+		outData.beginObject();
+
+		String messageId = status.getMessageId();
+		outData.addName(TAG_STATUS).addValue(messageId);
+		outData.addName(TAG_STATUS_DESC).addValue(status.getDescription());
+		Message[] messages = {Message.newError(messageId)};
+		writeMessages(messages, outData);
+
+		outData.endObject();
+
+		outWriter.write(stringWriter.toString());
+		return status;
+
+	}
+
+	@Override
+	public String getLoginServiceName() {
+		return this.loginServiceName;
+	}
+
+	@Override
+	public String getLogoutServiceName() {
+		return this.logoutServiceName;
 	}
 
 }

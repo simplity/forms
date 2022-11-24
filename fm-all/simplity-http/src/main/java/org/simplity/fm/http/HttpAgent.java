@@ -24,6 +24,7 @@ package org.simplity.fm.http;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
@@ -35,7 +36,6 @@ import org.simplity.fm.core.app.IApp;
 import org.simplity.fm.core.app.RequestStatus;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,10 +125,11 @@ class HttpAgent {
 			}
 		}
 
-		IServiceResponse r = this.app.serve(inputData);
-		resp.setStatus(toHttpStatus(r.getStatus()));
+		StringWriter sw = new StringWriter();
+		RequestStatus status = this.app.serve(inputData, sw);
+		resp.setStatus(toHttpStatus(status));
 		try (PrintWriter writer = resp.getWriter()) {
-			writer.write(r.getResponseData());
+			writer.write(sw.toString());
 		}
 	}
 

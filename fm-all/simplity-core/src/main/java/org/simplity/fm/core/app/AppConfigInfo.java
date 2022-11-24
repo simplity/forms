@@ -16,29 +16,6 @@ import org.simplity.fm.core.infra.ITexter;
  */
 public class AppConfigInfo {
 	/**
-	 * utility method to get an instance of this class from a provider class
-	 * name
-	 *
-	 * @param className
-	 *            valid qualified class-name of a class that implements
-	 *            <code>IAppCnfigProvider</code>
-	 * @return instance if all OK. null otherwise
-	 */
-	public static AppConfigInfo fromProviderClassName(String className) {
-		try {
-			Class<?> cls = Class.forName(className);
-			Class<?>[] params = {};
-			Object c = cls.getConstructor(params).newInstance();
-			if (c instanceof IAppConfigProvider == false) {
-				return null;
-			}
-			return ((IAppConfigProvider) c).getConfigInfo();
-		} catch (Exception e) {
-			return null;
-		}
-
-	}
-	/**
 	 * must be set to a unique name
 	 */
 	public String appName;
@@ -51,14 +28,14 @@ public class AppConfigInfo {
 	public boolean guestsOk;
 
 	/**
-	 * whether this server serves services only inside of a session. Relevant
-	 * only if guestsOk is true. If guests are not OK, then the server will
-	 * always use session
-	 *
-	 * true if session is a must while requesting any service. false if session
-	 * is optional. However, a given service may require session
+	 * name of the login service. null if the App has no such concept
 	 */
-	public boolean requireSession;
+	public String loginServiceName;
+
+	/**
+	 * name of the logout service. null if the App has no such concept
+	 */
+	public String logoutServiceName;
 
 	/**
 	 * root package name used for this app. like "com.myCompany.myApp". In this

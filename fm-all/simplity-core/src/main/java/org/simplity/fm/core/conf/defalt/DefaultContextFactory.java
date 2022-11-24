@@ -36,7 +36,7 @@ public class DefaultContextFactory implements IServiceContextFactory {
 
 	@Override
 	public IServiceContext newContext(final UserContext session,
-			final IOutputData outData) {
+			IOutputData outData) {
 		return new DefaultServiceContext(session, outData);
 	}
 

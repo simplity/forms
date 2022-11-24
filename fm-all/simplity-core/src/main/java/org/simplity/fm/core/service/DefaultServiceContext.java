@@ -60,6 +60,7 @@ public class DefaultServiceContext implements IServiceContext {
 	protected UserContext newUtx;
 	protected Object tenantId;
 	protected boolean responseSet;
+	protected boolean resetSession;
 	/*
 	 * created on need-basis because we expect this to be used sparingly..
 	 */
@@ -178,9 +179,7 @@ public class DefaultServiceContext implements IServiceContext {
 			throw new ApplicationError("Cannot set " + record.fetchName()
 					+ " as response-record. A response is already set or the serializer is already in use.");
 		}
-		this.outData.beginObject();
 		this.outData.addRecord(record);
-		this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -191,7 +190,6 @@ public class DefaultServiceContext implements IServiceContext {
 					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
 
-		this.outData.beginObject();
 		this.outData.addName(Conventions.Request.TAG_LIST);
 		this.outData.beginArray();
 
@@ -200,7 +198,6 @@ public class DefaultServiceContext implements IServiceContext {
 		}
 
 		this.outData.endArray();
-		this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -217,7 +214,6 @@ public class DefaultServiceContext implements IServiceContext {
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
 		}
 		logger.info("Setting table as list inside the response object");
-		this.outData.beginObject();
 		this.outData.addName(Conventions.Request.TAG_LIST);
 		this.outData.beginArray();
 
@@ -230,7 +226,6 @@ public class DefaultServiceContext implements IServiceContext {
 		}
 
 		this.outData.endArray();
-		this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -241,7 +236,6 @@ public class DefaultServiceContext implements IServiceContext {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
 		}
-		this.outData.beginObject();
 		this.outData.addRecord(header);
 		this.outData.addName(childName);
 		this.outData.beginArray();
@@ -255,7 +249,6 @@ public class DefaultServiceContext implements IServiceContext {
 		}
 
 		this.outData.endArray();
-		this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -266,7 +259,6 @@ public class DefaultServiceContext implements IServiceContext {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
 		}
-		this.outData.beginObject();
 		this.outData.addRecord(header);
 		this.outData.addName(childName);
 		this.outData.beginArray();
@@ -279,7 +271,6 @@ public class DefaultServiceContext implements IServiceContext {
 			});
 		}
 		this.outData.endArray();
-		this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -321,5 +312,15 @@ public class DefaultServiceContext implements IServiceContext {
 			return null;
 		}
 		return this.currentUtx.getFormOverrideId(formName);
+	}
+
+	@Override
+	public boolean toResetUserContext() {
+		return this.resetSession;
+	}
+
+	@Override
+	public void markUserContextForReset() {
+		this.resetSession = true;
 	}
 }

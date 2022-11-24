@@ -42,7 +42,7 @@ public interface IServiceContextFactory {
 	 *            non-null
 	 * @param outData
 	 *            non-null
-	 * @return non-null instance of IServiceCOntext that wil be passed to the
+	 * @return non-null instance of IServiceCOntext that will be passed to the
 	 *         service execution thread.
 	 */
 	IServiceContext newContext(UserContext userSession, IOutputData outData);
@@ -50,9 +50,10 @@ public interface IServiceContextFactory {
 	/**
 	 * create a service context for the logged-in user
 	 *
-	 * @param userSession
-	 *            non-null
 	 * @param outData
+	 *            non-null
+	 *
+	 * @param userSession
 	 *            non-null
 	 * @return non-null instance of IServiceCOntext that wil be passed to the
 	 *         service execution thread.

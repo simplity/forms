@@ -22,8 +22,10 @@
 
 package org.simplity.fm.core.app;
 
+import java.io.IOException;
+import java.io.Writer;
+
 import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IServiceResponse;
 
 /**
  * App is the highest level component that responds to service requests. It uses
@@ -48,34 +50,29 @@ public interface IApp {
 	boolean guestsOk();
 
 	/**
-	 * whether this server serves services only inside of a session. Relevant
-	 * only if guestsOk is true. If guests are not OK, then the server will
-	 * always use session
-	 *
-	 * @return true if session is a must while requesting any service. false if
-	 *         session is optional. However, a given service may require session
+	 * @return name of the service to login. null if the App has no such service
 	 */
-	boolean requireSession();
+	String getLoginServiceName();
 
 	/**
-	 * Create a session that can be used for subsequent requests. Relevant if
-	 * requireSession() returns true.
-	 *
-	 * @param userId
-	 *            null for a guest, if guests are ok.
-	 * @param password
-	 *            null for guests, if guests are ok.
-	 * @return sessionId that should be turned in for service requests
+	 * @return name of the service to logout. null if the App has no such
+	 *         service
 	 */
-	String createSession(String userId, String password);
+	String getLogoutServiceName();
 
 	/**
+	 * designed to facilitate writing the response directly to the stream.
+	 * internal calls can use a StringWriter to get the response as an string
 	 *
 	 * @param request
 	 *            as per schema for RequestData, that has details like
 	 *            sessionId, serviceId and input data
+	 * @param writer
+	 *            to which the response is to be written.
 	 * @return non-null response to the request
+	 * @throws IOException
+	 *             in case of errors while writing to the supplied writer
 	 */
-	IServiceResponse serve(IInputData request);
+	RequestStatus serve(IInputData request, Writer writer) throws IOException;
 
 }
