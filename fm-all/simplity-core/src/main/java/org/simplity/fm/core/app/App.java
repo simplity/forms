@@ -241,27 +241,25 @@ class App implements IApp, IAppInfra {
 			if (sessionId != null && sessionId.isEmpty()) {
 				sessionId = null;
 			}
+
 			StringWriter stringWriter = new StringWriter();
 			IOutputData outData = JsonUtil.newOutputData(stringWriter);
 			outData.beginObject();
 
-			if (sessionId == null) {
-				// login service is allowed always
-				if (this.guestsOk()
-						|| serviceName.equals(this.getLoginServiceName())) {
-					ctx = this.contextFactory.newSessionLessContext(outData);
-				} else {
-					return writeErrorResponse(RequestStatus.SessionRequired,
-							writer);
-				}
-			} else {
+			// get user context
+			if (sessionId != null) {
 				utx = this.cache.get(sessionId);
 				if (utx == null) {
-					logger.error("sessionId {} has no attached cache.",
+					logger.info(
+							"SessionId {} not found in cache. May be time-out",
 							sessionId);
-					return writeErrorResponse(RequestStatus.NoSuchSession,
-							writer);
+					sessionId = null;
 				}
+			}
+
+			if (utx == null) {
+				ctx = this.contextFactory.newSessionLessContext(outData);
+			} else {
 				userId = utx.getUserId();
 				ctx = this.contextFactory.newContext(utx, outData);
 			}
@@ -272,9 +270,9 @@ class App implements IApp, IAppInfra {
 				return writeErrorResponse(RequestStatus.NoSuchService, writer);
 			}
 
-			if (service.serveGuests() == false
-					&& (userId == null || userId.isEmpty())) {
-				return writeErrorResponse(RequestStatus.NoSuchService, writer);
+			if (service.serveGuests() == false && userId == null) {
+				return writeErrorResponse(RequestStatus.SessionRequired,
+						writer);
 			}
 
 			if (this.guard.okToServe(service, ctx) == false) {
