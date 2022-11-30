@@ -58,7 +58,6 @@ public class DefaultServiceContext implements IServiceContext {
 
 	protected int nbrErrors = 0;
 	protected UserContext newUtx;
-	protected Object tenantId;
 	protected boolean responseSet;
 	protected boolean resetSession;
 	/*
@@ -91,17 +90,6 @@ public class DefaultServiceContext implements IServiceContext {
 	@Override
 	public boolean hasUserContext() {
 		return this.currentUtx != null;
-	}
-
-	/**
-	 * MUST be executed before this context is used in case this APP is designed
-	 * for multi-tenant deployment
-	 *
-	 * @param tenantId
-	 *            the tenantId to set
-	 */
-	protected void setTenantId(final Object tenantId) {
-		this.tenantId = tenantId;
 	}
 
 	@Override
@@ -149,7 +137,10 @@ public class DefaultServiceContext implements IServiceContext {
 
 	@Override
 	public Object getTenantId() {
-		return this.tenantId;
+		if (this.currentUtx == null) {
+			return null;
+		}
+		return this.currentUtx.getTenantId();
 	}
 
 	@Override

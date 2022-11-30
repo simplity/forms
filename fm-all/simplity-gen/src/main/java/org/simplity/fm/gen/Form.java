@@ -176,7 +176,7 @@ public class Form {
 
 		sbf.append("\n\t}\n}\n");
 
-		Util.writeOut(folderName + cls + ".java", sbf);
+		Util.writeOut(folderName + cls + ".java", sbf.toString());
 	}
 
 	private static final Map<String, Integer> OP_INDEXES = getOpIndexes();

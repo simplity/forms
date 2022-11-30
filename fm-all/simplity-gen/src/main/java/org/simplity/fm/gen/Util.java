@@ -261,12 +261,13 @@ public class Util {
 	 * write the contents to the named file
 	 *
 	 * @param fileName
-	 * @param sbf
+	 *            non-null
+	 * @param text
+	 *            non-null
 	 */
-	public static void writeOut(final String fileName,
-			final StringBuilder sbf) {
+	public static void writeOut(final String fileName, final String text) {
 		try (Writer writer = new FileWriter(new File(fileName))) {
-			writer.write(sbf.toString());
+			writer.write(text);
 			logger.info("File {} generated.", fileName);
 		} catch (final Exception e) {
 			logger.error("Error while writing file {} \n {}", fileName,

@@ -39,7 +39,18 @@ import org.simplity.fm.core.data.RecordOverride;
  */
 public class UserContext {
 
+	/**
+	 * userId for whom this context is created. not-null non-empty. If this is
+	 * for a guest, the proposed design is that the app has the concept of a
+	 * guest
+	 */
 	protected final String userId;
+
+	/**
+	 * tenant id, if the app has such a concept
+	 */
+	protected Object tenantId;
+
 	/**
 	 * if form/records are overridden for this
 	 */
@@ -70,6 +81,22 @@ public class UserContext {
 	}
 
 	/**
+	 *
+	 * @return null if this app is not multi-tenant, or if it is not set
+	 */
+	public Object getTenantId() {
+		return this.tenantId;
+	}
+
+	/**
+	 *
+	 * @param id
+	 *            non-null, the right type, typically long
+	 */
+	public void setTenantId(Object id) {
+		this.tenantId = id;
+	}
+	/**
 	 * to be invoked by the extended class to cache the form/record overrides
 	 */
 	protected void setOverrides(final String id) {
@@ -93,11 +120,13 @@ public class UserContext {
 	/**
 	 *
 	 * @param recordName
-	 * @return null if this is not if overridden in the current context. overrideId if present. 
-	 * 
+	 * @return null if this is not if overridden in the current context.
+	 *         overrideId if present.
+	 *
 	 */
 	public String getRecordOverrideId(final String recordName) {
-		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
+		if (this.recordOverrides != null
+				&& this.recordOverrides.contains(recordName)) {
 			return this.overrideId;
 		}
 		return null;
@@ -110,7 +139,8 @@ public class UserContext {
 	 *         overridden.
 	 */
 	public String getFormOverrideId(final String formName) {
-		if (this.formOverrides != null && this.formOverrides.contains(formName)) {
+		if (this.formOverrides != null
+				&& this.formOverrides.contains(formName)) {
 			return this.overrideId;
 		}
 		return null;

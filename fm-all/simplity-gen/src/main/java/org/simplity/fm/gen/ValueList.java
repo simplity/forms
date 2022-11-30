@@ -74,7 +74,7 @@ public class ValueList implements IInitializer {
 		} else {
 			this.emitJavaRuntime(sbf, clsName);
 		}
-		Util.writeOut(folder + clsName + ".java", sbf);
+		Util.writeOut(folder + clsName + ".java", sbf.toString());
 	}
 
 	private void emitJavaRuntime(StringBuilder sbf, final String clsName) {

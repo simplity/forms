@@ -367,7 +367,7 @@ class Record {
 		Util.emitJavaGettersAndSetters(this.fields, sbf);
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.className + ".java", sbf);
+		Util.writeOut(folderName + this.className + ".java", sbf.toString());
 	}
 
 	private void emitNonDbSpecific(final StringBuilder sbf) {
@@ -751,6 +751,7 @@ class Record {
 		dataSbf.append("\n\nINSERT INTO ").append(this.nameInDb).append(" (");
 		StringBuilder valSbf = new StringBuilder("\nVALUES (");
 		boolean isFirst = true;
+		boolean dataEmitted = false;
 		for (Field field : this.fields) {
 			if (!field.isColumn()) {
 				continue;
@@ -759,10 +760,12 @@ class Record {
 				isFirst = false;
 			} else {
 				createSbf.append(",\n\t");
+			}
+			if (dataEmitted) {
 				dataSbf.append(", ");
 				valSbf.append(", ");
 			}
-			field.emitSql(createSbf, dataSbf, valSbf);
+			dataEmitted = field.emitSql(createSbf, dataSbf, valSbf);
 		}
 
 		if (this.keyFields != null && this.generatedKeyField == null) {
@@ -843,7 +846,8 @@ class Record {
 		}
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.recordName + ".form.ts", sbf);
+		Util.writeOut(folderName + this.recordName + ".form.ts",
+				sbf.toString());
 
 		return true;
 	}

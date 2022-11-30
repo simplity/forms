@@ -84,7 +84,7 @@ public class Sql {
 		}
 	}
 
-	void generateJava(String folderName, final String packageName) {
+	void generateJava(String folderName, final String rootPackage) {
 
 		final StringBuilder sbf = new StringBuilder();
 		final boolean hasRecord = this.recordName != null
@@ -130,7 +130,7 @@ public class Sql {
 			return;
 		}
 
-		emitImports(sbf, packageName);
+		emitImports(sbf, rootPackage);
 		if (this.hasDate) {
 			Util.emitImport(sbf, LocalDate.class);
 		}
@@ -143,18 +143,18 @@ public class Sql {
 			this.emitWriteSql(sbf);
 		} else if (this.sqlType.equals(SQL_TYPE_READ)) {
 			if (hasRecord) {
-				this.emitReadWithRecord(sbf, packageName);
+				this.emitReadWithRecord(sbf, rootPackage);
 			} else {
 				this.emitRead(sbf);
 			}
 		} else if (hasRecord) {
-			this.emitFilterWithRecord(sbf, packageName);
+			this.emitFilterWithRecord(sbf, rootPackage);
 
 		} else {
 			this.emitFilter(sbf);
 		}
 
-		Util.writeOut(folderName + this.className + ".java", sbf);
+		Util.writeOut(folderName + this.className + ".java", sbf.toString());
 	}
 
 	void emitWriteSql(final StringBuilder sbf) {
@@ -192,11 +192,11 @@ public class Sql {
 	}
 
 	void emitFilterWithRecord(final StringBuilder sbf,
-			final String packageName) {
+			final String rootPackage) {
 
 		Util.emitImport(sbf, FilterWithRecordSql.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.")
+		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(";");
 
 		/*
@@ -238,11 +238,11 @@ public class Sql {
 
 	}
 
-	void emitReadWithRecord(final StringBuilder sbf, final String packageName) {
+	void emitReadWithRecord(final StringBuilder sbf, final String rootPackage) {
 
 		Util.emitImport(sbf, ReadWithRecordSql.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.")
+		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(';');
 
 		/*
@@ -373,12 +373,12 @@ public class Sql {
 	}
 
 	private static void emitImports(final StringBuilder sbf,
-			final String packageName) {
-		sbf.append("package ").append(packageName).append(".sql;\n");
+			final String rootPackage) {
+		sbf.append("package ").append(rootPackage).append(".sql;\n");
 
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
-		sbf.append("\nimport ").append(packageName).append('.')
+		sbf.append("\nimport ").append(rootPackage).append('.')
 				.append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
 				.append(';');
 
@@ -419,8 +419,8 @@ public class Sql {
 			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.fieldName,
-						f.valueSchema);
+				logger.error("Field {} has an invalid data type of {}",
+						f.fieldName, f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 			}
@@ -448,8 +448,8 @@ public class Sql {
 			String typ = "unknownBecauseOfUnknownDataType";
 			String get = typ;
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.fieldName,
-						f.valueSchema);
+				logger.error("Field {} has an invalid data type of {}",
+						f.fieldName, f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 				get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];

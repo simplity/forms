@@ -68,9 +68,7 @@ public class Application {
 	 */
 	public static int TEXT_AREA_CUTOFF = 199;
 
-	String name;
-	String tenantFieldName;
-	String tenantDbName;
+	String appName;
 	int maxLengthForTextField = 199;
 	Map<String, ValueSchema> valueSchemas;
 	Map<String, ValueList> valueLists;
@@ -167,7 +165,7 @@ public class Application {
 
 		sbf.append("\n}\n");
 
-		Util.writeOut(rootFolder + clsName + ".java", sbf);
+		Util.writeOut(rootFolder + clsName + ".java", sbf.toString());
 	}
 
 	private void javaLists(final String rootFolder, final String packageName) {
@@ -190,15 +188,18 @@ public class Application {
 	 * generate TypeScript code
 	 *
 	 * @param folder
+	 *            client-side source folder (typically src/)
 	 * @param coreName
 	 *            name of the core package to import from
 	 * @return true if allOK, false otherwise
 	 */
 	public boolean generateTs(final String folder, String coreName) {
+
 		this.generateTsForLists(folder, coreName);
 		this.generateTsForSchemas(folder, coreName);
 		return true;
 	}
+
 	private void generateTsForSchemas(final String folder, String coreName) {
 		logger.info("Generatng TS code for value schemas ...");
 		final StringBuilder sbf = new StringBuilder();
@@ -213,7 +214,7 @@ public class Application {
 		sbf.append("\n}\n\n");
 
 		String fn = folder + "allValueSchemas.ts";
-		Util.writeOut(fn, sbf);
+		Util.writeOut(fn, sbf.toString());
 		logger.info("File {} generated", fn);
 
 		logger.info("Generatng  TS code for value lists...");
@@ -227,7 +228,7 @@ public class Application {
 
 		sbf.append("\n}\n\n");
 		fn = folder + "allLists.ts";
-		Util.writeOut(fn, sbf);
+		Util.writeOut(fn, sbf.toString());
 		logger.info("File {} generated", fn);
 	}
 
@@ -245,7 +246,7 @@ public class Application {
 		}
 
 		sbf.append("\n};\n");
-		Util.writeOut(folder + "allLists.ts", sbf);
+		Util.writeOut(folder + "allLists.ts", sbf.toString());
 		logger.info("TS code for {} lists generated", this.valueLists.size());
 	}
 }

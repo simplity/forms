@@ -25,6 +25,7 @@ package org.simplity.fm.gen;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.FieldType;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ class Field {
 	private static final Map<String, FieldType> fieldTypes = createMap();
 	private static final Logger logger = LoggerFactory.getLogger(Field.class);
 	private static final String C = ", ";
-	private static final char SINGLEQUOTE = '\'';
+	private static final char Q = '\'';
 
 	String fieldName;
 	String fieldType = "optionalData";
@@ -56,7 +57,7 @@ class Field {
 	String fieldSuffix;
 	String fieldPrefix;
 	String placeHolder;
-	String hint;
+	String description;
 	boolean renderInList;
 	boolean hideInSave;
 
@@ -190,7 +191,7 @@ class Field {
 		Util.addAttrTs(sbf, BEGIN, "suffix", this.fieldSuffix);
 		Util.addAttrTs(sbf, BEGIN, "prefix", this.fieldPrefix);
 		Util.addAttrTs(sbf, BEGIN, "placeHolder", this.placeHolder);
-		Util.addAttrTs(sbf, BEGIN, "hint", this.hint);
+		Util.addAttrTs(sbf, BEGIN, "hint", this.description);
 		Util.addAttrTs(sbf, BEGIN, "errorId", this.errorId);
 		Util.addAttrTs(sbf, BEGIN, "listName", this.listName);
 		Util.addAttrTs(sbf, BEGIN, "listKeyName", this.listKey);
@@ -212,98 +213,131 @@ class Field {
 	}
 
 	/**
+	 * not all fields are used for data-sql. caller may use the returned value
+	 * to check this
 	 *
 	 * @param string
 	 *            builder to which SQL is emitted
+	 * @return true if sql for insert added, false otherwise.
 	 */
-	void emitSql(StringBuilder sbf, StringBuilder dataSbf,
+	boolean emitSql(StringBuilder sbf, StringBuilder dataSbf,
 			StringBuilder valSbf) {
 		sbf.append(this.nameInDb);
+		// generated primary key should not be included in the
+		if (this.fieldTypeEnum == FieldType.GeneratedPrimaryKey) {
+			sbf.append(" INTEGER GENERATED ALWAYS AS IDENTITY");
+			return false;
+		}
+
 		dataSbf.append(this.nameInDb);
-		valSbf.append(this.schemaInstance.getDefaultConstant());
+
 		switch (this.fieldTypeEnum) {
 		case CreatedAt :
 		case ModifiedAt :
 			sbf.append(" DATETIME NOT NULL");
-			return;
+			valSbf.append("TIMESTAMP CURRENT_TIMESTAMP");
+			return true;
 
 		case CreatedBy :
 		case ModifiedBy :
 		case TenantKey :
 			sbf.append(" INTEGER NOT NULL");
-			return;
-
-		case GeneratedPrimaryKey :
-			sbf.append(" INTEGER GENERATED ALWAYS AS IDENTITY");
-			return;
+			valSbf.append("1");
+			return true;
 
 		case OptionalData :
 		case PrimaryKey :
 		case RequiredData :
 			break;
+
+		default :
+			throw new ApplicationError("FieldType " + this.fieldTypeEnum
+					+ " not handled by field sql generator");
 		}
 
+		String value = "";
 		switch (this.schemaInstance.valueTypeEnum) {
 		case Boolean :
 			sbf.append(" BOOLEAN NOT NULL DEFAULT FALSE");
-			return;
+			valSbf.append("false");
+			return true;
 
 		case Date :
 			sbf.append(" DATE ");
 			if (this.isRequired) {
 				sbf.append("NOT NULL ");
 			}
+
+			value = "DATE CURRENT_DATE";
 			if (this.defaultValue != null) {
 				sbf.append("DEFAULT DATE ");
 				if (this.defaultValue.equalsIgnoreCase("today")) {
 					sbf.append("CURRENT_DATE ");
 				} else {
-					sbf.append(SINGLEQUOTE).append(this.defaultValue)
-							.append("' ");
+					sbf.append(Q).append(this.defaultValue).append("' ");
+					value = "DATE '" + this.defaultValue + Q;
 				}
 			}
-			return;
+			valSbf.append(value);
+			return true;
 
 		case Decimal :
 			// DECIMAL(max-digits,nbr-decimals)
+			value = "0";
 			sbf.append(" DECIMAL(");
 			sbf.append(this.schemaInstance.maxLength - 1);
 			sbf.append(',').append(this.schemaInstance.nbrFractions)
-					.append(") NOT NULL DEFAULT 0");
-			return;
-
-		case Integer :
-			sbf.append(" INTEGER NULL DEFAULT ");
+					.append(") NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
 				sbf.append(this.defaultValue);
+				value = this.defaultValue;
 			} else {
 				sbf.append('0');
 			}
-			return;
+			valSbf.append(value);
+			return true;
+
+		case Integer :
+			value = "0";
+			sbf.append(" INTEGER NOT NULL DEFAULT ");
+			if (this.defaultValue != null) {
+				value = this.defaultValue;
+			}
+			sbf.append(value);
+			valSbf.append(value);
+			return true;
 
 		case Text :
-			sbf.append(" CHARACTER VARYING NOT NULL DEFAULT '");
+			value = "''";
+			sbf.append(" CHARACTER VARYING NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
-				sbf.append(this.defaultValue);
+				value = this.defaultValue.replaceAll("'", "''");
 			}
-			sbf.append(SINGLEQUOTE);
-			return;
+
+			sbf.append(value);
+			valSbf.append(value);
+			return true;
 
 		case Timestamp :
 			sbf.append(" TIMESTAMP ");
 			if (this.isRequired) {
 				sbf.append("NOT NULL ");
 			}
+			value = "TIMESTAMP CURRENT_TIMESTAMP";
+
 			if (this.defaultValue != null) {
-				sbf.append("DEFAULT TIMESTAMP ");
-				if (this.defaultValue.equalsIgnoreCase("now")) {
-					sbf.append("CURRENT_TIMESTAMP ");
-				} else {
-					sbf.append(SINGLEQUOTE).append(this.defaultValue)
-							.append(SINGLEQUOTE);
+				if (this.defaultValue.equalsIgnoreCase("now") == false) {
+					value = "TIMESTAMP " + this.defaultValue + Q;
 				}
+				sbf.append(value);
 			}
-			return;
+			valSbf.append(value);
+			return true;
+
+		default :
+			throw new ApplicationError(
+					"ValueType " + this.schemaInstance.valueTypeEnum
+							+ " not handled by field sql generator");
 		}
 	}
 
