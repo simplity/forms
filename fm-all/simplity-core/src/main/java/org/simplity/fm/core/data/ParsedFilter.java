@@ -31,6 +31,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
+import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -84,8 +85,8 @@ class ParsedFilter {
 		/*
 		 * sort order
 		 */
-		final IInputData sorts = inputObject
-				.getData(Conventions.Request.TAG_SORT);
+		final IInputArray sorts = inputObject
+				.getArray(Conventions.Request.TAG_SORT);
 
 		final int maxRows = (int) inputObject
 				.getInteger(Conventions.Request.TAG_MAX_ROWS);
@@ -125,21 +126,26 @@ class ParsedFilter {
 		if (sorts != null) {
 			boolean isFirst = true;
 
-			for (final String memberName : sorts.getMemberNames()) {
-				final DbField field = map.get(memberName);
+			for (IInputData sortBy : sorts.toDataArray()) {
+				String fieldName = sortBy.getString("field");
+				final DbField field = map.get(fieldName);
 				if (field == null) {
 					logger.error(
-							"{} is not a field in the form. Sort order ignored");
+							"{} is not a field in the form. Sort order ignored",
+							fieldName);
 					continue;
 				}
+
 				if (isFirst) {
 					sql.append(" ORDER BY ");
 					isFirst = false;
 				} else {
 					sql.append(", ");
 				}
+
 				sql.append(field.getColumnName());
-				final String order = sorts.getString(memberName);
+
+				String order = sortBy.getString("order");
 				if (order != null && order.toLowerCase().startsWith("d")) {
 					sql.append(" DESC ");
 				}

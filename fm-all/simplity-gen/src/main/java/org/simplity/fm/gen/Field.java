@@ -113,15 +113,15 @@ class Field {
 		// 4. isList as boolean
 		sbf.append(C).append(this.isList);
 		// 5. default value as string
-		sbf.append(C).append(Util.qoutedString(this.defaultValue));
+		sbf.append(C).append(Util.quotedString(this.defaultValue));
 		// 6. error id
-		sbf.append(C).append(Util.qoutedString(this.errorId));
+		sbf.append(C).append(Util.quotedString(this.errorId));
 		// 7. listName as string, null if not required
 		/*
 		 * list is handled by inter-field in case key is specified
 		 */
 		if (this.listKey == null) {
-			sbf.append(C).append(Util.qoutedString(this.listName));
+			sbf.append(C).append(Util.quotedString(this.listName));
 		} else {
 			sbf.append(C).append("null");
 		}
@@ -129,7 +129,7 @@ class Field {
 		// additional parameters for a DbField
 		if (isDb) {
 			// 7. column Name
-			sbf.append(C).append(Util.qoutedString(this.nameInDb));
+			sbf.append(C).append(Util.quotedString(this.nameInDb));
 			// 8. columnType as Enum
 			sbf.append(C).append("FieldType.")
 					.append(this.fieldTypeEnum.name());
@@ -143,13 +143,12 @@ class Field {
 	public void emitTs(final StringBuilder def, final String indent) {
 
 		if (this.isRequired) {
-			def.append(indent).append("isRequired: true,");
+			def.append(indent).append("\"isRequired\": true,");
 		}
 
 		if (this.listName != null) {
-			def.append(indent).append("listName: ")
-					.append(Util.singleQuotedString(this.listName))
-					.append(COMA);
+			def.append(indent).append("\"listName\": ")
+					.append(Util.quotedString(this.listName)).append(COMA);
 		}
 
 	}
@@ -166,37 +165,38 @@ class Field {
 	}
 
 	static final String BEGIN = "\n\t\t\t";
-	static final String END = "',";
+	static final String END = "\",";
 	static final char COMA = ',';
 
 	/**
 	 * @param sbf
 	 */
 	public void emitFormTs(final StringBuilder sbf) {
-		sbf.append("\n\t\t").append(this.fieldName).append(": {");
-		sbf.append(BEGIN).append("name: '").append(this.fieldName).append(END);
-		sbf.append(BEGIN).append("valueSchema: '").append(this.valueSchema)
+		sbf.append("\n\t\t\"").append(this.fieldName).append("\": {");
+		sbf.append(BEGIN).append("\"name\": \"").append(this.fieldName)
 				.append(END);
-		sbf.append(BEGIN).append("valueType: '")
+		sbf.append(BEGIN).append("\"valueSchema\": \"").append(this.valueSchema)
+				.append(END);
+		sbf.append(BEGIN).append("\"valueType\": \"")
 				.append(this.schemaInstance.getValueType()).append(END);
-		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired)
+		sbf.append(BEGIN).append("\"isRequired\": ").append(this.isRequired)
 				.append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
 			lbl = Util.toLabel(this.fieldName);
 		}
-		Util.addAttrTs(sbf, BEGIN, "label", lbl);
-		Util.addAttrTs(sbf, BEGIN, "defaultValue", this.defaultValue);
-		Util.addAttrTs(sbf, BEGIN, "icon", this.icon);
-		Util.addAttrTs(sbf, BEGIN, "suffix", this.fieldSuffix);
-		Util.addAttrTs(sbf, BEGIN, "prefix", this.fieldPrefix);
-		Util.addAttrTs(sbf, BEGIN, "placeHolder", this.placeHolder);
-		Util.addAttrTs(sbf, BEGIN, "hint", this.description);
-		Util.addAttrTs(sbf, BEGIN, "errorId", this.errorId);
-		Util.addAttrTs(sbf, BEGIN, "listName", this.listName);
-		Util.addAttrTs(sbf, BEGIN, "listKeyName", this.listKey);
+		Util.addAttr(sbf, BEGIN, "label", lbl);
+		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);
+		Util.addAttr(sbf, BEGIN, "icon", this.icon);
+		Util.addAttr(sbf, BEGIN, "suffix", this.fieldSuffix);
+		Util.addAttr(sbf, BEGIN, "prefix", this.fieldPrefix);
+		Util.addAttr(sbf, BEGIN, "placeHolder", this.placeHolder);
+		Util.addAttr(sbf, BEGIN, "hint", this.description);
+		Util.addAttr(sbf, BEGIN, "errorId", this.errorId);
+		Util.addAttr(sbf, BEGIN, "listName", this.listName);
+		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
 		if (this.renderInList) {
-			sbf.append(BEGIN).append("renderInList : true,");
+			sbf.append(BEGIN).append("\"renderInList\" : true,");
 		}
 		if (this.fieldTypeEnum == FieldType.PrimaryKey
 				|| this.fieldTypeEnum == FieldType.OptionalData
@@ -207,8 +207,9 @@ class Field {
 			} else {
 				rt = this.schemaInstance.getRenderType();
 			}
-			Util.addAttrTs(sbf, BEGIN, "renderType", rt);
+			Util.addAttr(sbf, BEGIN, "renderType", rt);
 		}
+		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t\t}");
 	}
 

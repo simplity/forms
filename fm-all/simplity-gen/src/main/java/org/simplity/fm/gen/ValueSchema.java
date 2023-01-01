@@ -18,7 +18,7 @@ public class ValueSchema implements Util.IInitializer {
 	 */
 	public static ValueSchema DEFAULT_SCHEMA = getDefaultSchema("defaultText");
 	private static final String P = "\n\tpublic static final ";
-	private static final String C = ", ";
+	private static final String C = ",";
 
 	String valueType;
 	String name;
@@ -82,8 +82,8 @@ public class ValueSchema implements Util.IInitializer {
 				.append(" = new ").append(cls).append("(");
 
 		// common parameters for the constructor
-		sbf.append(Util.qoutedString(this.name)).append(C);
-		sbf.append(Util.qoutedString(this.errorId));
+		sbf.append(Util.quotedString(this.name)).append(C);
+		sbf.append(Util.quotedString(this.errorId));
 		/**
 		 * additional parameters to the constructor are to be added based on the
 		 * type
@@ -92,7 +92,7 @@ public class ValueSchema implements Util.IInitializer {
 		case "text" :
 			sbf.append(C).append(this.minLength);
 			sbf.append(C).append(this.maxLength);
-			sbf.append(C).append(Util.qoutedString(this.pattern));
+			sbf.append(C).append(Util.quotedString(this.pattern));
 			break;
 
 		case "integer" :
@@ -115,36 +115,41 @@ public class ValueSchema implements Util.IInitializer {
 		sbf.append(");");
 	}
 
+	private static final String BEG = "\n\t\t";
+	private static final char END = ',';
 	void emitTs(StringBuilder sbf) {
-		sbf.append("\n\t").append(this.name).append(": {");
+		sbf.append("\n\t\"").append(this.name).append("\": {");
 
-		sbf.append("\n\t\tname: '").append(this.name).append("',");
-		sbf.append("\n\t\tvalueType: '").append(this.valueType).append("',");
+		Util.addAttr(sbf, BEG, "name", this.name);
+		Util.addAttr(sbf, BEG, "valueType", this.valueType);
 		if (this.errorId != null && this.errorId.isBlank() == false) {
-			sbf.append("\n\t\terrorId: '").append(errorId).append("',");
+			Util.addAttr(sbf, BEG, "errorId", this.errorId);
 		}
 		if (this.pattern != null && this.pattern.isBlank() == false) {
-			sbf.append("\n\t\tregex: ").append(Util.singleQuotedString(pattern))
-					.append(C);
+			Util.addAttr(sbf, BEG, "regex", this.pattern);
 		}
 		if (this.maxLength != 0) {
-			sbf.append("\n\t\tmaxLength: ").append(this.maxLength).append(C);
+			sbf.append(BEG).append("\"maxLength\": ").append(this.maxLength)
+					.append(END);
 		}
 		if (this.minLength != 0) {
-			sbf.append("\n\t\tminLength: ").append(this.minLength).append(C);
+			sbf.append(BEG).append("\"minLength\": ").append(this.minLength)
+					.append(END);
 		}
 		if (this.maxValue != 0) {
-			sbf.append("\n\t\tmaxValue: ").append(this.maxValue).append(C);
+			sbf.append(BEG).append("\"maxValue\": ").append(this.maxValue)
+					.append(END);
 		}
 		if (this.minValue != 0) {
-			sbf.append("\n\t\tminValue: ").append(this.minValue).append(C);
+			sbf.append(BEG).append("\"minValue\": ").append(this.minValue)
+					.append(END);
 		}
 		if (this.nbrFractions != 0) {
-			sbf.append("\n\t\tnbrFractions: ").append(this.nbrFractions)
-					.append(C);
+			sbf.append(BEG).append("\"nbrFractions\": ")
+					.append(this.nbrFractions).append(END);
 		}
-
-		sbf.append("\n\t},");
+		sbf.setLength(sbf.length() - 1);
+		sbf.append("\n\t}");
 	}
 
 	/**

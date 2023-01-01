@@ -189,64 +189,46 @@ public class Application {
 	 *
 	 * @param folder
 	 *            client-side source folder (typically src/)
-	 * @param coreName
-	 *            name of the core package to import from
 	 * @return true if allOK, false otherwise
 	 */
-	public boolean generateTs(final String folder, String coreName) {
+	public boolean generateTs(final String folder) {
 
-		this.generateTsForLists(folder, coreName);
-		this.generateTsForSchemas(folder, coreName);
+		this.generateTsForLists(folder);
+		this.generateTsForSchemas(folder);
 		return true;
 	}
 
-	private void generateTsForSchemas(final String folder, String coreName) {
+	private void generateTsForSchemas(final String folder) {
 		logger.info("Generatng TS code for value schemas ...");
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { ValueSchemas } from '").append(coreName)
-				.append("';");
-		sbf.append("\n\nexport const allValueSchemas: ValueSchemas = {");
+		sbf.append('{');
 
 		for (ValueSchema vs : this.valueSchemas.values()) {
 			vs.emitTs(sbf);
+			sbf.append(',');
 		}
+		sbf.setLength(sbf.length() - 1);
+		sbf.append("\n}\n");
 
-		sbf.append("\n}\n\n");
-
-		String fn = folder + "allValueSchemas.ts";
+		String fn = folder + "allValueSchemas.json";
 		Util.writeOut(fn, sbf.toString());
 		logger.info("File {} generated", fn);
 
-		logger.info("Generatng  TS code for value lists...");
-		sbf.setLength(0);
-		sbf.append("import { Lists } from '").append(coreName).append("';");
-		sbf.append("\n\nexport const allLists: Lists = {");
-
-		for (ValueList vl : this.valueLists.values()) {
-			vl.emitTs(sbf);
-		}
-
-		sbf.append("\n}\n\n");
-		fn = folder + "allLists.ts";
-		Util.writeOut(fn, sbf.toString());
-		logger.info("File {} generated", fn);
 	}
 
-	private void generateTsForLists(final String folder,
-			final String coreName) {
+	private void generateTsForLists(final String folder) {
 		logger.info("Generating TS code for lists...");
 
 		StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Lists } from '").append(coreName).append("';");
-		sbf.append("\n\nexport const allLists: Lists = {");
+		sbf.append('{');
 
 		for (ValueList list : this.valueLists.values()) {
 			list.emitTs(sbf);
 			sbf.append(',');
 		}
-
-		sbf.append("\n};\n");
-		Util.writeOut(folder + "allLists.ts", sbf.toString());
+		sbf.setLength(sbf.length() - 1);
+		sbf.append("\n}\n");
+		Util.writeOut(folder + "allListSources.json", sbf.toString());
 		logger.info("TS code for {} lists generated", this.valueLists.size());
 	}
 }

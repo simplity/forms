@@ -89,7 +89,27 @@ public interface IValueList {
 	 * @return map with key = keyName|displayText and value = internal value.
 	 *         e.g if keyId=91. keyName=India, internalValue=KA
 	 *         displyaText=Karnataka, then we will have an entry with
-	 *         key="India|Karnataka" and value="KA"
+	 *         key="India|Karnataka" and value="KA".
 	 */
-	Map<String, String> getAll(IServiceContext ctx);
+	Map<String, String> getAllEntries(IServiceContext ctx);
+
+	/**
+	 * relevant for keyed list. Get all the lists for all possible keys
+	 *
+	 * @param ctx
+	 * @return all lists mapped by the key value. Note that the map-key is
+	 *         string even if the list-key is numeric. null if this is not a
+	 *         keyed list
+	 */
+	Map<String, Object[][]> getAllLists(IServiceContext ctx);
+
+	/**
+	 * most lists are non-sensitive data, and can be accessed by the public.
+	 * However, certain business data may be accessible only to authenticated
+	 * users
+	 *
+	 * @return true if the list is accessible only to authenticated users
+	 */
+
+	boolean authenticationRequired();
 }

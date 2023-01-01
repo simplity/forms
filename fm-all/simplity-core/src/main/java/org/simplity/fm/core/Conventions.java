@@ -111,10 +111,35 @@ public class Conventions {
 		 */
 		public static final String TAG_MESSAGES = "messages";
 		/**
-		 * tag/attribute/field name in the payload for a lost of rows being
+		 * tag/attribute/field name in the payload for a list of rows being
 		 * sent/returned
 		 */
 		public static final String TAG_LIST = "list";
+		/**
+		 * tag/attribute/field name of key for a keyed-list a keyed-list
+		 */
+		public static final String TAG_KEY = "key";
+		/**
+		 * tag/attribute/field name in the payload for all lists for all keys in
+		 * a keyed-list
+		 */
+		public static final String TAG_LISTS = "lists";
+		/**
+		 * tag/attribute/field name of input data to request all lists for all
+		 * possible keys in a keyed-list
+		 */
+		public static final String TAG_ALL_KEYS = "forAllKeys";
+
+		/**
+		 * field name of value in a list entry. e.g. {"value": 23, "text": "Some
+		 * District Name"
+		 */
+		public static final String TAG_LIST_ENTRY_VALUE = "value";
+		/**
+		 * field name of text in a list entry. e.g. {"value": 23, "text": "Some
+		 * District Name"
+		 */
+		public static final String TAG_LIST_ENTRY_TEXT = "text";
 		/**
 		 * number of rows of data (expected or delivered)
 		 */
@@ -149,37 +174,6 @@ public class Conventions {
 		 * formName + sep + operation is treated as a service name
 		 */
 		public static final char SERVICE_OPER_SEPARATOR = '_';
-		/**
-		 * service was executed successfully, but it returned with error
-		 * message/s
-		 */
-		public static final String ERROR_SERVICE_FAILED = "serviceFailed";
-
-		/**
-		 * request has not specified any service
-		 */
-		public static final String ERROR_NO_SERVICE = "noService";
-
-		/**
-		 * request has errors in its data-structure.
-		 */
-		public static final String ERROR_INVALID_DATA = "invalidData";
-
-		/**
-		 * requested service is either not served at all, or not served for this
-		 * user
-		 */
-		public static final String ERROR_INVALID_SERVICE = "invalidService";
-
-		/**
-		 * User has to be authenticated before requesting this service
-		 */
-		public static final String ERROR_AUTH_REQUIRED = "authRequired";
-
-		/**
-		 * User has to be authenticated before requesting this service
-		 */
-		public static final String ERROR_INTERNAL = "internalError";
 
 	}
 
@@ -307,7 +301,7 @@ public class Conventions {
 		/**
 		 * predefined name for list service
 		 */
-		public static final String SERVICE_LIST = "list";
+		public static final String SERVICE_LIST = "_getList";
 
 		/**
 		 * predefined name for the service to get the output of an

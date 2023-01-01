@@ -291,8 +291,8 @@ class App implements IApp, IAppInfra {
 			outData.endObject();
 
 			RequestStatus status = ctx.allOk()
-					? RequestStatus.Served
-					: RequestStatus.ServedWithErrors;
+					? RequestStatus.Completed
+					: RequestStatus.CompletedWithErrors;
 			outData.addName(TAG_STATUS).addValue(status.getMessageId());
 
 			if (sessionId != null && ctx.toResetUserContext()) {

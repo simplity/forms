@@ -37,20 +37,25 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  */
 public class KeyedValueList implements IValueList {
-	protected static final Logger logger = LoggerFactory.getLogger(KeyedValueList.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(KeyedValueList.class);
 	protected String name;
+	protected boolean authenticationRequired;
 	protected Map<Object, ValueList> values = new HashMap<>();
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+	public boolean isValid(final Object fieldValue, final Object keyValue,
+			final IServiceContext ctx) {
 		final ValueList vl = this.values.get(keyValue);
 		if (vl == null) {
-			logger.error("Key {} is not valid for keyed list {}", keyValue, this.name);
+			logger.error("Key {} is not valid for keyed list {}", keyValue,
+					this.name);
 			return false;
 		}
 		final boolean ok = vl.isValid(fieldValue, null, ctx);
 		if (!ok) {
-			logger.error("{} is not in the list for key {} is keyed list {}", fieldValue, keyValue, this.name);
+			logger.error("{} is not in the list for key {} is keyed list {}",
+					fieldValue, keyValue, this.name);
 		}
 		return ok;
 	}
@@ -66,24 +71,43 @@ public class KeyedValueList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final Object keyValue, final IServiceContext ctx) {
+	public Object[][] getList(final Object keyValue,
+			final IServiceContext ctx) {
 		final ValueList vl = this.values.get(keyValue);
 		if (vl == null) {
-			logger.error("Key {} is not valid for keyed list {}. Null list returned.", keyValue, this.name);
+			logger.error(
+					"Key {} is not valid for keyed list {}. Null list returned.",
+					keyValue, this.name);
 			return null;
 		}
 		return vl.valueList;
 	}
 
 	@Override
-	public Map<String, String> getAll(final IServiceContext ctx) {
+	public Map<String, String> getAllEntries(final IServiceContext ctx) {
 		final Map<String, String> result = new HashMap<>();
-		for (final Map.Entry<Object, ValueList> entry : this.values.entrySet()) {
+		for (final Map.Entry<Object, ValueList> entry : this.values
+				.entrySet()) {
 			final String key = entry.getKey().toString() + '|';
 			for (final Object[] row : entry.getValue().valueList) {
 				result.put(key + row[1].toString(), row[0].toString());
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public Map<String, Object[][]> getAllLists(IServiceContext ctx) {
+		final Map<String, Object[][]> result = new HashMap<>();
+		for (final Map.Entry<Object, ValueList> entry : this.values
+				.entrySet()) {
+			result.put(entry.getKey().toString(), entry.getValue().valueList);
+		}
+		return result;
+	}
+
+	@Override
+	public boolean authenticationRequired() {
+		return this.authenticationRequired;
 	}
 }

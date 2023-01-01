@@ -50,23 +50,18 @@ class Control implements Util.IInitializer {
 	int idx;
 
 	void emitTs(final StringBuilder def, final Map<String, Field> fields) {
-		def.append("\n\t").append(this.name).append(":Field = {\n\t\tname:'")
-				.append(this.name).append("'");
-
 		final String b = "\n\t\t,";
-		def.append(b).append("controlType: '").append(this.controlType)
-				.append('\'');
+		def.append("\n\t\"").append(this.name).append("\": {\n\t\t\"name\":\"")
+				.append(this.name).append("\"");
 
-		def.append(b).append("label: ");
-		if (this.label == null) {
-			def.append(Util.singleQuotedString(this.name));
-		} else {
-			def.append(Util.singleQuotedString(this.label));
-		}
+		def.append(b).append("\"controlType\": \"").append(this.controlType)
+				.append('"');
+
+		final String lbl = this.label == null ? this.name : this.label;
+		Util.addAttr(def, b, "label", lbl);
 
 		if (this.placeHolder != null) {
-			def.append(b).append("placeHolder: ")
-					.append(Util.singleQuotedString(this.placeHolder));
+			Util.addAttr(def, b, "placeHolder", this.placeHolder);
 		}
 
 		if (this.width != 0) {

@@ -23,25 +23,26 @@ public class MessageMap {
 	 * @param folder
 	 *            folder name ending with folder character in which this file is
 	 *            to be generated
-	 * @param importLibrary
-	 *            name of the library to import the Types from
 	 * @return true if all OK. false otherwise
 	 */
-	public boolean generateTs(final String folder, final String importLibrary) {
+	public boolean generateTs(final String folder) {
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Messages } from '").append(importLibrary)
-				.append("';");
-		sbf.append("\n\nexport const allMessages: Messages = {");
+		sbf.append('{');
+		int n = 0;
 		if (this.messages != null) {
 			for (final Map.Entry<String, String> entry : this.messages
 					.entrySet()) {
-				sbf.append("\n\t").append(entry.getKey()).append(": ")
-						.append(Util.qoutedString(entry.getValue()))
+				sbf.append("\n\t\"").append(entry.getKey()).append("\": ")
+						.append(Util.quotedString(entry.getValue()))
 						.append(',');
+				n++;
 			}
 		}
-		sbf.append("\n}\n\n");
-		Util.writeOut(folder + "allMessages.ts", sbf.toString());
+		if (n != 0) {
+			sbf.setLength(sbf.length() - 1);
+		}
+		sbf.append("\n}\n");
+		Util.writeOut(folder + "allMessages.json", sbf.toString());
 		return true;
 
 	}

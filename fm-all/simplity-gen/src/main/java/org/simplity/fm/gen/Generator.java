@@ -39,7 +39,6 @@ public class Generator {
 
 	private static final String FOLDER = "/";
 
-	private static final String SIMPLITY_CLIENT = "simplity-client";
 	private static final String TS_FOLDER_FORM = "lib/form/";
 	private static final String TS_FOLDER_LIB = "lib/";
 
@@ -230,15 +229,14 @@ public class Generator {
 					app.generateJava(this.javaOutputRoot, this.packageName));
 		}
 		if (this.toGenerateTs) {
-			this.accumulate(app.generateTs(this.tsLibFolder, SIMPLITY_CLIENT));
+			this.accumulate(app.generateTs(this.tsLibFolder));
 
 			fileName = this.inputRoot + Conventions.App.MESSAGES_FILE;
 			MessageMap messages = Util.loadJson(fileName, MessageMap.class);
 			if (messages == null) {
 				messages = new MessageMap();
 			}
-			this.accumulate(
-					messages.generateTs(this.tsLibFolder, SIMPLITY_CLIENT));
+			this.accumulate(messages.generateTs(this.tsLibFolder));
 			writeIndexTs();
 		}
 
@@ -353,9 +351,7 @@ public class Generator {
 
 		if (this.toGenerateTs) {
 			// note that a record is generated as a form on the client side
-			imports.append("import { Forms } from '").append(SIMPLITY_CLIENT)
-					.append("';\n");
-			allForms.append("\nexport const allForms: Forms = {");
+			allForms.append("\nexport const allForms = {");
 		}
 
 		for (final File file : folder.listFiles()) {
@@ -390,14 +386,16 @@ public class Generator {
 			}
 
 			if (this.toGenerateTs) {
-				final boolean done = record.generateTs(this.tsFormFolder,
-						SIMPLITY_CLIENT);
+				final boolean done = record.generateTs(this.tsFormFolder);
 				if (done) {
-					imports.append("\nimport { ").append(fn)
-							.append("Form } from './form/").append(fn)
-							.append(".form';");
-					allForms.append("\n\t").append(fn).append(": ").append(fn)
-							.append("Form,");
+					// variable name is prefixed with _ to avoid clash with
+					// reserved words
+					imports.append("import _").append(fn)
+							.append(" from './form/").append(fn)
+							.append(".form.json';\n");
+
+					allForms.append("\n\t'").append(fn).append("': _")
+							.append(fn).append(',');
 				}
 			}
 		}
@@ -409,8 +407,23 @@ public class Generator {
 					dataSqls.toString());
 		}
 		if (this.toGenerateTs) {
-			imports.append('\n').append(allForms).append("\n};\n");
-			Util.writeOut(this.tsLibFolder + "allForms.ts", imports.toString());
+			allForms.setLength(allForms.length() - 1); // remove the last comma
+			allForms.append("\n};\n");
+
+			imports.append(
+					"\nimport _allListSources from './allListSources.json';");
+			imports.append("\nimport _allMessages from './allMessages.json';");
+			imports.append(
+					"\nimport _allValueSchemas from './allValueSchemas.json';\n\n");
+			imports.append(allForms);
+
+			imports.append("\nexport const allListSources = _allListSources;");
+			imports.append("\nexport const allMessages = _allMessages;");
+			imports.append(
+					"\nexport const allValueSchemas = _allValueSchemas;");
+			imports.append("\n\n");
+
+			Util.writeOut(this.tsLibFolder + "gen.ts", imports.toString());
 		}
 	}
 

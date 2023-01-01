@@ -21,7 +21,7 @@ public enum RequestStatus {
 	NoSuchService {
 		@Override
 		public String getDescription() {
-			return "This service either does not exist, or is not accessible to this user.";
+			return "No such service is served by this app, or the service is not accessible to this user.";
 		}
 	},
 	/**
@@ -31,7 +31,7 @@ public enum RequestStatus {
 	SessionRequired {
 		@Override
 		public String getDescription() {
-			return "A session is required for any service request";
+			return "Request does not specify a session id";
 		}
 	},
 
@@ -42,7 +42,7 @@ public enum RequestStatus {
 	NoSuchSession {
 		@Override
 		public String getDescription() {
-			return "No session is active with this session id. If this was indeed an id returned by this server, then the session is not active any more";
+			return "No session is active with this session id. Either the session has expired, or the id is invalid";
 		}
 	},
 	/**
@@ -52,23 +52,23 @@ public enum RequestStatus {
 	InvalidDataFormat {
 		@Override
 		public String getDescription() {
-			return "Invalid input data format";
+			return "Invalid input data format.";
 		}
 	},
 	/**
 	 * Request is serviced successfully
 	 */
-	Served {
+	Completed {
 		@Override
 		public String getDescription() {
-			return "Service successfully completed.";
+			return "Successfully completed.";
 		}
 	},
 	/**
 	 * Service execution found errors with input data, or the intended action
 	 * could not be taken for other reasons payload
 	 */
-	ServedWithErrors {
+	CompletedWithErrors {
 		@Override
 		public String getDescription() {
 			return "Service completed but with errors. Either the input data was invalid, or the intended action could not be taken for other reasons.";

@@ -187,7 +187,7 @@ public class ValueList implements IInitializer {
 			if (this.keyIsNumeric) {
 				sbf.append(key).append('L');
 			} else {
-				sbf.append(Util.qoutedString(key.toString()));
+				sbf.append(Util.quotedString(key.toString()));
 			}
 			sbf.append(C);
 			emitJavaSet(vals, entry.getValue());
@@ -224,11 +224,11 @@ public class ValueList implements IInitializer {
 		for (final Pair p : ps) {
 			vals.append("\n\t\t\t\t{");
 			if (p.value instanceof String) {
-				vals.append(Util.qoutedString(p.value.toString()));
+				vals.append(Util.quotedString(p.value.toString()));
 			} else {
 				vals.append(p.value).append('L');
 			}
-			vals.append(C).append(Util.qoutedString(p.label)).append("}");
+			vals.append(C).append(Util.quotedString(p.label)).append("}");
 			vals.append(C);
 		}
 		vals.setLength(vals.length() - C.length());
@@ -246,11 +246,11 @@ public class ValueList implements IInitializer {
 		for (final Pair p : this.list) {
 			sbf.append("\n\t\t{");
 			if (p.value instanceof String) {
-				sbf.append(Util.qoutedString(p.value.toString()));
+				sbf.append(Util.quotedString(p.value.toString()));
 			} else {
 				sbf.append(p.value).append('L');
 			}
-			sbf.append(C).append(Util.qoutedString(p.label)).append("}");
+			sbf.append(C).append(Util.quotedString(p.label)).append("}");
 			sbf.append(C);
 		}
 
@@ -286,32 +286,34 @@ public class ValueList implements IInitializer {
 	 * @return true if TS is emitted. False otherwise
 	 */
 	public boolean emitTs(StringBuilder sbf) {
-		sbf.append(T1).append(this.name).append(": {");
-		sbf.append(T2).append("name: '").append(this.name).append("',");
-		sbf.append(T2).append("listType: '").append(this.listType).append("',");
+		sbf.append(T1).append('"').append(this.name).append("\": {");
+		sbf.append(T2).append("\"name\": \"").append(this.name).append("\",");
+		sbf.append(T2).append("\"listType\": \"").append(this.listType)
+				.append("\",");
 		if (this.isKeyed) {
-			sbf.append(T2).append("isKeyed: true,");
+			sbf.append(T2).append("\"isKeyed\": true,");
 		}
 
 		if (this.listType.equals(LIST_SIMPLE)) {
-			sbf.append(T2).append("list: [");
+			sbf.append(T2).append("\"list\": [");
 			emitTsPairs(sbf, this.list, T3);
-			sbf.append(T2).append("],");
+			sbf.append(T2).append("]");
 		} else if (this.listType.equals(LIST_KEYED)) {
-			sbf.append(T2).append("keyedLists: {");
+			sbf.append(T2).append("\"keyedLists\": {");
 
 			for (final Map.Entry<String, Pair[]> entry : this.keys.entrySet()) {
-				sbf.append(T3).append("'").append(entry.getKey())
-						.append("': [");
+				sbf.append(T3).append('"').append(entry.getKey())
+						.append("\": [");
 				emitTsPairs(sbf, entry.getValue(), T4);
 				sbf.append(T3).append("],");
 			}
-			sbf.append(T2).append("},");
+			sbf.setLength(sbf.length() - 1);
+			sbf.append(T2).append("}");
 		} else {
 			// nothing more for runtime list
 		}
 
-		sbf.append(T1).append("},");
+		sbf.append(T1).append("}");
 		return true;
 	}
 
@@ -319,15 +321,16 @@ public class ValueList implements IInitializer {
 			String indent) {
 		for (final Pair p : pairs) {
 			sbf.append(indent).append('{');
-			sbf.append(indent).append("\tvalue:");
+			sbf.append(indent).append("\t\"value\":");
 			if (p.value instanceof String) {
 				sbf.append(Util.escapeTs(p.value));
 			} else {
 				sbf.append(p.value);
 			}
-			sbf.append(',').append(indent).append("\ttext:")
-					.append(Util.singleQuotedString(p.label));
+			sbf.append(',').append(indent).append("\t\"text\":")
+					.append(Util.quotedString(p.label));
 			sbf.append(indent).append("},");
 		}
+		sbf.setLength(sbf.length() - 1);
 	}
 }

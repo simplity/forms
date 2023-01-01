@@ -198,7 +198,7 @@ public class ServiceTester {
 				AppManager.getApp().getLogoutServiceName());
 		try {
 			RequestStatus status = this.app.serve(this.loginData, writer);
-			assertEquals(RequestStatus.Served, status,
+			assertEquals(RequestStatus.Completed, status,
 					"logout service should succeed");
 		} catch (IOException e) {
 			logger.error("I/O Error while executing login");
@@ -213,7 +213,7 @@ public class ServiceTester {
 
 		try {
 			RequestStatus status = this.app.serve(this.loginData, writer);
-			assertEquals(RequestStatus.Served, status,
+			assertEquals(RequestStatus.Completed, status,
 					"login service should succeed");
 			StringReader reader = new StringReader(writer.toString());
 			IInputData data = JsonUtil.newInputData(reader);

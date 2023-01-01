@@ -521,9 +521,9 @@ class Record {
 
 				sbf.append("new DependentListValidation(").append(field.index);
 				sbf.append(C).append(f.index);
-				sbf.append(C).append(Util.qoutedString(field.listName));
-				sbf.append(C).append(Util.qoutedString(field.fieldName));
-				sbf.append(C).append(Util.qoutedString(field.errorId));
+				sbf.append(C).append(Util.quotedString(field.listName));
+				sbf.append(C).append(Util.quotedString(field.fieldName));
+				sbf.append(C).append(Util.quotedString(field.errorId));
 				sbf.append(")");
 				sbf.append(sufix);
 			}
@@ -787,27 +787,23 @@ class Record {
 		return true;
 	}
 
-	private static final char Q = '\'';
+	private static final char Q = '"';
 
 	/**
 	 *
 	 * @param folderName
 	 *            including the last folder character, inside which this file is
 	 *            to be created.
-	 * @param tsImport
-	 *            package name from which to import Form Interface
 	 * @return true if the file was indeed generated. False otherwise
 	 */
-	public boolean generateTs(final String folderName, final String tsImport) {
+	public boolean generateTs(final String folderName) {
 		if (!this.isVisibleToClient) {
 			return false;
 		}
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Form } from '").append(tsImport).append("';");
-		sbf.append("\nexport const ").append(this.recordName)
-				.append("Form: Form = {");
-		sbf.append("\n\tname: '").append(this.recordName).append("',");
-		sbf.append("\n\tvalidOperations: {");
+		sbf.append('{');
+		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
+		sbf.append("\n\t\"validOperations\": {");
 		if (this.operations == null || this.operations.length == 0) {
 			logger.warn(
 					"No operatins are allowed for record {}. Client app will not be able to use auto-service for this record",
@@ -818,13 +814,13 @@ class Record {
 					logger.error("{} is not a valid form operation. skipped",
 							oper);
 				} else {
-					sbf.append("\n\t\t").append(oper).append(": true,");
+					sbf.append("\n\t\t\"").append(oper).append("\": true,");
 				}
 			}
-			sbf.setLength(sbf.length() - 1);
+			sbf.setLength(sbf.length() - 1); // removing the last comma
 		}
 		sbf.append("\n\t},");
-		sbf.append("\n\tfields: {");
+		sbf.append("\n\t\"fields\": {");
 		final StringBuilder names = new StringBuilder();
 		for (final Field field : this.fields) {
 			field.emitFormTs(sbf);
@@ -834,19 +830,20 @@ class Record {
 		sbf.setLength(sbf.length() - 1);
 		names.setLength((names.length() - 1));
 		sbf.append("\n\t},");
-		sbf.append("\n\tfieldNames: [").append(names.toString()).append("]");
+		sbf.append("\n\t\"fieldNames\": [").append(names.toString())
+				.append("]");
 		if (this.keyFields != null && this.keyFields.length > 0) {
 			// we generally have only one key field
-			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].fieldName)
-					.append(Q);
+			sbf.append(",\n\t\"keyFields\": [\"")
+					.append(this.keyFields[0].fieldName).append(Q);
 			for (int i = 1; i < this.keyFields.length; i++) {
-				sbf.append(",'").append(this.keyFields[i].fieldName).append(Q);
+				sbf.append(",\"").append(this.keyFields[i].fieldName).append(Q);
 			}
 			sbf.append("]");
 		}
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.recordName + ".form.ts",
+		Util.writeOut(folderName + this.recordName + ".form.json",
 				sbf.toString());
 
 		return true;

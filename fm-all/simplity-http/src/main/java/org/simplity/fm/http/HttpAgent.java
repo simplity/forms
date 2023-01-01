@@ -163,7 +163,7 @@ class HttpAgent {
 
 	private static int toHttpStatus(RequestStatus status) {
 		switch (status) {
-		case ServedWithErrors :
+		case CompletedWithErrors :
 			return Conventions.Http.STATUS_SERVICE_FAILED;
 		case ServiceNameRequired :
 			return Conventions.Http.STATUS_INVALID_DATA;
@@ -176,7 +176,7 @@ class HttpAgent {
 			return Conventions.Http.STATUS_AUTH_REQUIRED;
 		case ServerError :
 			return Conventions.Http.STATUS_INTERNAL_ERROR;
-		case Served :
+		case Completed :
 			return Conventions.Http.STATUS_ALL_OK;
 		default :
 			return Conventions.Http.STATUS_INTERNAL_ERROR;

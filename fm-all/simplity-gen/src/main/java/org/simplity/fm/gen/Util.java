@@ -50,6 +50,7 @@ import com.google.gson.stream.JsonToken;
  *
  */
 public class Util {
+	private static final char Q = '"';
 	/**
 	 * Gson is not a small object. It is immutable and thread safe. Hence with
 	 * this small trick, we can avoid repeated creation of Gson instances
@@ -100,24 +101,11 @@ public class Util {
 	 * @param s
 	 * @return escaped string with enclosed quotes
 	 */
-	public static String qoutedString(final String s) {
+	public static String quotedString(final String s) {
 		if (s == null || s.isEmpty()) {
 			return "null";
 		}
-		return '"' + s.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
-	}
-
-	/**
-	 * use single quotes around the string, after escaping chars
-	 *
-	 * @param s
-	 * @return escaped string with enclosed quotes
-	 */
-	public static String singleQuotedString(final String s) {
-		if (s == null) {
-			return "null";
-		}
-		return '\'' + s.replace("\\", "\\\\").replace("'", "''") + '\'';
+		return Q + s.replace("\\", "\\\\").replace("\"", "\\\"") + Q;
 	}
 
 	/**
@@ -131,7 +119,7 @@ public class Util {
 			return "null";
 		}
 		if (obj instanceof String) {
-			return singleQuotedString((String) obj);
+			return quotedString((String) obj);
 		}
 		return obj.toString();
 	}
@@ -288,7 +276,7 @@ public class Util {
 		}
 
 		if (obj instanceof String) {
-			return qoutedString((String) obj);
+			return quotedString((String) obj);
 		}
 
 		return obj.toString();
@@ -334,7 +322,7 @@ public class Util {
 			} else {
 				sbf.append(',');
 			}
-			sbf.append(qoutedString(s));
+			sbf.append(quotedString(s));
 		}
 		sbf.append('}');
 	}
@@ -369,25 +357,10 @@ public class Util {
 		if (val == null || val.isEmpty()) {
 			return;
 		}
-		sbf.append(prefix).append(Util.qoutedString(att)).append(": ")
-				.append(Util.qoutedString(val)).append(',');
+		sbf.append(prefix).append(Util.quotedString(att)).append(": ")
+				.append(Util.quotedString(val)).append(',');
 	}
 
-	/**
-	 * add att: "value', but only if it is required, for a TS script
-	 *
-	 * @param sbf
-	 * @param prefix
-	 * @param att
-	 * @param val
-	 */
-	public static void addAttrTs(final StringBuilder sbf, final String prefix,
-			final String att, final String val) {
-		if (val == null || val.isEmpty()) {
-			return;
-		}
-		sbf.append(prefix).append(att).append(": '").append(val).append("',");
-	}
 	/**
 	 *
 	 * @param <T>

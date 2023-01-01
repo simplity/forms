@@ -32,7 +32,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 class Section {
-	protected static final Logger logger = LoggerFactory.getLogger(Section.class);
+	protected static final Logger logger = LoggerFactory
+			.getLogger(Section.class);
 	protected static final String C = ", ";
 
 	/**
@@ -43,6 +44,7 @@ class Section {
 	Control[] controls;
 
 	void emitTs(final StringBuilder sbf) {
-		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");
+		sbf.append("\n\t\t\t\"").append(this.getClass().getSimpleName())
+				.append('"');
 	}
 }

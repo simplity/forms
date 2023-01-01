@@ -238,7 +238,7 @@ public class UploaderParser {
 					sysName);
 			return false;
 		}
-		Map<String, String> map = vl.getAll(ctx);
+		Map<String, String> map = vl.getAllEntries(ctx);
 		if (map == null) {
 			logger.error(
 					"SYstem list {} has no valid values. lookup on this list will always fail");

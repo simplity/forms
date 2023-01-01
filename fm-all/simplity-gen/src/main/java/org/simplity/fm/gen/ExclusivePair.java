@@ -43,8 +43,8 @@ class ExclusivePair {
 		sbf.append("new ExclusiveValidation(").append(this.index1);
 		sbf.append(C).append(this.index2);
 		sbf.append(C).append(this.isRequired);
-		sbf.append(C).append(Util.qoutedString(this.fieldName));
-		sbf.append(C).append(Util.qoutedString(this.errorId));
+		sbf.append(C).append(Util.quotedString(this.fieldName));
+		sbf.append(C).append(Util.quotedString(this.errorId));
 		sbf.append(")");
 	}
 	/**

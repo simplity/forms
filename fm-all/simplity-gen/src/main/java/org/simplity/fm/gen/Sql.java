@@ -173,7 +173,7 @@ public class Sql {
 		 * static declarations
 		 */
 		sbf.append(P).append("String SQL = ")
-				.append(Util.qoutedString(this.sql)).append(';');
+				.append(Util.quotedString(this.sql)).append(';');
 		sbf.append(P).append("Field[] IN = ");
 		emitFields(sbf, this.sqlParams);
 		sbf.append(';');
@@ -212,7 +212,7 @@ public class Sql {
 		 * static declarations
 		 */
 		sbf.append(P).append("String SQL = ")
-				.append(Util.qoutedString(this.sql)).append(';');
+				.append(Util.quotedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams);
@@ -258,7 +258,7 @@ public class Sql {
 		 * static declarations
 		 */
 		sbf.append(P).append("String SQL = ")
-				.append(Util.qoutedString(this.sql)).append(';');
+				.append(Util.quotedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams);
@@ -298,7 +298,7 @@ public class Sql {
 		 * static declarations
 		 */
 		sbf.append(P).append("String SQL = ")
-				.append(Util.qoutedString(this.sql)).append(';');
+				.append(Util.quotedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams);
@@ -343,7 +343,7 @@ public class Sql {
 		 * static declarations
 		 */
 		sbf.append(P).append("String SQL = ")
-				.append(Util.qoutedString(this.sql)).append(';');
+				.append(Util.quotedString(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams);

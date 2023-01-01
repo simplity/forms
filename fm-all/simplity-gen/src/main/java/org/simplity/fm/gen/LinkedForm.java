@@ -52,11 +52,11 @@ class LinkedForm {
 		sbf.append(P).append("LinkMetaData L").append(idx)
 				.append(" = new LinkMetaData(");
 
-		sbf.append(Util.qoutedString(this.name));
-		sbf.append(C).append(Util.qoutedString(this.formName));
+		sbf.append(Util.quotedString(this.name));
+		sbf.append(C).append(Util.quotedString(this.formName));
 		sbf.append(C).append(this.minRows);
 		sbf.append(C).append(this.maxRows);
-		sbf.append(C).append(Util.qoutedString(this.errorId));
+		sbf.append(C).append(Util.quotedString(this.errorId));
 
 		boolean linkExists = false;
 		if (this.parentLinkFields == null) {
@@ -108,20 +108,18 @@ class LinkedForm {
 
 	void emitTs(final StringBuilder sbf) {
 		final String T = ",\n\t\t";
-		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
-		sbf.append("\n\t\tname:").append(Util.singleQuotedString(this.name));
-		sbf.append(T).append("form:").append(Util.toClassName(this.formName))
-				.append("Form.getInstance()");
-		sbf.append(T).append("isEditable:").append(this.isEditable);
-		sbf.append(T).append("isTabular:").append(this.isTabular);
-		sbf.append(T).append("label:")
-				.append(this.label == null
-						? "''"
-						: Util.singleQuotedString(this.label));
-		sbf.append(T).append("minRows:").append(this.minRows);
-		sbf.append(T).append("maxRows:").append(this.maxRows);
-		sbf.append(T).append("errorId:")
-				.append(Util.singleQuotedString(this.errorId));
+		sbf.append("\n\t\"").append(this.name).append("\": {");
+		sbf.append("\n\t\t\"name\":").append(Util.quotedString(this.name));
+		sbf.append(T).append("\"form\":\"")
+				.append(Util.toClassName(this.formName)).append('"');
+		sbf.append(T).append("\"isEditable\":").append(this.isEditable);
+		sbf.append(T).append("\"isTabular\":").append(this.isTabular);
+		sbf.append(T).append("\"label\":").append(
+				this.label == null ? "\"\"" : Util.quotedString(this.label));
+		sbf.append(T).append("\"minRows\":").append(this.minRows);
+		sbf.append(T).append("\"maxRows\":").append(this.maxRows);
+		sbf.append(T).append("\"errorId\":")
+				.append(Util.quotedString(this.errorId));
 
 		sbf.append("\n\t};");
 	}
