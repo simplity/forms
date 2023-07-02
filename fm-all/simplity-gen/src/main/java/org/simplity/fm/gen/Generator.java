@@ -57,8 +57,8 @@ public class Generator {
 
 	private static final String CREATE_SQL_COMMENT = "-- This file has the sql to create tables. It includes command to create primary keys.\n"
 			+ "-- It is intended to be included in a sql after the script that would delete tables.";
-	private static final String DATA_SQL_COMMENT = "-- This file has the template for inserting rows into the tables."
-			+ "\n-- user may use copy the contents to create a sql to populate data into the db."
+	private static final String DATA_SQL_COMMENT = "-- This file has the template that can be used to create sql to add data to tables."
+			+ "\n-- Values clause has one row of empty/0/false values."
 			+ "\n-- we intend to introduce some syntax to generate this fiel WITH data in the future";
 
 	/**
@@ -469,9 +469,7 @@ public class Generator {
 		}
 	}
 
-	private static final String PRE = "export * from './lib/all";
-	private static final String INDEX_TS = PRE + "Forms';\n" + PRE + "Lists';\n"
-			+ PRE + "ValueSchemas';\r\n" + PRE + "Messages';\n";
+	private static final String INDEX_TS = "export * from './lib/gen';";
 	private static final String INDEX_NAME = "index.ts";
 
 	private void writeIndexTs() {
