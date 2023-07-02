@@ -92,6 +92,10 @@ public class Agent {
 	private JsonObject inputData;
 	private IServiceContext ctx;
 
+	private Agent() {
+		// instance to be obtained only through getAgent
+	}
+
 	/**
 	 * response for a pre-flight request
 	 *
@@ -159,7 +163,7 @@ public class Agent {
 
 		this.readInput();
 		if (this.inputData == null) {
-			logger.info("Invalid JSON recd from client ");
+			logger.info("Invalid JSON received from the client ");
 			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}

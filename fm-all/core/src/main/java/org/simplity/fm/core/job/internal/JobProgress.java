@@ -20,15 +20,53 @@
  * SOFTWARE.
  */
 
+package org.simplity.fm.core.job.internal;
+
+import org.simplity.fm.core.job.IJobProgressRecorder;
+import org.simplity.fm.core.job.IJobProgressReporter;
+
 /**
- * classes to provide highly restricted APIs to just what we want to do in
- * serialization and de-serialization
- *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
- *
  * @author simplity.org
  *
  */
-package org.simplity.fm.core.serialize;
+public class JobProgress implements IJobProgressRecorder, IJobProgressReporter {
+
+	private int percent;
+	private long count;
+	private String info = "";
+
+	@Override
+	public int getPercentageCompleted() {
+		return this.percent;
+	}
+
+	@Override
+	public long getProgressCount() {
+		return this.count;
+	}
+
+	@Override
+	public String getMessage() {
+		return this.info;
+	}
+
+	@Override
+	public void setPercentageCompleted(final int percentage) {
+		this.percent = percentage;
+	}
+
+	@Override
+	public void getProgressCount(final long progressCount) {
+		this.count = progressCount;
+	}
+
+	@Override
+	public void getMessage(final String message) {
+		if (message == null) {
+			this.info = "";
+		} else {
+			this.info = message;
+		}
+	}
+
+}

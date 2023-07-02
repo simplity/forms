@@ -20,15 +20,28 @@
  * SOFTWARE.
  */
 
+package org.simplity.fm.core.job.internal;
+
+import java.util.UUID;
+
+import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.service.AbstractService;
+import org.simplity.fm.core.service.IServiceContext;
+
 /**
- * classes to provide highly restricted APIs to just what we want to do in
- * serialization and de-serialization
- *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
+ * Class that serves a service as a job
  *
  * @author simplity.org
  *
  */
-package org.simplity.fm.core.serialize;
+public class ServiceAsJob extends AbstractService {
+
+	@Override
+	public void serve(final IServiceContext ctx, final IInputObject inputObject) throws Exception {
+		/**
+		 *
+		 */
+		final String uid = UUID.randomUUID().toString();
+	}
+
+}

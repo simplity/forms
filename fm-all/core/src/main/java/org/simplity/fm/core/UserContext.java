@@ -54,6 +54,11 @@ public class UserContext {
 	protected Set<String> recordOverrides;
 
 	/**
+	 * pending jobs that the user has asked for, but not delivered yet
+	 */
+	protected Set<String> jobs;
+
+	/**
 	 *
 	 * @param userId
 	 */
@@ -93,8 +98,9 @@ public class UserContext {
 	/**
 	 *
 	 * @param recordName
-	 * @return null if this is not if overridden in the current context. overrideId if present. 
-	 * 
+	 * @return null if this is not if overridden in the current context.
+	 *         overrideId if present.
+	 *
 	 */
 	public String getRecordOverrideId(final String recordName) {
 		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
@@ -124,5 +130,29 @@ public class UserContext {
 	 */
 	public RecordOverride getRecordOverride(final String recordName) {
 		return OverrideUtil.getRecord(this.overrideId, recordName);
+	}
+
+	/**
+	 * save a jobId in the context
+	 *
+	 * @param jobId
+	 *            must be a valid jobId returned by the JobManager
+	 */
+	public void addJob(final String jobId) {
+		if (this.jobs == null) {
+			this.jobs = new HashSet<>();
+		}
+		this.jobs.add(jobId);
+	}
+
+	/**
+	 * remove the jobId from this list once it is taken care of..
+	 *
+	 * @param jobId
+	 */
+	public void removeJob(final String jobId) {
+		if (this.jobs != null) {
+			this.jobs.remove(jobId);
+		}
 	}
 }

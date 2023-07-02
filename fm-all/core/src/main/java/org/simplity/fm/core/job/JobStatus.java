@@ -20,15 +20,34 @@
  * SOFTWARE.
  */
 
+package org.simplity.fm.core.job;
+
 /**
- * classes to provide highly restricted APIs to just what we want to do in
- * serialization and de-serialization
- *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
+ * STatus of a job
  *
  * @author simplity.org
  *
  */
-package org.simplity.fm.core.serialize;
+public enum JobStatus {
+	/**
+	 * waiting in the queue
+	 */
+	Waiting,
+	/**
+	 * started running, yet to be completed
+	 */
+	Running,
+
+	/**
+	 * completed successfully
+	 */
+	Completed,
+	/**
+	 * job failed to run
+	 */
+	Failed,
+	/**
+	 * cancelled by request
+	 */
+	Cancelled
+}

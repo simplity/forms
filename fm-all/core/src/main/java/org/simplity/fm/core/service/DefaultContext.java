@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.service;
 
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,7 +51,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DefaultContext implements IServiceContext {
-	protected static Logger logger = LoggerFactory.getLogger(DefaultContext.class);
+	protected static Logger logger = LoggerFactory
+			.getLogger(DefaultContext.class);
 
 	protected final ISerializer serializer;
 	protected final UserContext currentUtx;
@@ -70,7 +73,8 @@ public class DefaultContext implements IServiceContext {
 	 * @param session
 	 * @param serializer
 	 */
-	public DefaultContext(final UserContext session, final ISerializer serializer) {
+	public DefaultContext(final UserContext session,
+			final ISerializer serializer) {
 		this.serializer = serializer;
 		this.currentUtx = session;
 		/*
@@ -88,13 +92,12 @@ public class DefaultContext implements IServiceContext {
 	public boolean hasUserContext() {
 		return this.currentUtx != null;
 	}
-	
+
 	/**
 	 * MUST be executed before this context is used in case this APP is designed
 	 * for multi-tenant deployment
 	 *
-	 * @param tenantId
-	 *            the tenantId to set
+	 * @param tenantId the tenantId to set
 	 */
 	protected void setTenantId(final Object tenantId) {
 		this.tenantId = tenantId;
@@ -102,13 +105,13 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public Object getUserId() {
-		this.checkCtx();
-		return this.userId;
+		if (this.userId != null) {
+			return this.userId;
+		}
+		throw new ApplicationError(
+				"Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
 	}
 
-	private void checkCtx() {
-		throw new ApplicationError("Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
-	}
 	@Override
 	public ISerializer getSerializer() {
 		return this.serializer;
@@ -231,7 +234,8 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName, final DbTable<?> lines) {
+	public void setAsResponse(final Record header, final String childName,
+			final DbTable<?> lines) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
@@ -255,7 +259,8 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName, final List<? extends Record> lines) {
+	public void setAsResponse(final Record header, final String childName,
+			final List<? extends Record> lines) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
@@ -279,8 +284,11 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public UserContext getCurrentUserContext() {
-		this.checkCtx();
-		return this.currentUtx;
+		if (this.currentUtx != null) {
+			return this.currentUtx;
+		}
+		throw new ApplicationError(
+				"Service Design Error: Service should not expect a user context/sessoin, but its implementation is asking for one.");
 	}
 
 	@Override
@@ -295,7 +303,7 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public String getRecordOverrideId(final String recordName) {
-		if(this.currentUtx == null) {
+		if (this.currentUtx == null) {
 			return null;
 		}
 		return this.currentUtx.getRecordOverrideId(recordName);
@@ -303,7 +311,7 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public RecordOverride getRecordOverride(final String recordName) {
-		if(this.currentUtx == null) {
+		if (this.currentUtx == null) {
 			return null;
 		}
 		return this.currentUtx.getRecordOverride(recordName);
@@ -311,9 +319,21 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public String getFormOverrideId(final String formName) {
-		if(this.currentUtx == null) {
+		if (this.currentUtx == null) {
 			return null;
 		}
 		return this.currentUtx.getFormOverrideId(formName);
+	}
+
+	@Override
+	public void persist(Writer writer) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean load(Reader reader) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

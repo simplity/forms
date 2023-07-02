@@ -20,15 +20,29 @@
  * SOFTWARE.
  */
 
+package org.simplity.fm.core.conf.defalt;
+
+import java.io.Reader;
+
+import org.simplity.fm.core.conf.IJobManager;
+import org.simplity.fm.core.job.IJobHandle;
+
 /**
- * classes to provide highly restricted APIs to just what we want to do in
- * serialization and de-serialization
- *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
- *
  * @author simplity.org
  *
  */
-package org.simplity.fm.core.serialize;
+public class DefaultJobManager implements IJobManager {
+
+	@Override
+	public IJobHandle newJob(final Reader reader, final String serviceName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IJobHandle getJob(final String jobId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

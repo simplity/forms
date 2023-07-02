@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class ListService implements IService {
+public class ListService extends AbstractService {
 	private static final ListService instance = new ListService();
 	protected static final Logger logger = LoggerFactory.getLogger(ListService.class);
 
@@ -50,12 +50,7 @@ public class ListService implements IService {
 	}
 
 	private ListService() {
-		// privatised for a singleton pattern
-	}
-
-	@Override
-	public String getId() {
-		return Conventions.App.SERVICE_LIST;
+		super(Conventions.App.SERVICE_LIST);
 	}
 
 	@Override
@@ -74,7 +69,8 @@ public class ListService implements IService {
 		if (list.isKeyBased()) {
 			key = payload.getString("key");
 			if (key == null || key.isEmpty()) {
-				ctx.addMessage(Message.newError("list " + listName + " requires value for key. But it is missing in the request"));
+				ctx.addMessage(Message
+						.newError("list " + listName + " requires value for key. But it is missing in the request"));
 				return;
 			}
 		}
@@ -82,7 +78,7 @@ public class ListService implements IService {
 		if (result == null) {
 			ctx.addMessage(Message.newError("Error while getting values for list " + listName + " for key " + key));
 			result = new Object[0][];
-		}else  if (result.length == 0) {
+		} else if (result.length == 0) {
 			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
 		writeOut(ctx.getSerializer(), result);

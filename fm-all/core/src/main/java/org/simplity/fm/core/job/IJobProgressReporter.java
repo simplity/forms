@@ -20,15 +20,33 @@
  * SOFTWARE.
  */
 
+package org.simplity.fm.core.job;
+
 /**
- * classes to provide highly restricted APIs to just what we want to do in
- * serialization and de-serialization
- *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
+ * represents the progress made by a job
  *
  * @author simplity.org
  *
  */
-package org.simplity.fm.core.serialize;
+public interface IJobProgressReporter {
+	/**
+	 *
+	 * @return percentage of progress. -1 if it in progress, but percentage can
+	 *         not be determined
+	 */
+	int getPercentageCompleted();
+
+	/**
+	 *
+	 * @return relevant number of units of work completed. -1 if it can not be
+	 *         determined
+	 */
+	long getProgressCount();
+
+	/**
+	 *
+	 * @return informative message. status text if the job does not report any
+	 *         progress message
+	 */
+	String getMessage();
+}
