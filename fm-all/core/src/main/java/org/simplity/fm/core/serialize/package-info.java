@@ -24,10 +24,6 @@
  * classes to provide highly restricted APIs to just what we want to do in
  * serialization and de-serialization
  *
- * We restrict serialization to only an object or an array, and hence no generic
- * class called de-serializer.
- * IInputObjectObject and IInputArray serve the purpose
- *
  * @author simplity.org
  *
  */

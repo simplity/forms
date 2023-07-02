@@ -246,10 +246,6 @@ public class Conventions {
 		public static final String SERVICE_LIST = "list";
 
 		/**
-		 * predefined name for retrieving asynch-service output
-		 */
-		public static final String SERVICE_ASYNCH_OUTPUT = "asynch";
-		/**
 		 * name with which the user data is saved in the context
 		 */
 		public static final String USER_IN_CTX = "_user";

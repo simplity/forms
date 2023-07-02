@@ -60,27 +60,4 @@ public interface IService {
 	 *         users
 	 */
 	boolean serveGuests();
-
-	/**
-	 * A service may be designed to gracefully abort in the middle of its
-	 * execution.
-	 * For example, if the job is to process large number of records, it may be
-	 * designed to be able to stop after every records..
-	 *
-	 * @return is this job designed to gracefully abort before completing its
-	 *         assigned job?
-	 */
-	boolean isAbortable();
-
-	/**
-	 * should this be run in asynch mode?
-	 * TODO: requires review to see if this should be outside of a service.
-	 *
-	 * @return if true, this service is run through the JobManager.
-	 *         Also, if this is accessible to the client-apps, then they need to
-	 *         be aware of this to manage the logistics of getting the output,
-	 *         if any
-	 *
-	 */
-	boolean isAsynch();
 }

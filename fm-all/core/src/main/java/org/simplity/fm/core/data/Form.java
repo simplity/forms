@@ -32,7 +32,6 @@ import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
-import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ public abstract class Form<T extends Record> {
 	 * record that this form is based on
 	 */
 	protected T record;
-
+	
 	/**
 	 * is this form open to guests
 	 */
@@ -177,7 +176,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		/*
-		 * form is simply a wrapper on the record..
+		 * form s simply a wrapper on the record..
 		 */
 		if (this.isDb) {
 			return ((DbRecord) this.record).getService(operation, serviceName);
@@ -189,45 +188,56 @@ public abstract class Form<T extends Record> {
 		 * we will add other features on
 		 */
 
-		return new DummyService(serviceName, this.record, operation);
+		final String sn = serviceName;
+		final boolean forInsert = operation == IoType.Create;
+		final T rec = this.record;
+		return new IService() {
+
+			@Override
+			public boolean serveGuests() {
+				return Form.this.serveGuests;
+			}
+
+			@Override
+			public void serve(final IServiceContext ctx, final IInputObject inputPayload) throws Exception {
+				rec.parse(inputPayload, forInsert, ctx, null, 0);
+				if (ctx.allOk()) {
+					logger.info("Service " + sn + " succeeded in parsing input. Same is set as response");
+					ctx.setAsResponse(rec);
+					return;
+				}
+				logger.error("Validation failed for service {} and operation {}", sn, operation.name());
+			}
+
+			@Override
+			public String getId() {
+				return sn;
+			}
+		};
 	}
 
-	protected class DummyService extends AbstractService {
-		private final T rec;
-		private final IoType operation;
+	protected abstract class Service implements IService {
+		private final String serviceName;
 
-		protected DummyService(final String name, final T rec, final IoType operation) {
-			super(name);
-			this.rec = rec;
-			this.operation = operation;
+		protected Service(final String name) {
+			this.serviceName = name;
 		}
 
+		@Override
+		public String getId() {
+			return this.serviceName;
+		}
 		@Override
 		public boolean serveGuests() {
 			return Form.this.serveGuests;
 		}
 
-		@Override
-		public void serve(final IServiceContext ctx, final IInputObject inputPayload) throws Exception {
-			this.rec.parse(inputPayload, this.operation == IoType.Create, ctx, null, 0);
-			if (ctx.allOk()) {
-				logger.info("Service " + this.serviceName + " succeeded in parsing input. Same is set as response");
-				ctx.setAsResponse(this.rec);
-				return;
-			}
-			logger.error("Validation failed for service {} and operation {}", this.serviceName, this.operation.name());
-		}
 	}
 
-	protected class Reader extends AbstractService {
+	protected class Reader extends Service {
 
 		protected Reader(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
 		}
 
 		@Override
@@ -260,15 +270,10 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Creater extends AbstractService {
+	protected class Creater extends Service {
 
 		protected Creater(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
 		}
 
 		@Override
@@ -296,15 +301,10 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Updater extends AbstractService {
+	protected class Updater extends Service {
 
 		protected Updater(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
 		}
 
 		@Override
@@ -334,15 +334,10 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Deleter extends AbstractService {
+	protected class Deleter extends Service {
 
 		protected Deleter(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
 		}
 
 		@Override
@@ -372,15 +367,10 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Filter extends AbstractService {
+	protected class Filter extends Service {
 
 		protected Filter(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
 		}
 
 		@Override

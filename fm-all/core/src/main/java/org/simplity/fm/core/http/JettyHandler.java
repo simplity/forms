@@ -92,7 +92,7 @@ public class JettyHandler extends AbstractHandler {
 	 * <br/>
 	 * Simply invoke this as java app to run the server (of course the class
 	 * path etc.. are to be taken care of)
-	 *
+	 * 
 	 * @param port
 	 * @param bootStrapBeforeRunning
 	 *
