@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.service;
 
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 
@@ -240,4 +242,18 @@ public interface IServiceContext {
 	 * true; note that there is no argument. This action can not be reversed!!
 	 */
 	void markUserContextForReset();
+	/**
+	 * serialize and write for persistence
+	 *
+	 * @param writer
+	 */
+	void persist(Writer writer);
+
+	/**
+	 *
+	 * @param reader
+	 * @return true if loaded successfully. false in case of any issue. Error
+	 *         message would have been added in case of any failure
+	 */
+	boolean load(Reader reader);
 }

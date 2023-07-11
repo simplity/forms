@@ -31,6 +31,7 @@ import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RecordProcessor;
+import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
@@ -363,20 +364,7 @@ public abstract class DbRecord extends Record {
 		}
 	}
 
-	protected abstract class Service implements IService {
-		private final String serviceName;
-
-		protected Service(final String name) {
-			this.serviceName = name;
-		}
-
-		@Override
-		public String getId() {
-			return this.serviceName;
-		}
-	}
-
-	protected class Reader extends Service {
+	protected class Reader extends AbstractService {
 
 		protected Reader(final String name) {
 			super(name);
@@ -403,21 +391,12 @@ public abstract class DbRecord extends Record {
 			}
 		}
 
-		@Override
-		public boolean serveGuests() {
-			return true;
-		}
 	}
 
-	protected class Creater extends Service {
+	protected class Creater extends AbstractService {
 
 		protected Creater(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return true;
 		}
 
 		@Override
@@ -441,15 +420,10 @@ public abstract class DbRecord extends Record {
 		}
 	}
 
-	protected class Updater extends Service {
+	protected class Updater extends AbstractService {
 
 		protected Updater(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return true;
 		}
 
 		@Override
@@ -474,15 +448,10 @@ public abstract class DbRecord extends Record {
 		}
 	}
 
-	protected class Deleter extends Service {
+	protected class Deleter extends AbstractService {
 
 		protected Deleter(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return true;
 		}
 
 		@Override
@@ -507,15 +476,10 @@ public abstract class DbRecord extends Record {
 		}
 	}
 
-	protected class Filter extends Service {
+	protected class Filter extends AbstractService {
 
 		protected Filter(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return true;
 		}
 
 		@Override

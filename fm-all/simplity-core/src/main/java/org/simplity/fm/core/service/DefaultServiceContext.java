@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.service;
 
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -313,5 +315,16 @@ public class DefaultServiceContext implements IServiceContext {
 	@Override
 	public void markUserContextForReset() {
 		this.resetSession = true;
+	}
+	@Override
+	public void persist(Writer writer) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean load(Reader reader) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

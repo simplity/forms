@@ -30,6 +30,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
+import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IService;
@@ -184,68 +185,43 @@ public abstract class Form<T extends Record> {
 		}
 
 		/*
-		 * form s simply a wrapper on the record..
+		 * form is simply a wrapper on the record..
 		 */
 		if (this.isDb) {
 			return ((DbRecord) this.record).getService(operation, serviceName);
 		}
 
-		/*
-		 * there is very little we can do as an auto-service. Just for
-		 * testing/development purpose?? we will add other features on
-		 */
-
-		final String sn = serviceName;
-		final boolean forInsert = operation == IoType.Create;
-		final T rec = this.record;
-		return new IService() {
-
-			@Override
-			public boolean serveGuests() {
-				return Form.this.serveGuests;
-			}
-
-			@Override
-			public void serve(final IServiceContext ctx,
-					final IInputData inputPayload) throws Exception {
-				rec.parse(inputPayload, forInsert, ctx, null, 0);
-				if (ctx.allOk()) {
-					logger.info("Service " + sn
-							+ " succeeded in parsing input. Same is set as response");
-					ctx.setAsResponse(rec);
-					return;
-				}
-				logger.error(
-						"Validation failed for service {} and operation {}", sn,
-						operation.name());
-			}
-
-			@Override
-			public String getId() {
-				return sn;
-			}
-		};
+		return new AutoService(serviceName, operation);
 	}
 
-	protected abstract class Service implements IService {
-		private final String serviceName;
-
-		protected Service(final String name) {
-			this.serviceName = name;
+	/*
+	 * there is very little we can do as an auto-service. Just for
+	 * testing/development purpose?? we will add other features later..
+	 */
+	protected class AutoService extends AbstractService {
+		private IoType operation;
+		protected AutoService(final String name, IoType operation) {
+			super(name);
+			this.operation = operation;
 		}
 
 		@Override
-		public String getId() {
-			return this.serviceName;
-		}
-		@Override
-		public boolean serveGuests() {
-			return Form.this.serveGuests;
+		public void serve(final IServiceContext ctx,
+				final IInputData inputPayload) throws Exception {
+			Form.this.record.parse(inputPayload, operation == IoType.Create,
+					ctx, null, 0);
+			if (ctx.allOk()) {
+				logger.info("Service " + this.serviceName
+						+ " succeeded in parsing input. Same is set as response");
+				ctx.setAsResponse(Form.this.record);
+				return;
+			}
+			logger.error("Validation failed for service {} and operation {}",
+					this.serviceName, operation.name());
 		}
 
 	}
-
-	protected class Reader extends Service {
+	protected class Reader extends AbstractService {
 
 		protected Reader(final String name) {
 			super(name);
@@ -282,7 +258,7 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Creater extends Service {
+	protected class Creater extends AbstractService {
 
 		protected Creater(final String name) {
 			super(name);
@@ -315,7 +291,7 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Updater extends Service {
+	protected class Updater extends AbstractService {
 
 		protected Updater(final String name) {
 			super(name);
@@ -350,7 +326,7 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Deleter extends Service {
+	protected class Deleter extends AbstractService {
 
 		protected Deleter(final String name) {
 			super(name);
@@ -385,7 +361,7 @@ public abstract class Form<T extends Record> {
 		}
 	}
 
-	protected class Filter extends Service {
+	protected class Filter extends AbstractService {
 
 		protected Filter(final String name) {
 			super(name);

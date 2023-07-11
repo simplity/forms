@@ -63,6 +63,10 @@ public class UserContext {
 	 * name of records that are overridden in this context
 	 */
 	protected Set<String> recordOverrides;
+	/**
+	 * pending jobs that the user has asked for, but not delivered yet
+	 */
+	protected Set<String> jobs;
 
 	/**
 	 *
@@ -154,5 +158,28 @@ public class UserContext {
 	 */
 	public RecordOverride getRecordOverride(final String recordName) {
 		return OverrideUtil.getRecord(this.overrideId, recordName);
+	}
+	/**
+	 * save a jobId in the context
+	 *
+	 * @param jobId
+	 *            must be a valid jobId returned by the JobManager
+	 */
+	public void addJob(final String jobId) {
+		if (this.jobs == null) {
+			this.jobs = new HashSet<>();
+		}
+		this.jobs.add(jobId);
+	}
+
+	/**
+	 * remove the jobId from this list once it is taken care of..
+	 *
+	 * @param jobId
+	 */
+	public void removeJob(final String jobId) {
+		if (this.jobs != null) {
+			this.jobs.remove(jobId);
+		}
 	}
 }

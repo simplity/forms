@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class ListService implements IService {
+public class ListService extends AbstractService {
 	private static final ListService instance = new ListService();
 	protected static final Logger logger = LoggerFactory
 			.getLogger(ListService.class);
@@ -61,12 +61,7 @@ public class ListService implements IService {
 	}
 
 	private ListService() {
-		// privatised for a singleton pattern
-	}
-
-	@Override
-	public String getId() {
-		return Conventions.App.SERVICE_LIST;
+		super(Conventions.App.SERVICE_LIST);
 	}
 
 	private static void reportError(final IServiceContext ctx, String msg) {
