@@ -1,0 +1,148 @@
+{
+    "name": "studentCieDetail",
+    "nameInDb": "student_cie_details",
+    "useTimestampCheck": false,
+    "operations": [
+        "create",
+        "delete",
+        "filter",
+        "get",
+        "update"
+    ],
+    "fields": [
+            {"name": "studentId",
+        
+            "valueSchema": "flexibleId",
+            "dbColumnName": "student_id",
+           "fieldType": "primaryKey",
+            "defaultValue": "-1"
+        },
+        {"name":     "subjectSectionId",
+       	
+            "valueSchema": "id",
+            "dbColumnName": "subject_section_id",
+           "fieldType": "requiredData"
+        },
+        {"name":     "departmentName",
+        
+            "valueSchema": "text",
+            "dbColumnName": "department_name",
+           "fieldType": "requiredData"
+        },
+        {"name":     "usn",
+        
+            "valueSchema": "text",
+            "dbColumnName": "usn",
+           "fieldType": "optionalData"
+        },
+        {"name":     "name",
+        
+            "valueSchema": "name",
+            "dbColumnName": "student_name",
+           "fieldType": "requiredData"
+        },
+        {"name":     "eligibility",
+        
+            "valueSchema": "name",
+            "dbColumnName": "is_eligible",
+           "fieldType": "optionalData"
+        },
+        {"name":     "test1",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "test2",
+		
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "test3",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "quiz1",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "quiz2",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "theoryCie",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "theoryClassesHeld",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "theoryClassesAttended",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "theoryClassesPercentage",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "practicalCie",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "practicalClassesHeld",
+                
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "practicalClassesAttended",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "practicalClassesPercentage",
+                
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+            {"name": "selfStudy",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "practicalMarks",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        },
+        {"name":     "totalCie",
+        
+            "valueSchema": "text",
+           "fieldType": "optionalData",
+            "defaultValue":"1"
+        }
+    ]
+    
+}

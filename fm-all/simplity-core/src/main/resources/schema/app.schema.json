@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/app",
+  "title": "Application Configuration Parameters",
+  "description": "Schema for app.json",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "title": "App Name",
+      "description": "Name of the App",
+      "$ref": "#/$defs/name"
+    },
+    "maxLengthForTextField": {
+      "title": "Max Length for TextField",
+      "description": "Any field langer than this is to be rendered as Text Area",
+      "type": "integer",
+      "defaultValue": 199
+    },
+    "tenantFieldName": {
+      "title": "Tenant Field Name",
+      "description": "Required in a multi-tenant app. Name of the field that has the tenant-id",
+      "$ref": "#/$defs/name"
+    },
+    "tenantDbName": {
+      "title": "Tenant Db Column Name",
+      "description": "Required in a multi-tenant app. Standard column name used in every tenant-specific table.",
+      "$ref": "#/$defs/name"
+    },
+    "valueSchemas": {
+      "title": "Value Schemas",
+      "description": "Schemas to validate values. These are used to validate input to API's as well as user-inputs in a client-form",
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]$": {
+          "title": "Value Schema",
+          "description": "validation rules for a value",
+          "$ref": "#/$defs/valueSchema"
+        }
+      }
+    },
+    "valueLists": {
+      "title": "List of value-label pairs",
+      "description": "List of values and lables that can be used for validating a field, as well as rendering a drop-down",
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]$": {
+          "title": "Value List",
+          "description": "List of valid values for a field",
+          "$ref": "#/$defs/valueList"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "description": "suitable to be used as an entity name in a programming language.",
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$"
+    },
+    "valueSchema": {
+      "type": "object",
+      "required": ["valueType"],
+      "additionalProperties": false,
+      "properties": {
+        "valueType": {
+          "type": {
+            "enum": [
+              "text",
+              "integer",
+              "decimal",
+              "boolean",
+              "date",
+              "timestamp"
+            ]
+          }
+        },
+        "errorId": { "$ref": "#/$defs/name" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "valueType": { "const": "text" } } },
+          "then": {
+            "required": ["maxLength"],
+            "properties": {
+              "pattern": {
+                "title": "Pattern",
+                "description": "Pattern the value should conform to. Must be a sommon subset of patterns supported by most languages, specifically java and javascript",
+                "type": "string"
+              },
+              "minLength": { "type": "integer", "default": 1 },
+              "maxLength": { "type": "integer" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "const": "integer" } } },
+          "then": {
+            "required": ["maxValue"],
+            "properties": {
+              "minValue": { "type": "integer" },
+              "maxValue": { "type": "integer" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "const": "decimal" } } },
+          "then": {
+            "required": ["maxValue", "nbrFractions"],
+            "properties": {
+              "minValue": { "type": "number" },
+              "maxValue": { "type": "number" },
+              "nbrFractions": { "type": "integer" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "valueType": { "const": "date" } } },
+          "then": {
+            "required": ["maxFutureDays", "maxPastDays"],
+            "properties": {
+              "maxFutureDays": { "type": "integer" },
+              "maxPastDays": { "type": "integer" }
+            }
+          }
+        }
+      ]
+    },
+    "valueList": {
+      "type": "object",
+      "required": ["listType"],
+      "additionalProperties": false,
+      "properties": {
+        "listType": {
+          "type": {
+            "enum": ["simple", "keyed", "runtime"]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "listType": { "const": "simple" } } },
+          "then": {
+            "required": ["list"],
+            "properties": {
+              "list": { "$ref": "#/$defs/simpleList" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "listType": { "const": "keyed" } } },
+          "then": {
+            "required": ["keys"],
+            "properties": {
+              "keys": { "$ref": "#/$defs/keyedList" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "listType": { "const": "runtime" } } },
+          "then": {
+            "required": ["dbParams"],
+            "properties": {
+              "dbTableName": {
+                "title": "Table Name",
+                "description": "Table or View that has the required data for this list",
+                "$ref": "#/$defs/name"
+              },
+              "dbColumn1": {
+                "title": "Column Name for Value",
+                "description": "Column Name for Value",
+                "$ref": "#/$defs/name"
+              },
+              "dbColumn2": {
+                "title": "Column Name for Label",
+                "description": "Column Name for Value",
+                "$ref": "#/$defs/name"
+              },
+              "keyColumn": {
+                "title": "Column Name for Key",
+                "description": "Required if this is a keyed-list.",
+                "$ref": "#/$defs/name"
+              },
+              "tenantColumn": {
+                "title": "Tenant Column Name",
+                "description": "Relevant if the table is multi-tenant",
+                "$ref": "#/$defs/name"
+              },
+              "activeColumn": {
+                "title": "Active Column Name",
+                "description": "Relevant if the table has a boolean field for active rows",
+                "$ref": "#/$defs/name"
+              },
+              "keyIsNumeric": {
+                "title": "Is Key Numeric?",
+                "description": "Key field value type could be numeric or text",
+                "type": "boolean"
+              },
+              "valueIsNumeric": {
+                "title": "Is Value Numeric?",
+                "description": "Value could be numeric or text",
+                "type": "boolean"
+              },
+              "parentTable": {
+                "title": "Parent Table Name",
+                "description": "This is specified if all keys are to be extracted, and list for each key is to be extracted. This is similar to keyed-list except that it is extracted once at run time",
+                "$ref": "#/$defs/name"
+              },
+              "parentIdColumnName": {
+                "title": "Parent id/value column name",
+                "description": "Parent id/value column name",
+                "$ref": "#/$defs/name"
+              },
+              "parentNameColumnName": {
+                "title": "Parent name/label column name",
+                "description": "Parent name/label column name",
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "simpleList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["value", "label"],
+        "properties": {
+          "value": {
+            "type": ["string", "integer"]
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "keyedList": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/simpleList"
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+    "name": "studentDetail",
+    "recordName": "studentDetail",
+    "operations": [
+        "get",
+        "create",
+        "update",
+        "filter"
+    ],
+    "controls": {
+            "studentId":
+        {
+            "controlType": "hidden"
+        },
+            "instituteId":
+        {
+            "controlType": "hidden"
+        },
+            "departmentId":
+        {
+            "controlType": "dropDown",
+            "label": "Department"
+        },
+            "departmentName":
+        {
+            "controlType": "input",
+            "label": "Department Name"
+        },
+            "name":
+        {
+            "controlType": "input",
+            "label": "Level"
+        },
+            "usn":
+        {
+            "controlType": "input",
+            "label": "USN"
+        },
+            "phoneNumber":
+        {
+            "controlType": "input",
+            "label": "Phone"
+        }
+    }
+}

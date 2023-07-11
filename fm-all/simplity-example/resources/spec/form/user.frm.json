@@ -1,0 +1,91 @@
+{
+    "name": "user",
+    "recordName": "user",
+    "operations": [
+        "get",
+        "filter"
+    ],
+    "controls": {
+            "userId":
+        {
+            "controlType": "hidden"
+        },
+            "instituteId":
+        {
+            "controlType": "hidden"
+        },
+            "trustId":
+        {
+            "controlType": "hidden"
+        },
+            "userType":
+         {
+            "controlType": "dropDown",
+            "label": "User Type"
+        },
+            "loginId":
+        {
+            "controlType": "input",
+            "label": "Login Id"
+        },
+            "loginToken":
+        {
+            "controlType": "output",
+            "label": "Login Token"
+        },
+            "loginEnabled":
+        {
+            "controlType": "checkBox",
+            "label": "Login Enabled"
+        },
+            "resetPasswordCount":
+        {
+            "controlType": "output",
+            "label": "Reset Password Count"
+        },
+            "loginCount":
+        {
+            "controlType": "output",
+            "label": "Login Count"
+        },
+            "confirmationToken":
+        {
+            "controlType": "output",
+            "label": "Confirmation Token"
+        },
+            "currentLoginIp":
+        {
+            "controlType": "output",
+            "label": "Current Login IP"
+        },
+            "previousLoginIp":
+        {
+            "controlType": "output",
+            "label": "Previous Login IP"
+        },
+            "currentLoginAt":
+        {
+            "controlType": "output",
+            "label": "CurrentLogin At"
+        },
+            "previousLoginAt":
+        {
+            "controlType": "output",
+            "label": "Previous Login At"
+        },
+            "resetPasswordSentAt":
+        {
+            "controlType": "output",
+            "label": "Reset Password Sent At"
+        },
+            "createdAt":
+        {
+            "controlType": "hidden"
+        },
+            "updatedAt":
+        {
+            "controlType": "hidden"
+        }
+         
+    }
+}

@@ -1,0 +1,66 @@
+    {
+    "name": "studentAssessmentDetail",
+    "nameInDb": "student_assessment_details",
+    "operations": [
+        "filter",
+        "get"
+    ],
+    "fields": [
+        {"name": "studentAssessmentId",
+            "valueSchema": "id",
+            "dbColumnName": "student_assessment_id",
+           "fieldType": "generatedPrimaryKey"
+        },
+        {"name": "instituteId",
+            "valueSchema": "tenantKey",
+            "dbColumnName": "institute_id",
+           "fieldType": "tenantKey"
+        },
+        {"name": "subjectSectionId",
+            "valueSchema": "id",
+            "dbColumnName": "subject_section_id",
+           "fieldType": "optionalData"
+        },
+        {"name": "assessmentSchemeId",
+            "valueSchema": "id",
+            "dbColumnName": "assessment_scheme_id",
+           "fieldType": "optionalData"
+        },
+        {"name": "assessmentSeqNo",
+            "valueSchema": "integer",
+            "dbColumnName": "assessment_seq_no",
+           "fieldType": "requiredData"
+        },
+        {"name": "studentId",
+            "valueSchema": "id",
+            "dbColumnName": "student_id",
+           "fieldType": "requiredData"
+        },
+        {"name": "name",
+            "valueSchema": "name",
+            "dbColumnName": "name",
+           "fieldType": "optionalData"
+        },
+        {"name": "usn",
+            "valueSchema": "text",
+            "dbColumnName": "usn",
+           "fieldType": "optionalData"
+        },
+        {"name": "hasAttended",
+            "valueSchema": "bool",
+            "dbColumnName": "has_attended",
+           "fieldType": "optionalData",
+            "defaultValue": "false"
+        },
+        {"name": "marksScored",
+            "valueSchema": "integer",
+            "dbColumnName": "marks_scored",
+           "fieldType": "optionalData",
+            "defaultValue": "0"
+        },
+        {"name": "marks",
+            "valueSchema": "text",
+            "defaultValue": ""
+        }
+    ]
+}

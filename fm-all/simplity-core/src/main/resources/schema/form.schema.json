@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/form",
+  "title": "Form Schema",
+  "description": "Form is a client-facing component. It's objective is to render data as per one or more records",
+  "required": ["name", "recordName"],
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "recordName": {
+      "type": "string"
+    },
+    "serveGuests": {
+      "description": "false means this form is meant for authenticated users only",
+      "type": "boolean"
+    },
+    "operations": {
+      "description": "subset of operations allowed for the corresponding record",
+      "type": "array",
+      "items": {
+        "enum": ["get", "create", "update", "filter", "delete"]
+      }
+    },
+    "linkedForms": {
+      "description": "related form, or child form",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "formName", "isTabular"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "formName": {
+            "type": "string"
+          },
+          "parentLinkFields": {
+            "description": "fields from this (parent) form to be linked to the linked form",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "childLinkFields": {
+            "description": "fields from the linked form, in the right order, to be matched with the parent",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "isTabular": {
+          "description": "true if the linked form is a child form, and we may have more than one rows of the child for a row of the parent",
+          "type": "boolean"
+        },
+        "minRows": {
+          "type": "integer"
+        },
+        "maxRows": {
+          "type": "integer"
+        },
+        "errorId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
