@@ -22,8 +22,8 @@
 package org.simplity.fm.core;
 
 import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.service.IOutputData;
+import org.simplity.fm.core.valueschema.InvalidValueException;
 
 /**
  * represents a validation error while accepting data from a client for a field

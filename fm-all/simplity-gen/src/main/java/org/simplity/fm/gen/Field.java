@@ -58,8 +58,8 @@ class Field {
 	String fieldPrefix;
 	String placeHolder;
 	String description;
-	boolean renderInList;
-	boolean hideInSave;
+	boolean visibleInList;
+	boolean visibleInSave;
 
 	// synthetic attributes
 	boolean isRequired;
@@ -195,19 +195,22 @@ class Field {
 		Util.addAttr(sbf, BEGIN, "errorId", this.errorId);
 		Util.addAttr(sbf, BEGIN, "listName", this.listName);
 		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
-		if (this.renderInList) {
-			sbf.append(BEGIN).append("\"renderInList\" : true,");
+		if (this.visibleInList) {
+			sbf.append(BEGIN).append("\"visibleInList\" : true,");
+		}
+		if (this.visibleInSave) {
+			sbf.append(BEGIN).append("\"visibleInSave\" : true,");
 		}
 		if (this.fieldTypeEnum == FieldType.PrimaryKey
 				|| this.fieldTypeEnum == FieldType.OptionalData
 				|| this.fieldTypeEnum == FieldType.RequiredData) {
-			String rt;
+			String renderingType;
 			if (this.listName != null) {
-				rt = "select";
+				renderingType = "select";
 			} else {
-				rt = this.schemaInstance.getRenderType();
+				renderingType = this.schemaInstance.getRenderType();
 			}
-			Util.addAttr(sbf, BEGIN, "renderType", rt);
+			Util.addAttr(sbf, BEGIN, "renderType", renderingType);
 		}
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t\t}");

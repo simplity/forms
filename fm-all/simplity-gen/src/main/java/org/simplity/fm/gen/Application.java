@@ -26,14 +26,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IDataTypes;
-import org.simplity.fm.core.datatypes.BooleanType;
-import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.datatypes.DateType;
-import org.simplity.fm.core.datatypes.DecimalType;
-import org.simplity.fm.core.datatypes.IntegerType;
-import org.simplity.fm.core.datatypes.TextType;
-import org.simplity.fm.core.datatypes.TimestampType;
+import org.simplity.fm.core.IValueSchemas;
+import org.simplity.fm.core.valueschema.BooleanSchema;
+import org.simplity.fm.core.valueschema.DateSchema;
+import org.simplity.fm.core.valueschema.DecimalSchema;
+import org.simplity.fm.core.valueschema.IntegerSchema;
+import org.simplity.fm.core.valueschema.TextSchema;
+import org.simplity.fm.core.valueschema.TimestampSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,22 +113,22 @@ public class Application {
 		Util.emitImport(sbf, Map.class);
 		sbf.append("\n");
 
-		Util.emitImport(sbf, IDataTypes.class);
-		Util.emitImport(sbf, DataType.class);
-		Util.emitImport(sbf, TextType.class);
-		Util.emitImport(sbf, IntegerType.class);
-		Util.emitImport(sbf, DecimalType.class);
-		Util.emitImport(sbf, BooleanType.class);
-		Util.emitImport(sbf, DateType.class);
-		Util.emitImport(sbf, TimestampType.class);
+		Util.emitImport(sbf, IValueSchemas.class);
+		Util.emitImport(sbf, ValueSchema.class);
+		Util.emitImport(sbf, TextSchema.class);
+		Util.emitImport(sbf, IntegerSchema.class);
+		Util.emitImport(sbf, DecimalSchema.class);
+		Util.emitImport(sbf, BooleanSchema.class);
+		Util.emitImport(sbf, DateSchema.class);
+		Util.emitImport(sbf, TimestampSchema.class);
 
 		final String clsName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 
 		sbf.append(
-				"\n\n/**\n * class that has static attributes for all data types defined for this project. It also extends <code>DataTypes</code>");
+				"\n\n/**\n * class that has static attributes for all value schemas defined for this project. It also extends <code>DataTypes</code>");
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(clsName)
-				.append(" implements IDataTypes {");
+				.append(" implements IValueSchemas {");
 
 		if (this.valueSchemas == null) {
 			this.valueSchemas = new HashMap<>();

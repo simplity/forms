@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 /**
  * @author simplity.org

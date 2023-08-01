@@ -19,64 +19,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+
+package org.simplity.fm.core;
+
+import org.simplity.fm.core.valueschema.ValueSchema;
 
 /**
- * validation parameters for a an integral value
- *
  * @author simplity.org
  *
  */
-public class IntegerType extends DataType {
-	private final long minValue;
-	private final long maxValue;
-
+public interface IValueSchemas {
 	/**
-	 *
+	 * 
 	 * @param name
-	 * @param messageId
-	 * @param minValue
-	 * @param maxValue
+	 * @return data type instance, or null if there is no such data type
 	 */
-	public IntegerType(String name, String messageId, long minValue,
-			long maxValue) {
-		this.valueType = ValueType.Integer;
-		this.name = name;
-		this.messageId = messageId;
-		this.minValue = minValue;
-		this.maxValue = maxValue;
+	public abstract ValueSchema getDataValueSchema(String name);
 
-		this.maxLength = ("" + this.maxValue).length();
-		int len = ("" + this.minValue).length();
-		if (len > this.maxLength) {
-			this.maxLength = len;
-		}
-	}
-
-	private Long validate(long value) {
-		if (value >= this.minValue && value <= this.maxValue) {
-			return value;
-		}
-		return null;
-	}
-
-	@Override
-	public Long parse(Object object) {
-		if (object instanceof Number) {
-			return this.validate(((Number) object).longValue());
-		}
-		if (object instanceof String) {
-			return this.parse((String) object);
-		}
-		return null;
-	}
-
-	@Override
-	public Long parse(String value) {
-		try {
-			return this.validate(Long.parseLong(value));
-		} catch (Exception e) {
-			return null;
-		}
-	}
 }

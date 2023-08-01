@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 /**
  * class that restricts possible valid values that a field can have. Used for
@@ -28,7 +28,7 @@ package org.simplity.fm.core.datatypes;
  * @author simplity.org
  *
  */
-public abstract class DataType {
+public abstract class ValueSchema {
 	protected String name;
 	protected String messageId;
 	protected int minLength;

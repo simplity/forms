@@ -29,13 +29,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
-import org.simplity.fm.core.datatypes.BooleanType;
-import org.simplity.fm.core.datatypes.DateType;
-import org.simplity.fm.core.datatypes.DecimalType;
-import org.simplity.fm.core.datatypes.IntegerType;
-import org.simplity.fm.core.datatypes.TextType;
-import org.simplity.fm.core.datatypes.TimestampType;
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.valueschema.BooleanSchema;
+import org.simplity.fm.core.valueschema.DateSchema;
+import org.simplity.fm.core.valueschema.DecimalSchema;
+import org.simplity.fm.core.valueschema.IntegerSchema;
+import org.simplity.fm.core.valueschema.TextSchema;
+import org.simplity.fm.core.valueschema.TimestampSchema;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -290,20 +290,20 @@ public class Util {
 	public static Class<?> getDataTypeClass(final ValueType valueType) {
 		switch (valueType) {
 		case Boolean :
-			return BooleanType.class;
+			return BooleanSchema.class;
 		case Date :
-			return DateType.class;
+			return DateSchema.class;
 		case Decimal :
-			return DecimalType.class;
+			return DecimalSchema.class;
 		case Integer :
-			return IntegerType.class;
+			return IntegerSchema.class;
 		case Text :
-			return TextType.class;
+			return TextSchema.class;
 		case Timestamp :
-			return TimestampType.class;
+			return TimestampSchema.class;
 		default :
 			logger.error("{} is not a known value type", valueType);
-			return TextType.class;
+			return TextSchema.class;
 		}
 	}
 

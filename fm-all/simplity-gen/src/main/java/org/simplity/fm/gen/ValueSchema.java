@@ -3,7 +3,7 @@ package org.simplity.fm.gen;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * Data Structure will all possible attributes for all types of values.
@@ -74,10 +74,10 @@ public class ValueSchema implements Util.IInitializer {
 	public void emitJava(final StringBuilder sbf) {
 
 		/**
-		 * public static XyzType = new XyzType("name", "errorId",...);
+		 * public static XyzSchema = new XyzSchema("name", "errorId",...);
 		 *
 		 */
-		final String cls = Util.toClassName(this.valueType) + "Type";
+		final String cls = Util.toClassName(this.valueType) + "Schema";
 		sbf.append(P).append(cls).append(' ').append(this.name)
 				.append(" = new ").append(cls).append("(");
 

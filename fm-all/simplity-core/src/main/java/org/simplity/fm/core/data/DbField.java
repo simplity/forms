@@ -23,8 +23,8 @@
 package org.simplity.fm.core.data;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueSchema;
 
 /**
  * @author simplity.org
@@ -49,9 +49,9 @@ public class DbField extends Field {
 	 *            unique within its data structure
 	 * @param index
 	 *            0-based index of this field in the parent form
-	 * @param dataType
-	 *            pre-defined data type. used for validating data coming from a
-	 *            client
+	 * @param valueSchema
+	 *            pre-defined value schema. used for validating data coming from
+	 *            a client
 	 * @param isList
 	 *            is this a comma-separated list of values?
 	 * @param defaultValue
@@ -72,11 +72,11 @@ public class DbField extends Field {
 	 *            db field type. non-null
 	 */
 	public DbField(final String fieldName, final int index,
-			final DataType dataType, final boolean isList,
+			final ValueSchema valueSchema, final boolean isList,
 			final String defaultValue, final String messageId,
 			final String valueListName, final String columnName,
 			final FieldType fieldType) {
-		super(fieldName, index, dataType, isList, defaultValue, messageId,
+		super(fieldName, index, valueSchema, isList, defaultValue, messageId,
 				valueListName, fieldType.isRequired());
 		this.columnName = columnName;
 		this.fieldType = fieldType;

@@ -22,8 +22,8 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * Concatenate strings

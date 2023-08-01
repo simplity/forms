@@ -25,11 +25,11 @@ package org.simplity.fm.core.infra;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.valueschema.ValueSchema;
 
 /**
  * specification for the class that provides instances of all standard app
@@ -79,7 +79,7 @@ public interface ICompProvider {
 	 * @param dataTypeId
 	 * @return a data type instance, or null if it is not located.
 	 */
-	DataType getDataType(String dataTypeId);
+	ValueSchema getValueSchema(String dataTypeId);
 
 	/**
 	 *

@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
@@ -38,6 +37,7 @@ import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RowProcessor;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

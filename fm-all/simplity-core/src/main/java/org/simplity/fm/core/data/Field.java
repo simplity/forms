@@ -25,10 +25,10 @@ package org.simplity.fm.core.data;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.valueschema.ValueSchema;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +51,9 @@ public class Field {
 	 */
 	private final int index;
 	/**
-	 * data type describes the type of value and restrictions (validations) on
-	 * the value
+	 * value schema describes the restriction on the value (validations)
 	 */
-	private DataType dataType;
+	private ValueSchema valueSchema;
 	/**
 	 * we allow a field to have a list/array of values. If true, then the value
 	 * is a string with comma-separated values. Note that this is meant for
@@ -92,8 +91,8 @@ public class Field {
 	 * @param index
 	 *            0-based index of this field in the parent form
 	 * @param dataType
-	 *            pre-defined data type. used for validating data coming from a
-	 *            client
+	 *            pre-defined value schema. used for validating data coming from
+	 *            a client
 	 * @param isArray
 	 *            is this field represent a list of primitive values? If true,
 	 *            it is a string with the underlying
@@ -114,14 +113,14 @@ public class Field {
 	 *            a client
 	 */
 	public Field(final String fieldName, final int index,
-			final DataType dataType, final boolean isArray,
+			final ValueSchema dataType, final boolean isArray,
 			final String defaultValue, final String messageId,
 			final String valueListName, final boolean isRequired) {
 		this.name = fieldName;
 		this.index = index;
 		this.isRequired = isRequired;
 		this.messageId = messageId;
-		this.dataType = dataType;
+		this.valueSchema = dataType;
 		this.isArray = isArray;
 		if (defaultValue == null) {
 			this.defaultValue = null;
@@ -153,8 +152,8 @@ public class Field {
 	/**
 	 * @return the dataType
 	 */
-	public DataType getDataType() {
-		return this.dataType;
+	public ValueSchema getDataType() {
+		return this.valueSchema;
 	}
 
 	/**
@@ -169,7 +168,7 @@ public class Field {
 	 */
 	public String getMessageId() {
 		if (this.messageId == null) {
-			return this.dataType.getMessageId();
+			return this.valueSchema.getMessageId();
 		}
 		return this.messageId;
 	}
@@ -189,7 +188,7 @@ public class Field {
 		if (this.isArray) {
 			return ValueType.Text;
 		}
-		return this.dataType.getValueType();
+		return this.valueSchema.getValueType();
 	}
 
 	/**
@@ -242,16 +241,16 @@ public class Field {
 	 */
 	private Object parse(final String inputValue, final IServiceContext ctx,
 			final String tableName, final int idx) {
-		final Object obj = this.dataType.parse(inputValue);
+		final Object obj = this.valueSchema.parse(inputValue);
 		if (obj == null) {
-			logger.error("{} is not valid for field {} as per data type {}",
-					inputValue, this.name, this.dataType.getName());
+			logger.error("{} is not valid for field {} as per value schema {}",
+					inputValue, this.name, this.valueSchema.getName());
 			ctx.addMessage(Message.newValidationError(this, tableName, idx));
 			return null;
 		}
 
 		if (this.isArray) {
-			final DataType.ParsedList parsedList = (DataType.ParsedList) obj;
+			final ValueSchema.ParsedList parsedList = (ValueSchema.ParsedList) obj;
 
 			if (this.valueList == null) {
 				return parsedList.textValue;
@@ -299,18 +298,18 @@ public class Field {
 		this.isRequired = over.isRequired;
 
 		if (over.dataType != null && over.dataType.isEmpty() == false) {
-			final DataType dt = AppManager.getAppInfra().getCompProvider()
-					.getDataType(over.dataType);
+			final ValueSchema dt = AppManager.getAppInfra().getCompProvider()
+					.getValueSchema(over.dataType);
 			if (dt.getValueType() != this.getValueType()) {
 				throw new ApplicationError(
-						"Field {} is of data type {}. It can not be overrideen with data type '{}' because its value type is different");
+						"Field {} is of value schema {}. It can not be overrideen with value schema '{}' because its value type is different");
 			}
-			this.dataType = AppManager.getAppInfra().getCompProvider()
-					.getDataType(over.dataType);
+			this.valueSchema = AppManager.getAppInfra().getCompProvider()
+					.getValueSchema(over.dataType);
 		}
 
 		if (over.defaultValue != null && over.defaultValue.isEmpty() == false) {
-			this.defaultValue = this.dataType.parse(over.defaultValue);
+			this.defaultValue = this.valueSchema.parse(over.defaultValue);
 		}
 
 		if (over.messageId != null && over.messageId.isEmpty() == false) {

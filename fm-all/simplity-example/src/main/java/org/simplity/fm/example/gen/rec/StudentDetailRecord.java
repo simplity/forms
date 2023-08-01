@@ -11,26 +11,26 @@ import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
-import org.simplity.fm.example.gen.DefinedDataTypes;
+import org.simplity.fm.example.gen.DefinedValueSchemas;
 
 /**
  * class that represents structure of studentDetail
  */
 public class StudentDetailRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("studentId", 0, DefinedDataTypes.flexibleId, false,
+			new DbField("studentId", 0, DefinedValueSchemas.flexibleId, false,
 					"-1", null, null, "student_id", FieldType.PrimaryKey),
-			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, false,
+			new DbField("instituteId", 1, DefinedValueSchemas.tenantKey, false,
 					null, null, null, "institute_id", FieldType.TenantKey),
-			new DbField("departmentId", 2, DefinedDataTypes.id, false, null,
+			new DbField("departmentId", 2, DefinedValueSchemas.id, false, null,
 					null, null, "department_id", FieldType.RequiredData),
-			new DbField("departmentName", 3, DefinedDataTypes.text, false, null,
+			new DbField("departmentName", 3, DefinedValueSchemas.text, false, null,
 					null, null, "department_name", FieldType.RequiredData),
-			new DbField("usn", 4, DefinedDataTypes.text, false, null, null,
+			new DbField("usn", 4, DefinedValueSchemas.text, false, null, null,
 					null, "usn", FieldType.OptionalData),
-			new DbField("name", 5, DefinedDataTypes.name, false, null, null,
+			new DbField("name", 5, DefinedValueSchemas.name, false, null, null,
 					null, "name", FieldType.RequiredData),
-			new DbField("phoneNumber", 6, DefinedDataTypes.phone, false, null,
+			new DbField("phoneNumber", 6, DefinedValueSchemas.phone, false, null,
 					null, null, "phone_number", FieldType.RequiredData)};
 	private static final boolean[] OPERS = {true, true, true, true, true};
 	private static final IValidation[] VALIDS = {};

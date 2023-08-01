@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 import java.time.LocalDate;
 
@@ -29,7 +29,7 @@ import java.time.LocalDate;
  * @author simplity.org
  *
  */
-public class DateType extends DataType {
+public class DateSchema extends ValueSchema {
 	private final int maxPastDays;
 	private final int maxFutureDays;
 
@@ -44,7 +44,7 @@ public class DateType extends DataType {
 	 *            0 means today is OK. -100 means 100 days before today is the
 	 *            max. 100 means 100 days after today is the max
 	 */
-	public DateType(final String name, final String messageId, final int maxPastDays, final int maxFutureDays) {
+	public DateSchema(final String name, final String messageId, final int maxPastDays, final int maxFutureDays) {
 		this.valueType = ValueType.Date;
 		this.name = name;
 		this.messageId = messageId;

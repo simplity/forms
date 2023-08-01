@@ -26,7 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * @author simplity.org

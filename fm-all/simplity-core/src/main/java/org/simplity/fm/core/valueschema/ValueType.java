@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -48,7 +48,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			String val;
 			if (value == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
@@ -59,7 +60,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public String getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public String getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			String val = rs.getString(position);
 			if (val == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
@@ -112,7 +114,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			if (value == null) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setLong(position, 0L);
@@ -125,7 +128,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public Long getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public Long getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			final long result = rs.getLong(position);
 			if (rs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -155,7 +159,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			if (value == null) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setDouble(position, 0.0);
@@ -168,7 +173,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public Double getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public Double getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			final double result = rs.getDouble(position);
 			if (rs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -191,19 +197,20 @@ public enum ValueType {
 		@Override
 		public Boolean doParse(final String value) {
 			switch (value.toLowerCase()) {
-			case "1":
-			case "true":
+			case "1" :
+			case "true" :
 				return true;
-			case "0":
-			case "false":
+			case "0" :
+			case "false" :
 				return false;
-			default:
+			default :
 				return null;
 			}
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			if (value == null) {
 				ps.setNull(position, Types.BOOLEAN);
 			} else {
@@ -212,7 +219,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public Boolean getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public Boolean getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			final boolean result = rs.getBoolean(position);
 			if (rs.wasNull()) {
 				return null;
@@ -241,7 +249,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			java.sql.Date date = null;
 			if (value != null) {
 				date = java.sql.Date.valueOf((LocalDate) value);
@@ -250,7 +259,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public LocalDate getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public LocalDate getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			final java.sql.Date date = rs.getDate(position);
 			if (date == null) {
 				return null;
@@ -280,7 +290,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position,
+				final Object value) throws SQLException {
 			java.sql.Timestamp stamp = null;
 			if (value != null) {
 				stamp = java.sql.Timestamp.from((Instant) value);
@@ -289,7 +300,8 @@ public enum ValueType {
 		}
 
 		@Override
-		public Instant getFromRs(final ResultSet rs, final int position) throws SQLException {
+		public Instant getFromRs(final ResultSet rs, final int position)
+				throws SQLException {
 			final java.sql.Timestamp stamp = rs.getTimestamp(position);
 			if (stamp == null) {
 				return null;
@@ -325,7 +337,8 @@ public enum ValueType {
 	 * @param value
 	 * @throws SQLException
 	 */
-	public abstract void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException;
+	public abstract void setPsParam(PreparedStatement ps, int position,
+			Object value) throws SQLException;
 
 	/**
 	 *
@@ -334,13 +347,14 @@ public enum ValueType {
 	 * @return object returned in the result set
 	 * @throws SQLException
 	 */
-	public abstract Object getFromRs(ResultSet rs, int position) throws SQLException;
+	public abstract Object getFromRs(ResultSet rs, int position)
+			throws SQLException;
 
 	/**
 	 * can be used when the parameter is non-null and is one of String, Long,
 	 * Double, Boolean, LocalDate or Instant. This method has a slight
-	 * performance over-head to checkfor teh object instance. So, if the value
-	 * type is known, it is better to use setPsParam()If the valeType is knowm,
+	 * performance over-head to check for the object instance. So, if the value
+	 * type is known, it is better to use setPsParam()If the valeType is known,
 	 * it is better to use the
 	 *
 	 * @param value
@@ -353,10 +367,12 @@ public enum ValueType {
 	 *            at 1 and not 0
 	 * @throws SQLException
 	 */
-	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBasedPosition)
+	public static void setObjectAsPsParam(final Object value,
+			final PreparedStatement ps, final int oneBasedPosition)
 			throws SQLException {
 		if (value == null) {
-			throw new SQLException("Null value can not be set to a psparameter using this method");
+			throw new SQLException(
+					"Null value can not be set to a psparameter using this method");
 		}
 
 		if (value instanceof String) {
@@ -380,12 +396,14 @@ public enum ValueType {
 		}
 
 		if (value instanceof LocalDate) {
-			ps.setDate(oneBasedPosition, java.sql.Date.valueOf((LocalDate) value));
+			ps.setDate(oneBasedPosition,
+					java.sql.Date.valueOf((LocalDate) value));
 			return;
 		}
 
 		if (value instanceof Instant) {
-			ps.setTimestamp(oneBasedPosition, java.sql.Timestamp.from((Instant) value));
+			ps.setTimestamp(oneBasedPosition,
+					java.sql.Timestamp.from((Instant) value));
 			return;
 		}
 		throw new SQLException(

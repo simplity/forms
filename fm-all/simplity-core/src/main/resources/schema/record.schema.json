@@ -97,18 +97,18 @@
             "$ref": "#/$defs/name"
           },
           "listKey": {
-            "description": "If teh list is a keyedList",
+            "description": "If the list is a keyedList",
             "$ref": "#/$defs/name"
           },
           "errorId": {
             "$ref": "#/$defs/name"
           },
-          "renderInList": {
-            "description": "True if this field is shown when the rows are shown in a list. Only important fields may be shown in a tabular view.",
+          "showInList": {
+            "description": "Only important fields are rendered as columns when data is rendered as rows in a list.",
             "type": "boolean"
           },
-          "renderInSave": {
-            "description": "True if this field is meant for user user input.",
+          "showInSave": {
+            "description": "True if this field is meant for user input in edit/add mode.",
             "type": "boolean"
           }
         },

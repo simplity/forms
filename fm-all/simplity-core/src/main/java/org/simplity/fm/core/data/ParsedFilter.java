@@ -29,11 +29,11 @@ import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

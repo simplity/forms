@@ -11,37 +11,37 @@ import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
-import org.simplity.fm.example.gen.DefinedDataTypes;
+import org.simplity.fm.example.gen.DefinedValueSchemas;
 
 /**
  * class that represents structure of studentAssessmentDetail
  */
 public class StudentAssessmentDetailRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("studentAssessmentId", 0, DefinedDataTypes.id, false,
+			new DbField("studentAssessmentId", 0, DefinedValueSchemas.id, false,
 					null, null, null, "student_assessment_id",
 					FieldType.GeneratedPrimaryKey),
-			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, false,
+			new DbField("instituteId", 1, DefinedValueSchemas.tenantKey, false,
 					null, null, null, "institute_id", FieldType.TenantKey),
-			new DbField("subjectSectionId", 2, DefinedDataTypes.id, false, null,
+			new DbField("subjectSectionId", 2, DefinedValueSchemas.id, false, null,
 					null, null, "subject_section_id", FieldType.OptionalData),
-			new DbField("assessmentSchemeId", 3, DefinedDataTypes.id, false,
+			new DbField("assessmentSchemeId", 3, DefinedValueSchemas.id, false,
 					null, null, null, "assessment_scheme_id",
 					FieldType.OptionalData),
-			new DbField("assessmentSeqNo", 4, DefinedDataTypes.integer, false,
+			new DbField("assessmentSeqNo", 4, DefinedValueSchemas.integer, false,
 					null, null, null, "assessment_seq_no",
 					FieldType.RequiredData),
-			new DbField("studentId", 5, DefinedDataTypes.id, false, null, null,
+			new DbField("studentId", 5, DefinedValueSchemas.id, false, null, null,
 					null, "student_id", FieldType.RequiredData),
-			new DbField("name", 6, DefinedDataTypes.name, false, null, null,
+			new DbField("name", 6, DefinedValueSchemas.name, false, null, null,
 					null, "name", FieldType.OptionalData),
-			new DbField("usn", 7, DefinedDataTypes.text, false, null, null,
+			new DbField("usn", 7, DefinedValueSchemas.text, false, null, null,
 					null, "usn", FieldType.OptionalData),
-			new DbField("hasAttended", 8, DefinedDataTypes.bool, false, "false",
+			new DbField("hasAttended", 8, DefinedValueSchemas.bool, false, "false",
 					null, null, "has_attended", FieldType.OptionalData),
-			new DbField("marksScored", 9, DefinedDataTypes.integer, false, "0",
+			new DbField("marksScored", 9, DefinedValueSchemas.integer, false, "0",
 					null, null, "marks_scored", FieldType.OptionalData),
-			new DbField("marks", 10, DefinedDataTypes.text, false, null, null,
+			new DbField("marks", 10, DefinedValueSchemas.text, false, null, null,
 					null, null, FieldType.OptionalData)};
 	private static final boolean[] OPERS = {true, false, false, false, true};
 	private static final IValidation[] VALIDS = {};

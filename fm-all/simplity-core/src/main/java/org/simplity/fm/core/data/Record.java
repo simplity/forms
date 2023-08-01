@@ -32,12 +32,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -523,7 +523,7 @@ public class Record {
 	}
 
 	/**
-	 * parse this record from a serialized input when teh object is the root.
+	 * parse this record from a serialized input when the object is the root.
 	 *
 	 * @param inputObject
 	 *            input data

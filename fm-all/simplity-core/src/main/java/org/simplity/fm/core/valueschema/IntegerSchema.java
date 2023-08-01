@@ -19,56 +19,64 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
-
-import java.util.regex.Pattern;
+package org.simplity.fm.core.valueschema;
 
 /**
- * validation parameters for a text value
+ * validation parameters for a an integral value
  *
  * @author simplity.org
  *
  */
-public class TextType extends DataType {
-	private final String regex;
+public class IntegerSchema extends ValueSchema {
+	private final long minValue;
+	private final long maxValue;
 
 	/**
 	 *
 	 * @param name
 	 * @param messageId
-	 * @param minLength
-	 * @param maxLength
-	 * @param regex
+	 * @param minValue
+	 * @param maxValue
 	 */
-	public TextType(final String name, final String messageId,
-			final int minLength, final int maxLength, final String regex) {
+	public IntegerSchema(String name, String messageId, long minValue,
+			long maxValue) {
+		this.valueType = ValueType.Integer;
 		this.name = name;
-		this.valueType = ValueType.Text;
-		this.minLength = minLength;
-		this.maxLength = maxLength;
 		this.messageId = messageId;
-		if (regex == null || regex.isEmpty()) {
-			this.regex = null;
-		} else {
-			this.regex = regex;
+		this.minValue = minValue;
+		this.maxValue = maxValue;
+
+		this.maxLength = ("" + this.maxValue).length();
+		int len = ("" + this.minValue).length();
+		if (len > this.maxLength) {
+			this.maxLength = len;
 		}
 	}
 
-	@Override
-	public String parse(final Object object) {
-		return this.parse(object.toString());
-	}
-
-	@Override
-	public String parse(final String value) {
-		final int len = value.length();
-		if (len < this.minLength
-				|| (this.maxLength > 0 && len > this.maxLength)) {
-			return null;
-		}
-		if (this.regex == null || Pattern.matches(this.regex, value)) {
+	private Long validate(long value) {
+		if (value >= this.minValue && value <= this.maxValue) {
 			return value;
 		}
 		return null;
+	}
+
+	@Override
+	public Long parse(Object object) {
+		if (object instanceof Number) {
+			return this.validate(((Number) object).longValue());
+		}
+		if (object instanceof String) {
+			return this.parse((String) object);
+		}
+		return null;
+	}
+
+	@Override
+	public Long parse(String value) {
+		try {
+			return this.validate(Long.parseLong(value));
+		} catch (Exception e) {
+			return null;
+		}
 	}
 }

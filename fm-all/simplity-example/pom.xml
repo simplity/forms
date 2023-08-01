@@ -7,8 +7,8 @@
     <artifactId>fm-all</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>example</artifactId>
-  <name>example</name>
+  <artifactId>simplity-example</artifactId>
+  <name>simplity-example</name>
   <url>http://maven.apache.org</url>
   <properties>
   </properties>

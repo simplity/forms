@@ -40,7 +40,7 @@ public interface IUserContext {
 	/**
 	 *
 	 * @param key
-	 * @return object associated with this key, null if no such key, or teh
+	 * @return object associated with this key, null if no such key, or the
 	 *         value is null
 	 */
 	Object getValue(String key);

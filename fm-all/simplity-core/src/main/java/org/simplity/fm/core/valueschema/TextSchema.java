@@ -19,36 +19,56 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
+
+import java.util.regex.Pattern;
 
 /**
- * validation parameters for a an integral value
- * 
+ * validation parameters for a text value
+ *
  * @author simplity.org
  *
  */
-public class BooleanType extends DataType {
+public class TextSchema extends ValueSchema {
+	private final String regex;
 
 	/**
-	 * @param name 
+	 *
+	 * @param name
 	 * @param messageId
+	 * @param minLength
+	 * @param maxLength
+	 * @param regex
 	 */
-	public BooleanType(String name, String messageId) {
-		this.valueType = ValueType.Boolean;
+	public TextSchema(final String name, final String messageId,
+			final int minLength, final int maxLength, final String regex) {
 		this.name = name;
+		this.valueType = ValueType.Text;
+		this.minLength = minLength;
+		this.maxLength = maxLength;
 		this.messageId = messageId;
+		if (regex == null || regex.isEmpty()) {
+			this.regex = null;
+		} else {
+			this.regex = regex;
+		}
 	}
 
 	@Override
-	public Boolean parse(String value) {
-		return (Boolean)ValueType.Boolean.parse(value);
+	public String parse(final Object object) {
+		return this.parse(object.toString());
 	}
-	
+
 	@Override
-	public Boolean parse(Object value) {
-		if(value instanceof Boolean) {
-			return (Boolean)value;
+	public String parse(final String value) {
+		final int len = value.length();
+		if (len < this.minLength
+				|| (this.maxLength > 0 && len > this.maxLength)) {
+			return null;
 		}
-		return (Boolean)ValueType.Boolean.parse(value.toString());
+		if (this.regex == null || Pattern.matches(this.regex, value)) {
+			return value;
+		}
+		return null;
 	}
 }

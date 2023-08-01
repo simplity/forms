@@ -29,8 +29,9 @@ import org.simplity.fm.gen.Generator;
  *
  */
 public class Generate {
-	private static final String SPEC_ROOT = "c:/work/fm-all/example/resources/spec/";
-	private static final String JAVA_ROOT = "c:/work/fm-all/example/src/main/java/";
+	private static final String PROJECT_ROOT = "c:/gitHub/forms/fm-all/simplity-example/";
+	private static final String SPEC_ROOT = PROJECT_ROOT + "resources/spec/";
+	private static final String JAVA_ROOT = PROJECT_ROOT + "src/main/java/";
 	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";
 	private static final String TS_ROOT = "c:/temp/ts/";
 

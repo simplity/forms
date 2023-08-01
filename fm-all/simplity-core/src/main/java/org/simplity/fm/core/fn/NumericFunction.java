@@ -23,8 +23,8 @@
 package org.simplity.fm.core.fn;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * base class for functions that deal only with numbers. we use double as the

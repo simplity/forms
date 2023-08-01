@@ -26,14 +26,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IDataTypes;
+import org.simplity.fm.core.IValueSchemas;
 import org.simplity.fm.core.IMessages;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.Average;
 import org.simplity.fm.core.fn.Concat;
 import org.simplity.fm.core.fn.IFunction;
@@ -45,6 +44,7 @@ import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.valueschema.ValueSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class CompProvider implements ICompProvider {
 	private static final String RECORD = Conventions.App.RECORD_CLASS_SUFIX;
 	private static final String FORM = Conventions.App.FORM_CLASS_SUFIX;
 
-	private final IDataTypes dataTypes;
+	private final IValueSchemas dataTypes;
 	private final String formRoot;
 	private final String recordRoot;
 	private final String listRoot;
@@ -88,9 +88,9 @@ public class CompProvider implements ICompProvider {
 		final String genRoot = rootPackageName + DOT
 				+ Conventions.App.FOLDER_NAME_GEN + DOT;
 		String cls = genRoot + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-		IDataTypes types = null;
+		IValueSchemas types = null;
 		try {
-			types = (IDataTypes) Class.forName(cls).getConstructor()
+			types = (IValueSchemas) Class.forName(cls).getConstructor()
 					.newInstance();
 		} catch (final Exception e) {
 			logger.error("Unable to locate class {}  as IDataTypes", cls);
@@ -111,7 +111,7 @@ public class CompProvider implements ICompProvider {
 		return new CompProvider(types, messages, rootPackageName);
 	}
 
-	private CompProvider(final IDataTypes dataTypes, final IMessages messages,
+	private CompProvider(final IValueSchemas dataTypes, final IMessages messages,
 			final String rootPackage) {
 		this.dataTypes = dataTypes;
 		this.messages = messages;
@@ -157,8 +157,8 @@ public class CompProvider implements ICompProvider {
 	}
 
 	@Override
-	public DataType getDataType(final String dataTypeId) {
-		return this.dataTypes.getDataType(dataTypeId);
+	public ValueSchema getValueSchema(final String dataTypeId) {
+		return this.dataTypes.getDataValueSchema(dataTypeId);
 	}
 
 	@Override

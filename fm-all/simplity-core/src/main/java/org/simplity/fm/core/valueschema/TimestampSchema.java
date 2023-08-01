@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 import java.time.Instant;
 
@@ -32,14 +32,14 @@ import java.time.Instant;
  * @author simplity.org
  *
  */
-public class TimestampType extends DataType {
+public class TimestampSchema extends ValueSchema {
 
 	/**
 	 * @param name
 	 * @param errorId
 	 * 
 	 */
-	public TimestampType(String name, String errorId) {
+	public TimestampSchema(String name, String errorId) {
 		this.valueType = ValueType.Timestamp;
 	}
 

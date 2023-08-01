@@ -20,13 +20,13 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 /**
  * @author simplity.org
  *
  */
-public class DecimalType extends DataType {
+public class DecimalSchema extends ValueSchema {
 	private final long minValue;
 	private final long maxValue;
 	/**
@@ -43,7 +43,7 @@ public class DecimalType extends DataType {
 	 * @param maxValue
 	 * @param nbrDecimals
 	 */
-	public DecimalType(final String name, final String messageId, final long minValue, final long maxValue,
+	public DecimalSchema(final String name, final String messageId, final long minValue, final long maxValue,
 			final int nbrDecimals) {
 		this.valueType = ValueType.Decimal;
 		this.name = name;

@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.simplity.fm.core.data.PreparedStatementParam;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

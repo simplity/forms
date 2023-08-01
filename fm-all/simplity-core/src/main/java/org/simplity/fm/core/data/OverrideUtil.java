@@ -26,7 +26,7 @@ import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
