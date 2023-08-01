@@ -312,7 +312,7 @@ class Record {
 		 * data types are directly referred to the static declarations
 		 */
 		sbf.append("\nimport ").append(javaPackage).append('.')
-				.append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+				.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
 				.append(';');
 		/*
 		 * class definition

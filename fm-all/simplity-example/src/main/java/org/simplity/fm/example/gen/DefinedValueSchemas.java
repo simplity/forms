@@ -60,7 +60,7 @@ public class DefinedValueSchemas implements IValueSchemas {
 	}
 
 @Override
-	public ValueSchema getDataValueSchema(String name) {
+	public ValueSchema getValueSchema(String name) {
 		return this.typesMap.get(name);
 	}
 }

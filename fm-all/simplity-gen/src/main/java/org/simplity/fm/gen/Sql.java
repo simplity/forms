@@ -379,7 +379,7 @@ public class Sql {
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
 		sbf.append("\nimport ").append(rootPackage).append('.')
-				.append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+				.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
 				.append(';');
 
 	}

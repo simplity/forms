@@ -108,7 +108,7 @@ class Field {
 		sbf.append(C).append(this.index);
 		// 3. schema name. All Schema names are statically defined in the main
 		// class. e.g. DataTypes.schemaName
-		sbf.append(C).append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+		sbf.append(C).append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
 				.append('.').append(this.valueSchema);
 		// 4. isList as boolean
 		sbf.append(C).append(this.isList);

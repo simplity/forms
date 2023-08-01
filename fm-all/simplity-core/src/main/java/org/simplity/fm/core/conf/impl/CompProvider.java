@@ -26,8 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IValueSchemas;
 import org.simplity.fm.core.IMessages;
+import org.simplity.fm.core.IValueSchemas;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Form;
@@ -87,7 +87,8 @@ public class CompProvider implements ICompProvider {
 
 		final String genRoot = rootPackageName + DOT
 				+ Conventions.App.FOLDER_NAME_GEN + DOT;
-		String cls = genRoot + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+		String cls = genRoot
+				+ Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME;
 		IValueSchemas types = null;
 		try {
 			types = (IValueSchemas) Class.forName(cls).getConstructor()
@@ -111,8 +112,8 @@ public class CompProvider implements ICompProvider {
 		return new CompProvider(types, messages, rootPackageName);
 	}
 
-	private CompProvider(final IValueSchemas dataTypes, final IMessages messages,
-			final String rootPackage) {
+	private CompProvider(final IValueSchemas dataTypes,
+			final IMessages messages, final String rootPackage) {
 		this.dataTypes = dataTypes;
 		this.messages = messages;
 		final String genRoot = rootPackage + DOT
@@ -158,7 +159,7 @@ public class CompProvider implements ICompProvider {
 
 	@Override
 	public ValueSchema getValueSchema(final String dataTypeId) {
-		return this.dataTypes.getDataValueSchema(dataTypeId);
+		return this.dataTypes.getValueSchema(dataTypeId);
 	}
 
 	@Override

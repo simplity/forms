@@ -71,6 +71,10 @@ public class Generator {
 			generate(args[0], args[1], args[2], args[3]);
 			return;
 		}
+		generate("c:/bitBucket/simeta/simeta-meta/meta/",
+				"c:/bitBucket/simeta/simeta-meta/simeta-server-gen/src/main/java/",
+				"org.simplity.simeta.gen",
+				"c:/bitBucket/simeta/simeta-meta/simeta-client-gen/src/");
 		System.err.println(
 				"Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
 						+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsOutputFolder");

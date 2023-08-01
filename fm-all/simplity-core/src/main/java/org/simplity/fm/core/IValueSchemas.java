@@ -34,6 +34,6 @@ public interface IValueSchemas {
 	 * @param name
 	 * @return data type instance, or null if there is no such data type
 	 */
-	public abstract ValueSchema getDataValueSchema(String name);
+	public abstract ValueSchema getValueSchema(String name);
 
 }

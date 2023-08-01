@@ -114,7 +114,8 @@ public class Application {
 		sbf.append("\n");
 
 		Util.emitImport(sbf, IValueSchemas.class);
-		Util.emitImport(sbf, ValueSchema.class);
+		Util.emitImport(sbf,
+				org.simplity.fm.core.valueschema.ValueSchema.class);
 		Util.emitImport(sbf, TextSchema.class);
 		Util.emitImport(sbf, IntegerSchema.class);
 		Util.emitImport(sbf, DecimalSchema.class);
@@ -122,7 +123,7 @@ public class Application {
 		Util.emitImport(sbf, DateSchema.class);
 		Util.emitImport(sbf, TimestampSchema.class);
 
-		final String clsName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+		final String clsName = Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME;
 
 		sbf.append(
 				"\n\n/**\n * class that has static attributes for all value schemas defined for this project. It also extends <code>DataTypes</code>");
@@ -144,22 +145,23 @@ public class Application {
 			schemaNames.setLength(schemaNames.length() - C.length());
 		}
 
-		sbf.append("\n\n\tpublic static final DataType[] allTypes = {")
+		sbf.append("\n\n\tpublic static final ValueSchema[] allSchemas = {")
 				.append(schemaNames.toString()).append("};");
 
-		sbf.append("\n\t private Map<String, DataType> typesMap;");
+		sbf.append("\n\t private Map<String, ValueSchema> schemaMap;");
 
 		sbf.append("\n\t/**\n\t * default constructor\n\t */");
 
 		sbf.append("\n\tpublic ").append(clsName).append("() {");
-		sbf.append("\n\t\tthis.typesMap = new HashMap<>();");
-		sbf.append("\n\t\tfor(DataType dt: allTypes) {");
-		sbf.append("\n\t\t\tthis.typesMap.put(dt.getName(), dt);");
+		sbf.append("\n\t\tthis.schemaMap = new HashMap<>();");
+		sbf.append("\n\t\tfor(ValueSchema vs: allSchemas) {");
+		sbf.append("\n\t\t\tthis.schemaMap.put(vs.getName(), vs);");
 		sbf.append("\n\t\t}\n\t}");
 
 		sbf.append("\n\n@Override");
-		sbf.append("\n\tpublic DataType getDataType(String typeName) {");
-		sbf.append("\n\t\treturn this.typesMap.get(typeName);");
+		sbf.append(
+				"\n\tpublic ValueSchema getValueSchema(String schemaName) {");
+		sbf.append("\n\t\treturn this.schemaMap.get(schemaName);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
