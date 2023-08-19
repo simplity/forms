@@ -32,10 +32,10 @@
         "uniqueItems": true,
         "enum": ["get", "create", "update", "filter", "delete"]
       },
-    "isExposedToClient": {
-    	"description": "Is this data strucrure part of onput/output API for srvices. Used by the generator for generating client-side components.",
-		"type": "boolean"
-    }
+      "isExposedToClient": {
+        "description": "Is this data structure part of output/output API for services. Used by the generator for generating client-side components.",
+        "type": "boolean"
+      }
     },
     "fields": {
       "type": "object",
@@ -46,8 +46,8 @@
         "required": ["valueSchema"],
         "properties": {
           "valueSchema": {
-            "description": "All value schemas defined for the app",
-            "$ref": "#/$defs/allValueSchemas"
+            "description": "Value schema used to validate value for this field",
+            "$ref": "#/$defs/name"
           },
           "defaultValue": {
             "description": "Used while inserting/new operations",
@@ -93,7 +93,7 @@
             "type": "string"
           },
           "listName": {
-            "description": "The list name that provides the list of valid values. Used for validation by the server, and to provide drop-down values bythe client",
+            "description": "The list name that provides the list of valid values. Used for validation by the server, and to provide drop-down values by the client",
             "$ref": "#/$defs/name"
           },
           "listKey": {

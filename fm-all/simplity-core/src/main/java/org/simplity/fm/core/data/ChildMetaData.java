@@ -40,18 +40,18 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class LinkMetaData {
+public class ChildMetaData {
 	private static final Logger logger = LoggerFactory
-			.getLogger(LinkMetaData.class);
+			.getLogger(ChildMetaData.class);
 	/**
 	 * non-null unique across all fields of the form
 	 */
-	private final String linkName;
+	private final String childName;
 
 	/**
-	 * name of the other form being linked
+	 * name of the child form being linked
 	 */
-	private final String linkFormName;
+	private final String childFormName;
 
 	/**
 	 * if this is tabular, min rows expected from client
@@ -80,13 +80,13 @@ public class LinkMetaData {
 	/**
 	 * is the link meant for an array of data or 1-to-1?
 	 */
-	private final boolean isTabular;
+	private final boolean isTable;
 	/*
 	 * fields that are final but created at init()
 	 */
 
 	/**
-	 * true inly if meta data exists, and the two records are db records
+	 * true only if meta data exists, and the two records are db records
 	 */
 	private boolean isDbLink;
 	/**
@@ -116,31 +116,34 @@ public class LinkMetaData {
 	 * used by generated code, and hence we are ok with large number of
 	 * parameters
 	 *
-	 * @param linkName
-	 * @param linkFormName
+	 * @param childName
+	 *            this is different from the child form name. childName has to
+	 *            be unique across all field names used by the parent. It is the
+	 *            name used in this context of the parent-child relationship
+	 * @param childFormName
 	 * @param minRows
 	 * @param maxRows
 	 * @param errorMessageId
 	 * @param parentLinkNames
 	 * @param childLinkNames
-	 * @param isTabular
+	 * @param isTable
 	 */
-	public LinkMetaData(final String linkName, final String linkFormName,
+	public ChildMetaData(final String childName, final String childFormName,
 			final int minRows, final int maxRows, final String errorMessageId,
 			final String[] parentLinkNames, final String[] childLinkNames,
-			final boolean isTabular) {
-		this.linkName = linkName;
-		this.linkFormName = linkFormName;
+			final boolean isTable) {
+		this.childName = childName;
+		this.childFormName = childFormName;
 		this.minRows = minRows;
 		this.maxRows = maxRows;
 		this.parentLinkNames = parentLinkNames;
 		this.childLinkNames = childLinkNames;
 		this.errorMessageId = errorMessageId;
-		this.isTabular = isTabular;
+		this.isTable = isTable;
 	}
 
 	boolean isTabular() {
-		return this.isTabular;
+		return this.isTable;
 	}
 
 	/**
@@ -185,7 +188,7 @@ public class LinkMetaData {
 			if (childField == null) {
 				throw new RuntimeException("Field " + this.childLinkNames[i]
 						+ " is defined as childLinkName, but is not defined as a field in the linked form "
-						+ this.linkFormName);
+						+ this.childFormName);
 			}
 			this.parentIndexes[i] = parentField.getIndex();
 			this.childIndexes[i] = childField.getIndex();
@@ -205,7 +208,7 @@ public class LinkMetaData {
 	private void noDb() {
 		logger.error(
 				"Link is not designed for db operation on form {}. Database operation not done",
-				this.linkFormName);
+				this.childFormName);
 	}
 	/**
 	 * our current design is to write to the serializer directly
@@ -228,15 +231,15 @@ public class LinkMetaData {
 		final Object[] values = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
-		outData.addName(this.linkName);
+		outData.addName(this.childName);
 		final Field[] fields = thisRecord.fetchFields();
-		if (this.isTabular) {
+		if (this.isTable) {
 			outData.beginArray();
 			for (final Object[] row : thisRecord.filter(this.linkWhereClause,
 					values, handle)) {
 				outData.beginObject();
 				outData.addFields(fields, row);
-				form.readLinkedForms(row, outData, handle);
+				form.readChildForms(row, outData, handle);
 				outData.endObject();
 			}
 			outData.endArray();
@@ -287,15 +290,15 @@ public class LinkMetaData {
 		}
 
 		final DbRecord thisRecord = (DbRecord) form.record;
-		if (this.isTabular) {
-			final IInputArray arr = inputObject.getArray(this.linkName);
+		if (this.isTable) {
+			final IInputArray arr = inputObject.getArray(this.childName);
 			if (arr == null) {
 				if (this.minRows == 0) {
 					logger.info(
 							"Input not received, but it is optional. No data saved for linked form.");
 					return true;
 				}
-				ctx.addMessage(Message.newFieldError(this.linkName,
+				ctx.addMessage(Message.newFieldError(this.childName,
 						Message.FIELD_REQUIRED, ""));
 				return false;
 			}
@@ -303,7 +306,7 @@ public class LinkMetaData {
 			final int nbr = arr.length();
 			if (nbr < this.minRows
 					|| (this.maxRows > 0 && nbr > this.maxRows)) {
-				ctx.addMessage(Message.newFieldError(this.linkName,
+				ctx.addMessage(Message.newFieldError(this.childName,
 						"a min of " + this.minRows + " and a max of "
 								+ this.maxRows + " rows expected",
 						""));
@@ -313,7 +316,7 @@ public class LinkMetaData {
 			IInputData[] childRecs = arr.toDataArray();
 			for (int idx = 0; idx < childRecs.length; idx++) {
 				if (!thisRecord.parse(childRecs[idx], true, ctx,
-						this.linkFormName, idx)) {
+						this.childFormName, idx)) {
 					return false;
 				}
 				this.copyParentKeys(parentRec, thisRecord);
@@ -323,10 +326,10 @@ public class LinkMetaData {
 			return true;
 		}
 
-		final IInputData obj = inputObject.getData(this.linkName);
+		final IInputData obj = inputObject.getData(this.childName);
 		if (obj == null) {
 			if (this.minRows > 0) {
-				ctx.addMessage(Message.newFieldError(this.linkName,
+				ctx.addMessage(Message.newFieldError(this.childName,
 						Message.FIELD_REQUIRED, ""));
 				return false;
 			}
@@ -335,9 +338,9 @@ public class LinkMetaData {
 			return true;
 		}
 
-		if (!thisRecord.parse(obj, true, ctx, this.linkName, 0)) {
+		if (!thisRecord.parse(obj, true, ctx, this.childName, 0)) {
 			logger.error("INput data had errors for linked form {}",
-					this.linkName);
+					this.childName);
 			return false;
 		}
 

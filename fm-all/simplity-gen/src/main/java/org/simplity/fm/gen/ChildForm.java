@@ -30,12 +30,12 @@ import java.util.Map;
  * @author simplity.org
  *
  */
-class LinkedForm {
+class ChildForm {
 	private static final String C = ", ";
 	private static final String P = "\n\tprivate static final ";
 
-	String name;
-	String formName;
+	String linkName;
+	String childFormName;
 	int minRows;
 	int maxRows;
 	String errorId;
@@ -44,16 +44,16 @@ class LinkedForm {
 
 	String label;
 	boolean isEditable;
-	boolean isTabular;
+	boolean isTable;
 	int index;
 
 	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields,
 			final int idx) {
-		sbf.append(P).append("LinkMetaData L").append(idx)
-				.append(" = new LinkMetaData(");
+		sbf.append(P).append("ChildMetaData L").append(idx)
+				.append(" = new ChildMetaData(");
 
-		sbf.append(Util.quotedString(this.name));
-		sbf.append(C).append(Util.quotedString(this.formName));
+		sbf.append(Util.quotedString(this.linkName));
+		sbf.append(C).append(Util.quotedString(this.childFormName));
 		sbf.append(C).append(this.minRows);
 		sbf.append(C).append(this.maxRows);
 		sbf.append(C).append(Util.quotedString(this.errorId));
@@ -91,7 +91,7 @@ class LinkedForm {
 		} else {
 			sbf.append(",null ,null");
 		}
-		sbf.append(C).append(this.isTabular);
+		sbf.append(C).append(this.isTable);
 		sbf.append(");");
 
 		/*
@@ -99,36 +99,37 @@ class LinkedForm {
 		 */
 		sbf.append(P).append("Form<?> F").append(idx);
 		sbf.append(" = AppManager.getAppInfra().getCompProvider().getForm(\"");
-		sbf.append(this.formName).append("\");");
+		sbf.append(this.childFormName).append("\");");
 	}
 
 	String getFormName() {
-		return this.formName;
+		return this.childFormName;
 	}
 
-	void emitTs(final StringBuilder sbf) {
-		final String T = ",\n\t\t";
-		sbf.append("\n\t\"").append(this.name).append("\": {");
-		sbf.append("\n\t\t\"name\":").append(Util.quotedString(this.name));
-		sbf.append(T).append("\"form\":\"")
-				.append(Util.toClassName(this.formName)).append('"');
-		sbf.append(T).append("\"isEditable\":").append(this.isEditable);
-		sbf.append(T).append("\"isTabular\":").append(this.isTabular);
-		sbf.append(T).append("\"label\":").append(
+	void emitTs(final StringBuilder sbf, String tabs) {
+		sbf.append(tabs).append("\"name\": ")
+				.append(Util.quotedString(this.linkName));
+		final String prefix = ',' + tabs;
+		sbf.append(prefix).append("\"formName\": ")
+				.append(Util.quotedString(this.childFormName));
+		sbf.append(prefix).append("\"isEditable\": ").append(this.isEditable);
+		sbf.append(prefix).append("\"isTable\": ").append(this.isTable);
+		sbf.append(prefix).append("\"label\":").append(
 				this.label == null ? "\"\"" : Util.quotedString(this.label));
-		sbf.append(T).append("\"minRows\":").append(this.minRows);
-		sbf.append(T).append("\"maxRows\":").append(this.maxRows);
-		sbf.append(T).append("\"errorId\":")
-				.append(Util.quotedString(this.errorId));
+		sbf.append(prefix).append("\"minRows\": ").append(this.minRows);
+		sbf.append(prefix).append("\"maxRows\": ").append(this.maxRows);
+		if (this.errorId != null) {
+			sbf.append(prefix).append("\"errorId\": ")
+					.append(Util.quotedString(this.errorId));
+		}
 
-		sbf.append("\n\t};");
 	}
 
 	/**
 	 * @param sbf
 	 */
 	void emitJavaGetSetter(final StringBuilder sbf) {
-		final String c = Util.toClassName(this.formName);
+		final String c = Util.toClassName(this.childFormName);
 		sbf.append("\n\n\t/** get form table for this linked form ").append(c)
 				.append(" **/");
 		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c)

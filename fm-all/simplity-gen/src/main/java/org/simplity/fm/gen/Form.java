@@ -40,6 +40,19 @@ import org.slf4j.LoggerFactory;
 public class Form {
 	protected static final Logger logger = LoggerFactory.getLogger(Form.class);
 
+	/**
+	 * create a default form for a record
+	 *
+	 * @param rec
+	 * @return
+	 */
+	static Form fromRecord(Record rec) {
+		Form form = new Form();
+		form.formName = rec.recordName;
+		form.initialize(rec);
+		return form;
+	}
+
 	String formName;
 	String recordName;
 	/*
@@ -50,43 +63,37 @@ public class Form {
 	 */
 	boolean serveGuests;
 	String[] operations;
-	Map<String, Control> controls;
-	LinkedForm[] linkedForms;
-	// Section[] sections;
+	ChildForm[] childForms;
 
-	/*
-	 * derived attributes
-	 */
-	Map<String, Field> fields;
+	// derived fields
 	Record record;
 
 	final Set<String> keyFieldNames = new HashSet<>();
 
-	Field[] keyFields;
-
 	void initialize(final Record rec) {
-		this.fields = new HashMap<>();
-
 		this.record = rec;
-		for (final Field f : rec.fieldsMap.values()) {
-			final FieldType ct = f.fieldTypeEnum;
-			if (ct == FieldType.PrimaryKey
-					|| ct == FieldType.GeneratedPrimaryKey) {
-				this.keyFieldNames.add(f.fieldName);
+		this.recordName = rec.recordName;
+
+		if (this.operations == null) {
+			this.operations = rec.operations;
+		}
+
+		if (rec.keyFields != null) {
+			for (final Field f : rec.keyFields) {
+				final FieldType ct = f.fieldTypeEnum;
+				if (ct == FieldType.PrimaryKey
+						|| ct == FieldType.GeneratedPrimaryKey) {
+					this.keyFieldNames.add(f.fieldName);
+				}
 			}
 		}
 
-		this.fields.putAll(rec.fieldsMap);
-
-		if (this.linkedForms != null) {
+		if (this.childForms != null) {
 			int idx = 0;
-			for (final LinkedForm lf : this.linkedForms) {
-				lf.index = idx;
+			for (final ChildForm child : this.childForms) {
+				child.index = idx;
 				idx++;
 			}
-		}
-		if (this.controls != null) {
-			Util.initializeMapEntries(this.controls);
 		}
 	}
 
@@ -105,8 +112,8 @@ public class Form {
 		sbf.append("package ").append(pck).append(";\n");
 		Util.emitImport(sbf, AppManager.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
-		Util.emitImport(sbf, org.simplity.fm.core.data.LinkMetaData.class);
-		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.ChildForm.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.ChildMetaData.class);
 		final String recordClass = Util.toClassName(this.recordName) + "Record";
 		sbf.append("\nimport ").append(packageName).append(".rec.")
 				.append(recordClass).append(';');
@@ -144,22 +151,23 @@ public class Form {
 		/*
 		 * linked forms
 		 */
-		final String lf = "\n\tprivate static final LinkedForm<?>[] LINKS = ";
-		if (this.linkedForms == null) {
+		final String lf = "\n\tprivate static final ChildForm<?>[] LINKS = ";
+		if (this.childForms == null) {
 			sbf.append(lf).append("null;");
 		} else {
 			final StringBuilder bf = new StringBuilder();
-			for (int i = 0; i < this.linkedForms.length; i++) {
+			for (int i = 0; i < this.childForms.length; i++) {
 				/*
 				 * declare linkedMeta and Form
 				 */
-				this.linkedForms[i].emitJavaCode(sbf, this.fields, i);
+				this.childForms[i].emitJavaCode(sbf, this.record.fieldsMap, i);
 
 				if (i != 0) {
 					bf.append(',');
 				}
-				bf.append("new LinkedForm<>(L").append(i).append(", F")
-						.append(i).append(')');
+
+				bf.append("new ChildForm<>(L").append(i).append(", F").append(i)
+						.append(')');
 			}
 			sbf.append(lf).append('{').append(bf).append("};");
 		}
@@ -218,6 +226,76 @@ public class Form {
 			indexes.put(iot.name().toLowerCase(), iot.ordinal());
 		}
 		return indexes;
+	}
+
+	private static final char Q = '"';
+	boolean generateTs(String folderName) {
+		logger.info("TS for form {} being generated into folder {}",
+				this.formName, folderName);
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append('{');
+		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
+		sbf.append("\n\t\"operations\": {");
+		if (this.operations == null || this.operations.length == 0) {
+			logger.warn(
+					"No operatins are allowed for record {}. Client app will not be able to use auto-service for this record",
+					this.recordName);
+		} else {
+			for (final String oper : this.operations) {
+				if (oper == null) {
+					logger.error("{} is not a valid form operation. skipped",
+							oper);
+				} else {
+					sbf.append("\n\t\t\"").append(oper).append("\": true,");
+				}
+			}
+			sbf.setLength(sbf.length() - 1); // removing the last comma
+		}
+		sbf.append("\n\t},");
+
+		sbf.append("\n\t\"fields\": {");
+		final StringBuilder names = new StringBuilder();
+		for (final Field field : this.record.fields) {
+			field.emitFormTs(sbf);
+			sbf.append(',');
+			names.append(Q).append(field.fieldName).append(Q).append(',');
+		}
+		sbf.setLength(sbf.length() - 1);
+		names.setLength((names.length() - 1));
+		sbf.append("\n\t},");
+
+		sbf.append("\n\t\"fieldNames\": [").append(names.toString())
+				.append("]");
+
+		Field[] keys = this.record.keyFields;
+		if (keys != null && (keys.length > 0)) {
+			// we generally have only one key field
+			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].fieldName)
+					.append(Q);
+			for (int i = 1; i < keys.length; i++) {
+				sbf.append(",\"").append(keys[i].fieldName).append(Q);
+			}
+			sbf.append("]");
+		}
+
+		if (this.childForms != null) {
+			sbf.append(",\n\t\"childForms\": {");
+			for (ChildForm cf : this.childForms) {
+				sbf.append("\n\t\t\"").append(cf.linkName).append("\": {");
+				cf.emitTs(sbf, "\n\t\t\t");
+				sbf.append("\n\t\t},");
+			}
+			sbf.setLength(sbf.length() - 1);
+			sbf.append("\n\t}");
+		}
+
+		sbf.append("\n}\n");
+
+		Util.writeOut(folderName + this.formName + ".form.json",
+				sbf.toString());
+
+		return true;
+
 	}
 
 }

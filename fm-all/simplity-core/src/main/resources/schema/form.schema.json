@@ -8,7 +8,7 @@
     "description": {
       "type": "string"
     },
-    "name": {
+    "formName": {
       "type": "string"
     },
     "recordName": {
@@ -20,13 +20,16 @@
     },
     "operations": {
       "description": "subset of operations allowed for the corresponding record",
-      "type": "array",
-      "items": {
-        "enum": ["get", "create", "update", "filter", "delete"]
+			"properties": {
+        "get": {"type": "boolean"}, 
+        "create": {"type": "boolean"}, 
+        "update": {"type": "boolean"}, 
+        "filter": {"type": "boolean"},
+        "delete": {"type": "boolean"}
       }
     },
-    "linkedForms": {
-      "description": "related form, or child form",
+    "childForms": {
+      "description": "related forms, or child forms",
       "type": "array",
       "items": {
         "type": "object",
@@ -51,26 +54,29 @@
             "items": {
               "type": "string"
             }
-          }
-        },
-        "isEditable": {
-          "type": "boolean"
-        },
-        "isTabular": {
-          "description": "true if the linked form is a child form, and we may have more than one rows of the child for a row of the parent",
-          "type": "boolean"
-        },
-        "minRows": {
-          "type": "integer"
-        },
-        "maxRows": {
-          "type": "integer"
-        },
-        "errorId": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
+        	},
+	        "isEditable": {
+	          "type": "boolean"
+	        },
+	        "isTabular": {
+	          "description": "true if the linked form is a child form, and we may have more than one rows of the child for a row of the parent",
+	          "type": "boolean"
+	        },
+	        "minRows": {
+	          "type": "integer"
+	        },
+	        "maxRows": {
+	          "type": "integer"
+	        },
+	        "errorId": {
+	          "type": "string"
+	        },
+	        "label": {
+	        	"type": "string"
+	        }
+      	}
+     },
+     "additionalProperties": false
     }
   },
   "additionalProperties": false

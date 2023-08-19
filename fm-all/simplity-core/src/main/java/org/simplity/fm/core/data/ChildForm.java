@@ -33,33 +33,33 @@ import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * represents a child/linked form for a parent form
+ * represents a child form for a parent form
  *
  * @author simplity.org
  * @param <T>
- *            Record of the linked form
+ *            Record of the child form
  *
  */
-public class LinkedForm<T extends Record> {
+public class ChildForm<T extends Record> {
 	/**
 	 * how this form is linked to its parent
 	 */
-	private final LinkMetaData linkMeta;
+	private final ChildMetaData childMeta;
 
 	private Form<T> form;
 
 	/**
 	 *
-	 * @param linkMeta
+	 * @param childMeta
 	 * @param form
 	 */
-	public LinkedForm(final LinkMetaData linkMeta, final Form<T> form) {
-		this.linkMeta = linkMeta;
+	public ChildForm(final ChildMetaData childMeta, final Form<T> form) {
+		this.childMeta = childMeta;
 		this.form = form;
 	}
 
 	/**
-	 * read rows for this linked form based on the parent record
+	 * read rows for this child form based on the parent record
 	 *
 	 * @param parentRec
 	 *            parent record
@@ -70,7 +70,7 @@ public class LinkedForm<T extends Record> {
 	 */
 	public void read(final DbRecord parentRec, final IOutputData outData,
 			final ReadonlyHandle handle) throws SQLException {
-		this.linkMeta.read(parentRec, this.form, outData, handle);
+		this.childMeta.read(parentRec, this.form, outData, handle);
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class LinkedForm<T extends Record> {
 			final IInputData inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
-		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
+		return this.childMeta.save(parentRec, this.form, inputObject, handle,
 				ctx);
 	}
 
@@ -101,7 +101,7 @@ public class LinkedForm<T extends Record> {
 			final IInputData inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
-		return this.linkMeta.save(parentRec, this.form, inputObject, handle,
+		return this.childMeta.save(parentRec, this.form, inputObject, handle,
 				ctx);
 	}
 
@@ -116,13 +116,13 @@ public class LinkedForm<T extends Record> {
 			final ReadWriteHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		this.checkUpdatability();
-		return this.linkMeta.delete(parentRec, this.form, handle);
+		return this.childMeta.delete(parentRec, this.form, handle);
 	}
 
 	private void checkUpdatability() {
-		if (this.form.hasLinks()) {
+		if (this.form.hasChildren()) {
 			throw new ApplicationError(
-					"Auto delete operation is not allowed on a form with hard-links. It can have only one level of linked forms.");
+					"Auto delete operation is not allowed on a form with child forms that in turn have child forms.");
 		}
 	}
 
@@ -132,7 +132,7 @@ public class LinkedForm<T extends Record> {
 	 * @param parentRecord
 	 */
 	public void init(final Record parentRecord) {
-		this.linkMeta.init(parentRecord, this.form.getRecord());
+		this.childMeta.init(parentRecord, this.form.getRecord());
 
 	}
 

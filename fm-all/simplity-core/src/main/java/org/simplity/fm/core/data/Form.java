@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author simplity.org
  * @param <T>
- *            record that describes the data behind this form
+ *            primary record that describes the data behind this form
  *
  */
 public abstract class Form<T extends Record> {
@@ -71,20 +71,20 @@ public abstract class Form<T extends Record> {
 	private final boolean[] operations;
 
 	/*
-	 * linked forms
+	 * child forms
 	 */
-	protected final LinkedForm<?>[] linkedForms;
+	protected final ChildForm<?>[] childForms;
 	private final boolean isDb;
 
 	protected Form(final String name, final T record,
-			final boolean[] operations, final LinkedForm<?>[] linkedForms) {
+			final boolean[] operations, final ChildForm<?>[] childForms) {
 		this.name = name;
 		this.record = record;
 		this.operations = operations;
 		this.isDb = record instanceof DbRecord;
-		this.linkedForms = linkedForms;
-		if (linkedForms != null && linkedForms.length > 0) {
-			for (final LinkedForm<?> lf : linkedForms) {
+		this.childForms = childForms;
+		if (childForms != null && childForms.length > 0) {
+			for (final ChildForm<?> lf : childForms) {
 				lf.init(record);
 			}
 		}
@@ -99,14 +99,14 @@ public abstract class Form<T extends Record> {
 
 	/**
 	 *
-	 * @return true if this form has linked forms. false otherwise.
+	 * @return true if this form has child forms. false otherwise.
 	 */
-	public boolean hasLinks() {
-		return this.linkedForms != null;
+	public boolean hasChildren() {
+		return this.childForms != null;
 	}
 
 	/**
-	 * read rows for the linked-forms
+	 * read rows for the child-forms
 	 *
 	 * @param rawData
 	 *            for the record for this form
@@ -115,12 +115,12 @@ public abstract class Form<T extends Record> {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void readLinkedForms(final Object[] rawData,
+	public void readChildForms(final Object[] rawData,
 			final IOutputData outData, final ReadonlyHandle handle)
 			throws SQLException {
-		if (this.linkedForms != null) {
-			for (final LinkedForm<?> link : Form.this.linkedForms) {
-				link.read((DbRecord) this.record, outData, handle);
+		if (this.childForms != null) {
+			for (final ChildForm<?> child : Form.this.childForms) {
+				child.read((DbRecord) this.record, outData, handle);
 			}
 		}
 	}
@@ -163,9 +163,9 @@ public abstract class Form<T extends Record> {
 				+ serviceName.substring(1) + '_' + this.name;
 
 		/*
-		 * forms with links require form-based service
+		 * forms with children require form-based service
 		 */
-		if (this.linkedForms != null) {
+		if (this.childForms != null) {
 			switch (operation) {
 			case Get :
 				return new Reader(serviceName);
@@ -250,8 +250,8 @@ public abstract class Form<T extends Record> {
 				outData.beginObject();
 				outData.addRecord(rec);
 
-				for (final LinkedForm<?> link : Form.this.linkedForms) {
-					link.read(rec, outData, handle);
+				for (final ChildForm<?> child : Form.this.childForms) {
+					child.read(rec, outData, handle);
 				}
 				outData.endObject();
 			});
@@ -278,9 +278,10 @@ public abstract class Form<T extends Record> {
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return false;
 				}
-				for (final LinkedForm<?> lf : Form.this.linkedForms) {
+				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.insert(rec, payload, handle, ctx)) {
-						logger.error("Insert operation failed for linked form");
+						logger.error(
+								"Insert operation failed for a child form");
 						ctx.addMessage(
 								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
@@ -312,9 +313,10 @@ public abstract class Form<T extends Record> {
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return false;
 				}
-				for (final LinkedForm<?> lf : Form.this.linkedForms) {
+				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.update(rec, payload, handle, ctx)) {
-						logger.error("Update operation failed for linked form");
+						logger.error(
+								"Update operation failed for a child form");
 						ctx.addMessage(
 								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
@@ -348,9 +350,10 @@ public abstract class Form<T extends Record> {
 					return false;
 				}
 
-				for (final LinkedForm<?> lf : Form.this.linkedForms) {
+				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.delete(rec, handle, ctx)) {
-						logger.error("Insert operation failed for linked form");
+						logger.error(
+								"Insert operation failed for a child form");
 						ctx.addMessage(
 								Message.newError(Message.MSG_INVALID_DATA));
 						return false;
@@ -400,8 +403,8 @@ public abstract class Form<T extends Record> {
 						final DbRecord r = rec.newInstance(row);
 						outData.beginObject();
 						outData.addRecord(r);
-						for (final LinkedForm<?> link : Form.this.linkedForms) {
-							link.read(r, outData, handle);
+						for (final ChildForm<?> child : Form.this.childForms) {
+							child.read(r, outData, handle);
 						}
 						outData.endObject();
 					}
@@ -428,8 +431,8 @@ public abstract class Form<T extends Record> {
 		final String recordName = this.record.fetchName();
 		this.record = (T) AppManager.getAppInfra().getCompProvider()
 				.getRecord(recordName, ctx);
-		if (this.linkedForms != null) {
-			for (final LinkedForm<?> lf : this.linkedForms) {
+		if (this.childForms != null) {
+			for (final ChildForm<?> lf : this.childForms) {
 				lf.override(this.record, ctx);
 			}
 		}
