@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.datatypes;
+package org.simplity.fm.core.valueschema;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -51,7 +51,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  */
 
 @SuppressWarnings("resource")
-public class ValueTypeTest {
+public class ValueSchemaTest {
 	protected ResultSet rs = Mockito.mock(ResultSet.class);
 	protected PreparedStatement ps = Mockito.mock(PreparedStatement.class);
 
@@ -79,43 +79,43 @@ public class ValueTypeTest {
 		@ParameterizedTest
 		@ValueSource(booleans = { true, false })
 		void shouldSetBoolValueToPs(final boolean value) throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Boolean.setPsParam(ValueTypeTest.this.ps, 1, value);
-			Mockito.verify(ValueTypeTest.this.ps).setBoolean(1, value);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Boolean.setPsParam(ValueSchemaTest.this.ps, 1, value);
+			Mockito.verify(ValueSchemaTest.this.ps).setBoolean(1, value);
 		}
 
 		@Test
 		void shouldSetNullToPs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Boolean.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setNull(1, Types.BOOLEAN);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Boolean.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setNull(1, Types.BOOLEAN);
 		}
 
 		@Test
 		void shouldThrowException() {
 			assertThrows(ClassCastException.class, () -> {
-				ValueType.Boolean.setPsParam(ValueTypeTest.this.ps, 1, "someString");
+				ValueType.Boolean.setPsParam(ValueSchemaTest.this.ps, 1, "someString");
 			});
 		}
 
 		@Test
 		void shouldGetBooleanValueFromRes() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(false);
-			when(ValueTypeTest.this.rs.getBoolean(1)).thenReturn(true);
-			when(ValueTypeTest.this.rs.getBoolean(2)).thenReturn(false);
-			assertEquals(true, ValueType.Boolean.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(false, ValueType.Boolean.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(false);
+			when(ValueSchemaTest.this.rs.getBoolean(1)).thenReturn(true);
+			when(ValueSchemaTest.this.rs.getBoolean(2)).thenReturn(false);
+			assertEquals(true, ValueType.Boolean.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(false, ValueType.Boolean.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 
 		@Test
 		void shouldGetNullFromRes() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(true);
-			when(ValueTypeTest.this.rs.getBoolean(1)).thenReturn(true);
-			when(ValueTypeTest.this.rs.getBoolean(2)).thenReturn(false);
-			assertEquals(null, ValueType.Boolean.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(null, ValueType.Boolean.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(true);
+			when(ValueSchemaTest.this.rs.getBoolean(1)).thenReturn(true);
+			when(ValueSchemaTest.this.rs.getBoolean(2)).thenReturn(false);
+			assertEquals(null, ValueType.Boolean.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(null, ValueType.Boolean.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 	}
 
@@ -132,29 +132,29 @@ public class ValueTypeTest {
 		void shouldSetTextValueToPs() throws SQLException {
 			final Object[] objects = { 1, "abcd", true, LocalDate.now() };
 			for (final Object obj : objects) {
-				Mockito.reset(ValueTypeTest.this.ps);
-				ValueType.Text.setPsParam(ValueTypeTest.this.ps, 1, obj);
-				Mockito.verify(ValueTypeTest.this.ps).setString(1, obj.toString());
+				Mockito.reset(ValueSchemaTest.this.ps);
+				ValueType.Text.setPsParam(ValueSchemaTest.this.ps, 1, obj);
+				Mockito.verify(ValueSchemaTest.this.ps).setString(1, obj.toString());
 			}
 		}
 
 		@Test
 		void shouldSetNullToPsAsPerConvention() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Text.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setString(1, Conventions.Db.TEXT_VALUE_OF_NULL);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Text.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setString(1, Conventions.Db.TEXT_VALUE_OF_NULL);
 		}
 
 		@Test
 		void shouldGetTextValueFromRes() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(false);
-			when(ValueTypeTest.this.rs.getString(1)).thenReturn("one");
-			when(ValueTypeTest.this.rs.getString(2)).thenReturn("two");
-			when(ValueTypeTest.this.rs.getString(3)).thenReturn(null);
-			assertEquals("one", ValueType.Text.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals("two", ValueType.Text.getFromRs(ValueTypeTest.this.rs, 2));
-			assertEquals(Conventions.Db.TEXT_VALUE_OF_NULL, ValueType.Text.getFromRs(ValueTypeTest.this.rs, 3));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(false);
+			when(ValueSchemaTest.this.rs.getString(1)).thenReturn("one");
+			when(ValueSchemaTest.this.rs.getString(2)).thenReturn("two");
+			when(ValueSchemaTest.this.rs.getString(3)).thenReturn(null);
+			assertEquals("one", ValueType.Text.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals("two", ValueType.Text.getFromRs(ValueSchemaTest.this.rs, 2));
+			assertEquals(Conventions.Db.TEXT_VALUE_OF_NULL, ValueType.Text.getFromRs(ValueSchemaTest.this.rs, 3));
 		}
 	}
 
@@ -208,43 +208,43 @@ public class ValueTypeTest {
 		@ParameterizedTest
 		@ValueSource(longs = { 0L, 1L, -1L })
 		void shouldSetLongValueToPs(final long value) throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Integer.setPsParam(ValueTypeTest.this.ps, 1, value);
-			Mockito.verify(ValueTypeTest.this.ps).setLong(1, value);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Integer.setPsParam(ValueSchemaTest.this.ps, 1, value);
+			Mockito.verify(ValueSchemaTest.this.ps).setLong(1, value);
 		}
 
 		@Test
 		void shouldSet0WhenNull() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Integer.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setLong(1, 0L);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Integer.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setLong(1, 0L);
 		}
 
 		@Test
 		void shouldThrowException() {
 			assertThrows(ClassCastException.class, () -> {
-				ValueType.Integer.setPsParam(ValueTypeTest.this.ps, 1, "some String");
+				ValueType.Integer.setPsParam(ValueSchemaTest.this.ps, 1, "some String");
 			});
 		}
 
 		@Test
 		void shouldGetLongValueFromRs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(false);
-			when(ValueTypeTest.this.rs.getLong(1)).thenReturn(0L);
-			when(ValueTypeTest.this.rs.getLong(2)).thenReturn(99L);
-			assertEquals(0L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(99L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(false);
+			when(ValueSchemaTest.this.rs.getLong(1)).thenReturn(0L);
+			when(ValueSchemaTest.this.rs.getLong(2)).thenReturn(99L);
+			assertEquals(0L, ValueType.Integer.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(99L, ValueType.Integer.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 
 		@Test
 		void shouldTreatNullFromRsAs0() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(true);
-			when(ValueTypeTest.this.rs.getLong(1)).thenReturn(1L);
-			when(ValueTypeTest.this.rs.getLong(2)).thenReturn(2L);
-			assertEquals(0L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(0L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(true);
+			when(ValueSchemaTest.this.rs.getLong(1)).thenReturn(1L);
+			when(ValueSchemaTest.this.rs.getLong(2)).thenReturn(2L);
+			assertEquals(0L, ValueType.Integer.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(0L, ValueType.Integer.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 	}
 
@@ -267,43 +267,43 @@ public class ValueTypeTest {
 		@ParameterizedTest
 		@ValueSource(doubles = { 0d, 1d, -1d })
 		void shouldSetDoubleValueToPs(final double value) throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Decimal.setPsParam(ValueTypeTest.this.ps, 1, value);
-			Mockito.verify(ValueTypeTest.this.ps).setDouble(1, value);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Decimal.setPsParam(ValueSchemaTest.this.ps, 1, value);
+			Mockito.verify(ValueSchemaTest.this.ps).setDouble(1, value);
 		}
 
 		@Test
 		void shouldSet0WhenNull() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Decimal.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setDouble(1, 0d);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Decimal.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setDouble(1, 0d);
 		}
 
 		@Test
 		void shouldThrowException() {
 			assertThrows(ClassCastException.class, () -> {
-				ValueType.Decimal.setPsParam(ValueTypeTest.this.ps, 1, "some String");
+				ValueType.Decimal.setPsParam(ValueSchemaTest.this.ps, 1, "some String");
 			});
 		}
 
 		@Test
 		void shouldGetDoubleValueFromRs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(false);
-			when(ValueTypeTest.this.rs.getDouble(1)).thenReturn(0d);
-			when(ValueTypeTest.this.rs.getDouble(2)).thenReturn(99d);
-			assertEquals(0d, ValueType.Decimal.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(99d, ValueType.Decimal.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(false);
+			when(ValueSchemaTest.this.rs.getDouble(1)).thenReturn(0d);
+			when(ValueSchemaTest.this.rs.getDouble(2)).thenReturn(99d);
+			assertEquals(0d, ValueType.Decimal.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(99d, ValueType.Decimal.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 
 		@Test
 		void shouldTreatNullFromRsAs0() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
-			when(ValueTypeTest.this.rs.wasNull()).thenReturn(true);
-			when(ValueTypeTest.this.rs.getDouble(1)).thenReturn(1d);
-			when(ValueTypeTest.this.rs.getDouble(2)).thenReturn(2d);
-			assertEquals(0d, ValueType.Decimal.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(0d, ValueType.Decimal.getFromRs(ValueTypeTest.this.rs, 2));
+			Mockito.reset(ValueSchemaTest.this.rs);
+			when(ValueSchemaTest.this.rs.wasNull()).thenReturn(true);
+			when(ValueSchemaTest.this.rs.getDouble(1)).thenReturn(1d);
+			when(ValueSchemaTest.this.rs.getDouble(2)).thenReturn(2d);
+			assertEquals(0d, ValueType.Decimal.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(0d, ValueType.Decimal.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 	}
 
@@ -324,35 +324,35 @@ public class ValueTypeTest {
 
 		@Test
 		void shouldSetDateValueToPs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final LocalDate d = LocalDate.now();
 			final Date date = Date.valueOf(d);
-			ValueType.Date.setPsParam(ValueTypeTest.this.ps, 1, d);
-			Mockito.verify(ValueTypeTest.this.ps).setDate(1, date);
+			ValueType.Date.setPsParam(ValueSchemaTest.this.ps, 1, d);
+			Mockito.verify(ValueSchemaTest.this.ps).setDate(1, date);
 		}
 
 		@Test
 		void shouldSetNullToPs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Date.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setDate(1, null);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Date.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setDate(1, null);
 		}
 
 		@Test
 		void shouldThrowExceptionOnNonDates() {
 			assertThrows(ClassCastException.class, () -> {
-				ValueType.Date.setPsParam(ValueTypeTest.this.ps, 1, "some String");
+				ValueType.Date.setPsParam(ValueSchemaTest.this.ps, 1, "some String");
 			});
 		}
 
 		@Test
 		void shouldGetDateValueFromRs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
+			Mockito.reset(ValueSchemaTest.this.rs);
 			final LocalDate d = LocalDate.parse("2011-12-31");
-			when(ValueTypeTest.this.rs.getDate(1)).thenReturn(null);
-			when(ValueTypeTest.this.rs.getDate(2)).thenReturn(Date.valueOf(d));
-			assertNull(ValueType.Date.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(d, ValueType.Date.getFromRs(ValueTypeTest.this.rs, 2));
+			when(ValueSchemaTest.this.rs.getDate(1)).thenReturn(null);
+			when(ValueSchemaTest.this.rs.getDate(2)).thenReturn(Date.valueOf(d));
+			assertNull(ValueType.Date.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(d, ValueType.Date.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 	}
 
@@ -373,35 +373,35 @@ public class ValueTypeTest {
 
 		@Test
 		void shouldSetStampValueToPs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final Instant t = Instant.ofEpochMilli(123456789l);
 			final Timestamp stamp = Timestamp.from(t);
-			ValueType.Timestamp.setPsParam(ValueTypeTest.this.ps, 1, t);
-			Mockito.verify(ValueTypeTest.this.ps).setTimestamp(1, stamp);
+			ValueType.Timestamp.setPsParam(ValueSchemaTest.this.ps, 1, t);
+			Mockito.verify(ValueSchemaTest.this.ps).setTimestamp(1, stamp);
 		}
 
 		@Test
 		void shouldSetNullToPs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Timestamp.setPsParam(ValueTypeTest.this.ps, 1, null);
-			Mockito.verify(ValueTypeTest.this.ps).setTimestamp(1, null);
+			Mockito.reset(ValueSchemaTest.this.ps);
+			ValueType.Timestamp.setPsParam(ValueSchemaTest.this.ps, 1, null);
+			Mockito.verify(ValueSchemaTest.this.ps).setTimestamp(1, null);
 		}
 
 		@Test
 		void shouldThrowExceptionOnNonDates() {
 			assertThrows(ClassCastException.class, () -> {
-				ValueType.Timestamp.setPsParam(ValueTypeTest.this.ps, 1, "some String");
+				ValueType.Timestamp.setPsParam(ValueSchemaTest.this.ps, 1, "some String");
 			});
 		}
 
 		@Test
 		void shouldGetTimestampValueFromRs() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.rs);
+			Mockito.reset(ValueSchemaTest.this.rs);
 			final Instant t = Instant.ofEpochMilli(123456789l);
-			when(ValueTypeTest.this.rs.getTimestamp(1)).thenReturn(null);
-			when(ValueTypeTest.this.rs.getTimestamp(2)).thenReturn(Timestamp.from(t));
-			assertNull(ValueType.Timestamp.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(t, ValueType.Timestamp.getFromRs(ValueTypeTest.this.rs, 2));
+			when(ValueSchemaTest.this.rs.getTimestamp(1)).thenReturn(null);
+			when(ValueSchemaTest.this.rs.getTimestamp(2)).thenReturn(Timestamp.from(t));
+			assertNull(ValueType.Timestamp.getFromRs(ValueSchemaTest.this.rs, 1));
+			assertEquals(t, ValueType.Timestamp.getFromRs(ValueSchemaTest.this.rs, 2));
 		}
 	}
 
@@ -414,59 +414,59 @@ public class ValueTypeTest {
 					Timestamp.from(Instant.ofEpochMilli(123456l)), null };
 			for (final Object value : values) {
 				assertThrows(SQLException.class, () -> {
-					ValueType.setObjectAsPsParam(value, ValueTypeTest.this.ps, 1);
+					ValueType.setObjectAsPsParam(value, ValueSchemaTest.this.ps, 1);
 				});
 			}
 		}
 
 		@Test
 		void shouldSetString() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final String value = "abcd";
-			ValueType.setObjectAsPsParam(value, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setString(1, value);
+			ValueType.setObjectAsPsParam(value, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setString(1, value);
 		}
 
 		@Test
 		void shouldSetLong() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final long value = 34215;
-			ValueType.setObjectAsPsParam(value, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setLong(1, value);
+			ValueType.setObjectAsPsParam(value, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setLong(1, value);
 		}
 
 		@Test
 		void shouldSetDouble() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final double value = 12.34d;
-			ValueType.setObjectAsPsParam(value, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setDouble(1, value);
+			ValueType.setObjectAsPsParam(value, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setDouble(1, value);
 		}
 
 		@Test
 		void shouldSetBoolean() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final boolean value = true;
-			ValueType.setObjectAsPsParam(value, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setBoolean(1, value);
+			ValueType.setObjectAsPsParam(value, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setBoolean(1, value);
 		}
 
 		@Test
 		void shouldSetDate() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final LocalDate t = LocalDate.ofEpochDay(12345);
 			final Date value = Date.valueOf(t);
-			ValueType.setObjectAsPsParam(t, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setDate(1, value);
+			ValueType.setObjectAsPsParam(t, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setDate(1, value);
 		}
 
 		@Test
 		void shouldSetTimestamp() throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
+			Mockito.reset(ValueSchemaTest.this.ps);
 			final Instant t = Instant.ofEpochMilli(342156l);
 			final Timestamp value = Timestamp.from(t);
-			ValueType.setObjectAsPsParam(t, ValueTypeTest.this.ps, 1);
-			Mockito.verify(ValueTypeTest.this.ps).setTimestamp(1, value);
+			ValueType.setObjectAsPsParam(t, ValueSchemaTest.this.ps, 1);
+			Mockito.verify(ValueSchemaTest.this.ps).setTimestamp(1, value);
 		}
 	}
 }
