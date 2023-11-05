@@ -150,9 +150,9 @@ public class Field {
 	}
 
 	/**
-	 * @return the dataType
+	 * @return the value-schema associated with this field
 	 */
-	public ValueSchema getDataType() {
+	public ValueSchema getValueSchema() {
 		return this.valueSchema;
 	}
 
