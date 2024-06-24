@@ -1,0 +1,47 @@
+{
+	"name": "userRole",
+	"operations": {
+		"create": true,
+		"delete": true,
+		"filter": true,
+		"get": true,
+		"update": true
+	},
+	"fields": {
+		"userId": {
+			"name": "userId",
+			"valueSchema": "id",
+			"valueType": "integer",
+			"isRequired": true,
+			"label": "User Id",
+			"renderType": "text"
+		},
+		"roleId": {
+			"name": "roleId",
+			"valueSchema": "id",
+			"valueType": "integer",
+			"isRequired": true,
+			"label": "Role Id",
+			"renderType": "text"
+		},
+		"instituteId": {
+			"name": "instituteId",
+			"valueSchema": "id",
+			"valueType": "integer",
+			"isRequired": true,
+			"label": "Institute Id",
+			"hint": "Institute in which the user has this role.",
+			"renderType": "text"
+		},
+		"junk": {
+			"name": "junk",
+			"valueSchema": "text",
+			"valueType": "text",
+			"isRequired": false,
+			"label": "Junk",
+			"renderType": "text"
+		}
+	},
+	"fieldNames": ["userId","roleId","instituteId","junk"],
+	"keyFields": ["userId","roleId","instituteId"]
+}

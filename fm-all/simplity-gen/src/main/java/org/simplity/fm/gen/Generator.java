@@ -68,6 +68,19 @@ public class Generator {
 			+ "\n-- Values clause has one row of empty/0/false values."
 			+ "\n-- we intend to introduce some syntax to generate this fiel WITH data in the future";
 
+	private static final String INPUT_ROOT = "c:/gitHub/wip/lms/lms-meta/meta/";
+	private static final String JAVA_ROOT = "c:/gitHub/wip/lms/lms-meta/lms-server-gen/src/main/java";
+	private static final String PACKAGE_NAME = "in.cognitron.lms.gen";
+	private static final String TS_ROOT = "c:gitHub/wip/lms/lms-meta/lms-client-gen/src/";
+
+	// private static final String INPUT_ROOT =
+	// "c:/bitBucket/simeta/simeta-meta/meta/";
+	// private static final String JAVA_ROOT =
+	// "c:/bitBucket/simeta/simeta-meta/simeta-server-gen/src/main/java/";
+	// private static final String PACKAGE_NAME = "org.simplity.simeta.gen";
+	// private static final String TS_ROOT =
+	// "c:/bitBucket/simeta/simeta-meta/simeta-client-gen/src/";
+
 	/**
 	 *
 	 * @param args
@@ -78,10 +91,7 @@ public class Generator {
 			generate(args[0], args[1], args[2], args[3]);
 			return;
 		}
-		generate("c:/bitBucket/simeta/simeta-meta/meta/",
-				"c:/bitBucket/simeta/simeta-meta/simeta-server-gen/src/main/java/",
-				"org.simplity.simeta.gen",
-				"c:/bitBucket/simeta/simeta-meta/simeta-client-gen/src/");
+		generate(INPUT_ROOT, JAVA_ROOT, PACKAGE_NAME, TS_ROOT);
 		// System.err.println(
 		// "Usage : java Generator.class resourceRootFolder tsFormFolder\n or
 		// \n"

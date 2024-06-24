@@ -33,21 +33,28 @@ public class JettyServer extends Server implements IAppServer {
 	public static IAppServer newServer(int port, IApp app,
 			IRestAdapter restAdapter) {
 
-		JettyServer server = new JettyServer();
-		AbstractHandler hendler = new JettyHandler(app, restAdapter);
-		server.setHandler(new JettyHandler(app, restAdapter));
-
 		try {
+			JettyServer server = new JettyServer(port);
+			server.setHandler(new JettyHandler(app, restAdapter));
 			server.start();
-			server.setHandler(hendler);
 			server.join();
-			server.destroy();
+			JettyHandler.logger.info(
+					"App {} started as a Jetty Server on port {}",
+					app.getName(), port);
 			return server;
 		} catch (Exception e) {
 			JettyHandler.logger.error("Error while starting Jetty Server. {}",
 					e.getMessage());
 			return null;
 		}
+	}
+
+	/**
+	 *
+	 * @param port
+	 */
+	public JettyServer(int port) {
+		super(port);
 	}
 
 	@Override

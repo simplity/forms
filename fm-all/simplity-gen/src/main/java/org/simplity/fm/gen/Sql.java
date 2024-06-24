@@ -52,7 +52,7 @@ public class Sql {
 	String sql;
 	Field[] sqlParams;
 	Field[] outputFields;
-	String recordName;
+	String outputRecord;
 	private boolean hasDate = false;
 	private boolean hasTime = false;
 	private String className;
@@ -87,8 +87,8 @@ public class Sql {
 	void generateJava(String folderName, final String rootPackage) {
 
 		final StringBuilder sbf = new StringBuilder();
-		final boolean hasRecord = this.recordName != null
-				&& this.recordName.isEmpty() == false;
+		final boolean hasRecord = this.outputRecord != null
+				&& this.outputRecord.isEmpty() == false;
 		final boolean hasOutFields = this.outputFields != null
 				&& this.outputFields.length > 0;
 		final boolean hasParams = this.sqlParams != null
@@ -106,7 +106,7 @@ public class Sql {
 			}
 		} else if (this.sqlType.equals(SQL_TYPE_READ)
 				|| this.sqlType.equals(SQL_TYPE_FILTER)) {
-			if ((hasRecord && hasOutFields) || (!hasRecord && !hasOutFields)) {
+			if (hasRecord == hasOutFields) {
 				msg = "read/filter sql should have either recordName or outputFields";
 			} else {
 				final String txt = this.sql.trim().toLowerCase();
@@ -195,7 +195,7 @@ public class Sql {
 			final String rootPackage) {
 
 		Util.emitImport(sbf, FilterWithRecordSql.class);
-		final String recordCls = Util.toClassName(this.recordName) + "Record";
+		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
 		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(";");
 
@@ -241,7 +241,7 @@ public class Sql {
 	void emitReadWithRecord(final StringBuilder sbf, final String rootPackage) {
 
 		Util.emitImport(sbf, ReadWithRecordSql.class);
-		final String recordCls = Util.toClassName(this.recordName) + "Record";
+		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
 		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(';');
 
@@ -419,12 +419,12 @@ public class Sql {
 			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}",
-						f.fieldName, f.valueSchema);
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 			}
-			final String nam = f.fieldName;
+			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
@@ -448,13 +448,13 @@ public class Sql {
 			String typ = "unknownBecauseOfUnknownDataType";
 			String get = typ;
 			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}",
-						f.fieldName, f.valueSchema);
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
 			} else {
 				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
 				get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
 			}
-			final String nam = f.fieldName;
+			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)

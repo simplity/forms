@@ -36,52 +36,66 @@ import org.slf4j.LoggerFactory;
 /**
  * serves as an example, or even a base class, for an application to design its
  * IConnecitonFactory class.
- * 
+ *
  * @author simplity.org
  *
  */
 public class DefaultConnectionFactory implements IDbConnectionFactory {
-	private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionFactory.class);
-	
+	private static final Logger logger = LoggerFactory
+			.getLogger(DefaultConnectionFactory.class);
+
 	/**
-	 * get a factory that gets connection to default schema. This factory can not get connection to any other schema
-	 * @param conString non-null connection string
-	 * @param driverClassName non-null driver class name
-	 * @return factory that can be used to get connection to a default schema. null in case the credentials could not be used to get a sample connection
+	 * get a factory that gets connection to default schema. This factory can
+	 * not get connection to any other schema
+	 *
+	 * @param conString
+	 *            non-null connection string
+	 * @param driverClassName
+	 *            non-null driver class name
+	 * @return factory that can be used to get connection to a default schema.
+	 *         null in case the credentials could not be used to get a sample
+	 *         connection
 	 */
-	public static IDbConnectionFactory getFactory(String conString, String driverClassName) {
+	public static IDbConnectionFactory getFactory(String conString,
+			String driverClassName) {
 		IFactory f = getCsFactory(conString, driverClassName);
-		if(f == null) {
+		if (f == null) {
 			return null;
 		}
 		return new DefaultConnectionFactory(f, null, null);
 	}
-	
+
 	/**
-	 * get a factory that gets connection to default schema. This factory an not get connection to any other schema
-	 * @param dataSourceName non-null jndi name for data source
-	 * @return factory that can be used to get connection to a default schema. null in case the credentials could not be used to get a sample connection
+	 * get a factory that gets connection to default schema. This factory an not
+	 * get connection to any other schema
+	 *
+	 * @param dataSourceName
+	 *            non-null jndi name for data source
+	 * @return factory that can be used to get connection to a default schema.
+	 *         null in case the credentials could not be used to get a sample
+	 *         connection
 	 */
 	public static IDbConnectionFactory getFactory(String dataSourceName) {
 		IFactory f = getDsFactory(dataSourceName);
-		if(f == null) {
+		if (f == null) {
 			return null;
 		}
 		return new DefaultConnectionFactory(f, null, null);
 	}
-	
+
 	private final IFactory defFactory;
 	private final IFactory altFactory;
 	private final String altSchema;
-	
-	private  DefaultConnectionFactory(IFactory defFactory, String altSchema, IFactory altFactory) {
+
+	private DefaultConnectionFactory(IFactory defFactory, String altSchema,
+			IFactory altFactory) {
 		this.defFactory = defFactory;
 		this.altFactory = altFactory;
 		this.altSchema = altSchema;
 	}
 	@Override
 	public Connection getConnection() throws SQLException {
-		if(this.defFactory == null) {
+		if (this.defFactory == null) {
 			throw new SQLException("No credentials set up for accessing a db");
 		}
 		return this.defFactory.getConnection();
@@ -89,8 +103,10 @@ public class DefaultConnectionFactory implements IDbConnectionFactory {
 
 	@Override
 	public Connection getConnection(String schemaName) throws SQLException {
-		if(this.altSchema == null || this.altFactory == null || this.altSchema.contentEquals(schemaName) == false) {
-				throw new SQLException("No credentials set up for schema {}", schemaName);
+		if (this.altSchema == null || this.altFactory == null
+				|| this.altSchema.contentEquals(schemaName) == false) {
+			throw new SQLException("No credentials set up for schema {}",
+					schemaName);
 		}
 		return this.altFactory.getConnection();
 	}
@@ -104,15 +120,18 @@ public class DefaultConnectionFactory implements IDbConnectionFactory {
 			IFactory factory = new DsBasedFactory(ds);
 			// let us test it..
 			factory.getConnection().close();
-			logger.info("DB driver set successfully based on JNDI name {} ", jndiName);
+			logger.info("DB driver set successfully based on JNDI name {} ",
+					jndiName);
 			return factory;
 		} catch (Exception e) {
-			logger.error("Error while using {} as data source. {} ", jndiName, e.getMessage());
+			logger.error("Error while using {} as data source. {} ", jndiName,
+					e.getMessage());
 			return null;
 		}
 
 	}
-	private static IFactory getCsFactory(String conString, String driverClassName) {
+	private static IFactory getCsFactory(String conString,
+			String driverClassName) {
 		try {
 			Class.forName(driverClassName);
 			IFactory factory = new CsBasedFactory(conString);
@@ -120,10 +139,14 @@ public class DefaultConnectionFactory implements IDbConnectionFactory {
 			 * test it
 			 */
 			factory.getConnection().close();
-			logger.info("DB driver set based on connection string for driver {} ", driverClassName);
+			logger.info(
+					"DB driver set based on connection string for driver {} ",
+					driverClassName);
 			return factory;
 		} catch (Exception e) {
-			logger.error("Error while using a connection striing as data source. {} ", e.getMessage());
+			logger.error(
+					"Error while using a connection string as data source. {} ",
+					e.getMessage());
 			return null;
 		}
 	}

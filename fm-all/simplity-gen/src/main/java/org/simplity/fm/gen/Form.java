@@ -83,7 +83,7 @@ public class Form {
 				final FieldType ct = f.fieldTypeEnum;
 				if (ct == FieldType.PrimaryKey
 						|| ct == FieldType.GeneratedPrimaryKey) {
-					this.keyFieldNames.add(f.fieldName);
+					this.keyFieldNames.add(f.name);
 				}
 			}
 		}
@@ -258,7 +258,7 @@ public class Form {
 		for (final Field field : this.record.fields) {
 			field.emitFormTs(sbf);
 			sbf.append(',');
-			names.append(Q).append(field.fieldName).append(Q).append(',');
+			names.append(Q).append(field.name).append(Q).append(',');
 		}
 		sbf.setLength(sbf.length() - 1);
 		names.setLength((names.length() - 1));
@@ -270,10 +270,10 @@ public class Form {
 		Field[] keys = this.record.keyFields;
 		if (keys != null && (keys.length > 0)) {
 			// we generally have only one key field
-			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].fieldName)
+			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].name)
 					.append(Q);
 			for (int i = 1; i < keys.length; i++) {
-				sbf.append(",\"").append(keys[i].fieldName).append(Q);
+				sbf.append(",\"").append(keys[i].name).append(Q);
 			}
 			sbf.append("]");
 		}

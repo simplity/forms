@@ -43,7 +43,7 @@ class Field {
 	private static final String C = ", ";
 	private static final char Q = '\'';
 
-	String fieldName;
+	String name;
 	String fieldType = "optionalData";
 	String nameInDb;
 	boolean isList;
@@ -75,11 +75,11 @@ class Field {
 			if (this.valueSchema == null) {
 				logger.error(
 						"Field {} has not defined a value-schema. A Default is assumed.",
-						this.fieldName);
+						this.name);
 			} else {
 				logger.error(
 						"Field {} has specified {} as value-schema, but it is not defined. A default text-schema is used instead",
-						this.valueSchema, this.fieldName);
+						this.name, this.valueSchema);
 			}
 			this.schemaInstance = ValueSchema.DEFAULT_SCHEMA;
 			this.valueSchema = this.schemaInstance.name;
@@ -89,7 +89,7 @@ class Field {
 		if (fieldTypeEnum == null) {
 			logger.error(
 					"{} is an invalid fieldType for field {}. optional data is  assumed",
-					this.fieldType, this.fieldName);
+					this.fieldType, this.name);
 			this.fieldType = "optionalData";
 			this.fieldTypeEnum = FieldType.OptionalData;
 		}
@@ -103,7 +103,7 @@ class Field {
 			sbf.append("Db");
 		}
 		// 1. name
-		sbf.append("Field(\"").append(this.fieldName).append('"');
+		sbf.append("Field(\"").append(this.name).append('"');
 		// 2. index
 		sbf.append(C).append(this.index);
 		// 3. schema name. All Schema names are statically defined in the main
@@ -172,9 +172,8 @@ class Field {
 	 * @param sbf
 	 */
 	public void emitFormTs(final StringBuilder sbf) {
-		sbf.append("\n\t\t\"").append(this.fieldName).append("\": {");
-		sbf.append(BEGIN).append("\"name\": \"").append(this.fieldName)
-				.append(END);
+		sbf.append("\n\t\t\"").append(this.name).append("\": {");
+		sbf.append(BEGIN).append("\"name\": \"").append(this.name).append(END);
 		sbf.append(BEGIN).append("\"valueSchema\": \"").append(this.valueSchema)
 				.append(END);
 		sbf.append(BEGIN).append("\"valueType\": \"")
@@ -183,7 +182,7 @@ class Field {
 				.append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
-			lbl = Util.toLabel(this.fieldName);
+			lbl = Util.toLabel(this.name);
 		}
 		Util.addAttr(sbf, BEGIN, "label", lbl);
 		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);

@@ -1,0 +1,203 @@
+{
+	"accountStatus": {
+		"name": "accountStatus",
+		"listType": "simple",
+		"list": [
+			{
+				"value":"active",
+				"text":"Active"
+			},
+			{
+				"value":"suspended",
+				"text":"Suspended"
+			},
+			{
+				"value":"closed",
+				"text":"Closed"
+			}
+		]
+	},
+	"userType": {
+		"name": "userType",
+		"listType": "simple",
+		"list": [
+			{
+				"value":"admin",
+				"text":"Admin"
+			},
+			{
+				"value":"guardian",
+				"text":"Guardian"
+			},
+			{
+				"value":"staff",
+				"text":"Staff"
+			},
+			{
+				"value":"student",
+				"text":"student"
+			}
+		]
+	},
+	"admissionQuota": {
+		"name": "admissionQuota",
+		"listType": "simple",
+		"list": [
+			{
+				"value":"cet",
+				"text":"CET"
+			},
+			{
+				"value":"comedk",
+				"text":"COMED-K"
+			},
+			{
+				"value":"cetsnq",
+				"text":"CET-NSQ"
+			},
+			{
+				"value":"mang",
+				"text":"Management"
+			},
+			{
+				"value":"nri",
+				"text":"NRI"
+			},
+			{
+				"value":"goi",
+				"text":"Govt of India"
+			},
+			{
+				"value":"other",
+				"text":"Other"
+			},
+			{
+				"value":"mang",
+				"text":"Filter Rows"
+			}
+		]
+	},
+	"domicileState": {
+		"name": "domicileState",
+		"listType": "simple",
+		"list": [
+			{
+				"value":"Karnataka",
+				"text":"Karnataka"
+			},
+			{
+				"value":"Non-Karnataka",
+				"text":"Non Karnataka"
+			},
+			{
+				"value":"Foreign",
+				"text":"Foreign"
+			}
+		]
+	},
+	"gender": {
+		"name": "gender",
+		"listType": "simple",
+		"list": [
+			{
+				"value":"Male",
+				"text":"Male"
+			},
+			{
+				"value":"Female",
+				"text":"Female"
+			},
+			{
+				"value":"Others",
+				"text":"Others"
+			},
+			{
+				"value":"Not Applicable",
+				"text":"Not Applicable"
+			}
+		]
+	},
+	"state": {
+		"name": "state",
+		"listType": "keyed",
+		"isKeyed": true,
+		"keyedLists": {
+			"91": [
+				{
+					"value":"Karnataka",
+					"text":"Karnataka"
+				},
+				{
+					"value":"Tamilnadu",
+					"text":"Tamilnadu"
+				},
+				{
+					"value":"Andhra Pradesh",
+					"text":"Andhra Pradesh"
+				}
+			],
+			"356": [
+				{
+					"value":"Karnataka",
+					"text":"Karnataka"
+				},
+				{
+					"value":"Tamilnadu",
+					"text":"Tamilnadu"
+				},
+				{
+					"value":"Andhra Pradesh",
+					"text":"Andhra Pradesh"
+				}
+			]
+		}
+	},
+	"instituteList": {
+		"name": "instituteList",
+		"listType": "runtime",
+		"isKeyed": true,
+	},
+	"roleList": {
+		"name": "roleList",
+		"listType": "runtime",
+	},
+	"programList": {
+		"name": "programList",
+		"listType": "runtime",
+		"isKeyed": true,
+	},
+	"departmentList": {
+		"name": "departmentList",
+		"listType": "runtime",
+	},
+	"levelList": {
+		"name": "levelList",
+		"listType": "runtime",
+		"isKeyed": true,
+	},
+	"seasonList": {
+		"name": "seasonList",
+		"listType": "runtime",
+	},
+	"sectionList": {
+		"name": "sectionList",
+		"listType": "runtime",
+	},
+	"subjectTypeList": {
+		"name": "subjectTypeList",
+		"listType": "runtime",
+	},
+	"groupList": {
+		"name": "groupList",
+		"listType": "runtime",
+	},
+	"subjectList": {
+		"name": "subjectList",
+		"listType": "runtime",
+	},
+	"offeredSubjectList": {
+		"name": "offeredSubjectList",
+		"listType": "runtime",
+		"isKeyed": true,
+	}
+}

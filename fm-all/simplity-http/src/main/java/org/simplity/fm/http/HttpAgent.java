@@ -99,17 +99,15 @@ class HttpAgent {
 			final HttpServletResponse resp) throws IOException {
 
 		IInputData inputData = null;
-		if (req.getContentLength() == 0) {
+		try (Reader reader = req.getReader()) {
+			inputData = JsonUtil.newInputData(reader);
+		} catch (final Exception e) {
+			logger.error("Invalid data recd from client {}", e.getMessage());
+			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
+			return;
+		}
+		if (inputData == null) {
 			inputData = JsonUtil.newInputData();
-		} else {
-			try (Reader reader = req.getReader()) {
-				inputData = JsonUtil.newInputData(reader);
-			} catch (final Exception e) {
-				logger.error("Invalid data recd from client {}",
-						e.getMessage());
-				resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
-				return;
-			}
 		}
 
 		readQueryString(req.getQueryString(), inputData);

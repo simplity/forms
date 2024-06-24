@@ -1,0 +1,144 @@
+{
+	"name": "institute",
+	"operations": {
+		"create": true,
+		"delete": true,
+		"filter": true,
+		"get": true,
+		"update": true
+	},
+	"fields": {
+		"instituteId": {
+			"name": "instituteId",
+			"valueSchema": "id",
+			"valueType": "integer",
+			"isRequired": false,
+			"label": "Institute"
+		},
+		"trustId": {
+			"name": "trustId",
+			"valueSchema": "id",
+			"valueType": "integer",
+			"isRequired": true,
+			"label": "Trust Id",
+			"renderType": "text"
+		},
+		"name": {
+			"name": "name",
+			"valueSchema": "name",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Trust Name",
+			"renderType": "text"
+		},
+		"instituteType": {
+			"name": "instituteType",
+			"valueSchema": "text",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Trust Name",
+			"defaultValue": "DSERTPS",
+			"renderType": "text"
+		},
+		"addressLine1": {
+			"name": "addressLine1",
+			"valueSchema": "text",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Address Line1",
+			"renderType": "text"
+		},
+		"addressLine2": {
+			"name": "addressLine2",
+			"valueSchema": "text",
+			"valueType": "text",
+			"isRequired": false,
+			"label": "Address Line2",
+			"renderType": "text"
+		},
+		"city": {
+			"name": "city",
+			"valueSchema": "name",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "City",
+			"renderType": "text"
+		},
+		"state": {
+			"name": "state",
+			"valueSchema": "name",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "State",
+			"listName": "state",
+			"listKeyName": "country",
+			"renderType": "select"
+		},
+		"pincode": {
+			"name": "pincode",
+			"valueSchema": "pin",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Pin",
+			"renderType": "text"
+		},
+		"country": {
+			"name": "country",
+			"valueSchema": "country",
+			"valueType": "integer",
+			"isRequired": true,
+			"label": "Country",
+			"defaultValue": "356",
+			"renderType": "text"
+		},
+		"phoneNumber": {
+			"name": "phoneNumber",
+			"valueSchema": "phone",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Phone Number",
+			"renderType": "text"
+		},
+		"email": {
+			"name": "email",
+			"valueSchema": "email",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Email",
+			"renderType": "text"
+		},
+		"govtCode": {
+			"name": "govtCode",
+			"valueSchema": "govtCode",
+			"valueType": "text",
+			"isRequired": true,
+			"label": "Govt Code",
+			"renderType": "text"
+		},
+		"accountStatus": {
+			"name": "accountStatus",
+			"valueSchema": "accountStatus",
+			"valueType": "text",
+			"isRequired": false,
+			"label": "Account Status",
+			"listName": "accountStatus",
+			"renderType": "select"
+		},
+		"createdAt": {
+			"name": "createdAt",
+			"valueSchema": "timestamp",
+			"valueType": "timestamp",
+			"isRequired": false,
+			"label": "Created At"
+		},
+		"updatedAt": {
+			"name": "updatedAt",
+			"valueSchema": "timestamp",
+			"valueType": "timestamp",
+			"isRequired": false,
+			"label": "Updated At"
+		}
+	},
+	"fieldNames": ["instituteId","trustId","name","instituteType","addressLine1","addressLine2","city","state","pincode","country","phoneNumber","email","govtCode","accountStatus","createdAt","updatedAt"],
+	"keyFields": ["instituteId"]
+}

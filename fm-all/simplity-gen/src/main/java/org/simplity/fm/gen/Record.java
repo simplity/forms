@@ -127,11 +127,11 @@ class Record {
 			}
 
 			field.init(idx, schemas);
-			Field existing = this.fieldsMap.put(field.fieldName, field);
+			Field existing = this.fieldsMap.put(field.name, field);
 			if (existing != null) {
 				logger.error(
 						"Field {} is a duplicate in record {}. Generated Code will have compilation errors",
-						field.fieldName, this.recordName);
+						field.name, this.recordName);
 			}
 
 			if (field.listName != null) {
@@ -143,12 +143,12 @@ class Record {
 				if (field.nameInDb == null) {
 					logger.warn(
 							"{} is not linked to a db-column. No I/O happens on this field.",
-							field.fieldName);
+							field.name);
 					continue;
 				}
 				logger.error(
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
-						field.fieldName, field.nameInDb);
+						field.name, field.nameInDb);
 				ft = FieldType.OptionalData;
 			}
 
@@ -157,7 +157,7 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error(
 							"{} is defined as a generated primary key, but {} is also defined as a primary key.",
-							keyList.get(0).fieldName, field.fieldName);
+							keyList.get(0).name, field.name);
 				} else {
 					keyList.add(field);
 				}
@@ -167,12 +167,12 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error(
 							"Only one generated key please. Found {} as well as {} as generated primary keys.",
-							field.fieldName, keyList.get(0).fieldName);
+							field.name, keyList.get(0).name);
 				} else {
 					if (keyList.size() > 0) {
 						logger.error(
 								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
-								field.fieldName, keyList.get(0).fieldName);
+								field.name, keyList.get(0).name);
 						keyList.clear();
 					}
 					keyList.add(field);
@@ -184,14 +184,14 @@ class Record {
 				if (field.valueSchema.equals("tenantKey") == false) {
 					logger.error(
 							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
-							field.fieldName, field.valueSchema);
+							field.name, field.valueSchema);
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
 				} else {
 					logger.error(
 							"Both {} and {} are marked as tenantKey. Tenant key has to be unique.",
-							field.fieldName, this.tenantField.fieldName);
+							field.name, this.tenantField.name);
 				}
 				break;
 
@@ -201,7 +201,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as createdAt but {} and {} are marked",
-							field.fieldName, createdAt.fieldName);
+							field.name, createdAt.name);
 				}
 				break;
 
@@ -211,7 +211,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as createdBy but {} and {} are marked",
-							field.fieldName, createdBy.fieldName);
+							field.name, createdBy.name);
 				}
 				break;
 
@@ -224,7 +224,7 @@ class Record {
 				} else {
 					logger.error(
 							"{} and {} are both defined as lastModifiedAt!!",
-							field.fieldName, this.timestampField.fieldName);
+							field.name, this.timestampField.name);
 				}
 				break;
 
@@ -234,7 +234,7 @@ class Record {
 				} else {
 					logger.error(
 							"Only one field to be used as modifiedBy but {} and {} are marked",
-							field.fieldName, modifiedBy.fieldName);
+							field.name, modifiedBy.name);
 				}
 				break;
 
@@ -515,14 +515,14 @@ class Record {
 				if (f == null) {
 					logger.error(
 							"DbField {} specifies {} as listKey, but that field is not defined",
-							field.fieldName, field.listKey);
+							field.name, field.listKey);
 					continue;
 				}
 
 				sbf.append("new DependentListValidation(").append(field.index);
 				sbf.append(C).append(f.index);
 				sbf.append(C).append(Util.quotedString(field.listName));
-				sbf.append(C).append(Util.quotedString(field.fieldName));
+				sbf.append(C).append(Util.quotedString(field.name));
 				sbf.append(C).append(Util.quotedString(field.errorId));
 				sbf.append(")");
 				sbf.append(sufix);
@@ -777,7 +777,7 @@ class Record {
 				} else {
 					createSbf.append(',');
 				}
-				createSbf.append(field.fieldName);
+				createSbf.append(field.name);
 			}
 			createSbf.append(')');
 		}

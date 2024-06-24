@@ -41,7 +41,7 @@ public class Conventions {
 		/**
 		 * header name with which token is sent
 		 */
-		public static final String HEADER_AUTH = "AUTHORIZATION";
+		public static final String HEADER_AUTH = "Authorization";
 		/**
 		 * various headers that we respond back with
 		 */

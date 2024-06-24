@@ -103,7 +103,7 @@ public class Application {
 			final String packageName) {
 
 		/*
-		 * create DataTypes.java in the root folder.
+		 * create ValueSchemas.java in the root folder.
 		 */
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append("package ").append(packageName).append(';');

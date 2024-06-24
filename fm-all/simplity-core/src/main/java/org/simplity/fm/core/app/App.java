@@ -69,8 +69,8 @@ class App implements IApp, IAppInfra {
 	/*
 	 * tag/property/member name
 	 */
-	private static final String TAG_SESSION_ID = "sessionId";
-	private static final String TAG_SERVICE_NAME = "serviceName";
+	private static final String TAG_SESSION = "session";
+	private static final String TAG_SERVICE = "service";
 	private static final String TAG_STATUS = "status";
 	private static final String TAG_STATUS_DESC = "statusDescription";
 	private static final String TAG_DATA = "data";
@@ -227,17 +227,17 @@ class App implements IApp, IAppInfra {
 			throws IOException {
 		IServiceContext ctx = null;
 		try {
-			String serviceName = inData.getString(TAG_SERVICE_NAME);
+			String serviceName = inData.getString(TAG_SERVICE);
 			if (serviceName == null || serviceName.isEmpty()) {
 				logger.error("Attribute named {} is required for service name",
-						TAG_SERVICE_NAME);
+						TAG_SERVICE);
 				return writeErrorResponse(RequestStatus.ServiceNameRequired,
 						writer);
 			}
 
 			UserContext utx = null;
 			String userId = null;
-			String sessionId = inData.getString(TAG_SESSION_ID);
+			String sessionId = inData.getString(TAG_SESSION);
 			if (sessionId != null && sessionId.isEmpty()) {
 				sessionId = null;
 			}
@@ -306,7 +306,7 @@ class App implements IApp, IAppInfra {
 				}
 				String token = UUID.randomUUID().toString();
 				this.cache.put(token, newCtx);
-				outData.addName(TAG_SESSION_ID).addValue(token);
+				outData.addName(TAG_SESSION).addValue(token);
 			}
 
 			Message[] messages = ctx.getMessages();
