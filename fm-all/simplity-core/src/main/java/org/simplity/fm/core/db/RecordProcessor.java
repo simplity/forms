@@ -20,23 +20,25 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
+
+import org.simplity.fm.core.data.Record;
 
 /**
  * @author simplity.org
  *
  */
 @FunctionalInterface
-public interface RowProcessor {
+public interface RecordProcessor {
 	/**
-	 * lambda function to process a a row of data
+	 * lambda function to process a record
 	 *
-	 * @param row
-	 *            non-null array of objects
+	 * @param record
+	 *            non-null record that is coming from the db
 	 * @return true to continue with the next. false to stop retrieving records
 	 * @throws SQLException
 	 */
-	boolean process(Object[] row) throws SQLException;
+	boolean process(Record record) throws SQLException;
 }

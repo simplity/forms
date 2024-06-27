@@ -25,7 +25,10 @@ package org.simplity.fm.core.rdb;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.IDbDriver;
+import org.simplity.fm.core.db.IDbDriver;
+import org.simplity.fm.core.db.IDbReader;
+import org.simplity.fm.core.db.IDbTransacter;
+import org.simplity.fm.core.db.IDbWriter;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +69,7 @@ public class RdbDriver implements IDbDriver {
 	 *
 	 */
 	@Override
-	public void read(final DbReader reader) throws SQLException {
+	public void processReader(final IDbReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doReadOnly(con, reader);
@@ -83,7 +86,7 @@ public class RdbDriver implements IDbDriver {
 	 *
 	 */
 	@Override
-	public void read(final String schemaName, final DbReader reader)
+	public void ProcessReader(final String schemaName, final IDbReader reader)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -102,7 +105,7 @@ public class RdbDriver implements IDbDriver {
 	 * @throws SQLException
 	 */
 	@Override
-	public void readWrite(final DbWriter updater) throws SQLException {
+	public void readWrite(final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doReadWrite(con, updater);
@@ -125,7 +128,7 @@ public class RdbDriver implements IDbDriver {
 	 *
 	 */
 	@Override
-	public void readWrite(final String schemaName, final DbWriter updater)
+	public void readWrite(final String schemaName, final IDbWriter updater)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -183,12 +186,12 @@ public class RdbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doReadOnly(final Connection con, final DbReader reader)
+	private static void doReadOnly(final Connection con, final IDbReader reader)
 			throws SQLException {
 		final ReadonlyHandle handle = new ReadonlyHandle(con);
 		try {
 			con.setReadOnly(true);
-			reader.read(handle);
+			reader.processReader(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error(
@@ -199,7 +202,7 @@ public class RdbDriver implements IDbDriver {
 	}
 
 	private static void doReadWrite(final Connection con,
-			final DbWriter updater) throws SQLException {
+			final IDbWriter updater) throws SQLException {
 		final ReadWriteHandle handle = new ReadWriteHandle(con);
 		try {
 			con.setAutoCommit(false);

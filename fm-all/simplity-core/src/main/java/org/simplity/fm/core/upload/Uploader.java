@@ -27,7 +27,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.rdb.TransactionHandle;
+import org.simplity.fm.core.db.ITransactionHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -51,7 +51,8 @@ public class Uploader {
 	public UploadResult upload(final IUploadClient client,
 			final IServiceContext ctx) throws SQLException {
 		final Worker worker = new Worker(client, ctx);
-		AppManager.getAppInfra().getDbDriver().transact(handle -> {
+		AppManager.getAppInfra().getDbDriver().processTransacter(handle -> {
+
 			worker.transact(handle);
 		});
 		return worker.getResult();
@@ -90,7 +91,7 @@ public class Uploader {
 					this.nbrErrors, this.ctx.getMessages());
 		}
 
-		protected void transact(final TransactionHandle handle)
+		protected void transact(final ITransactionHandle handle)
 				throws SQLException {
 			this.startedAt = Instant.now();
 			while (true) {

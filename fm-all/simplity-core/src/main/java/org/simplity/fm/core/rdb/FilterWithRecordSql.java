@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.data.DbRecord;
+import org.simplity.fm.core.db.RecordProcessor;
 
 /**
  * A Sql that is designed to filter rows from the RDBMS. That is, result may

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 simplity.org
+ * Copyright (c) 2019 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,40 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.Record;
-
 /**
+ * db handle that allows multiple transactions.
+ *
  * @author simplity.org
  *
  */
-@FunctionalInterface
-public interface RecordProcessor {
+public interface ITransactionHandle extends IReadWriteHandle {
+
 	/**
-	 * lambda function to process a record
+	 * turn on/off auto commit mode. If it is on, commit/roll-backs are not
+	 * valid
 	 *
-	 * @param record
-	 *            non-null record that is coming from the db
-	 * @return true to continue with the next. false to stop retrieving records
+	 * @param mode
 	 * @throws SQLException
 	 */
-	boolean process(Record record) throws SQLException;
+	public void setAutoCommitMode(final boolean mode) throws SQLException;
+
+	/**
+	 * commit all write operations after the last commit/roll-back
+	 *
+	 * @throws SQLException
+	 */
+	public void commit() throws SQLException;
+
+	/**
+	 * roll back any writes. This is to be used only to handle any exception. We
+	 * strongly suggest that this should never be called by design.
+	 *
+	 * @throws SQLException
+	 */
+	public void rollback() throws SQLException;
+
 }

@@ -1,6 +1,6 @@
 package org.simplity.fm.core.app;
 
-import org.simplity.fm.core.data.IDbDriver;
+import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.infra.ICompProvider;
 import org.simplity.fm.core.infra.IEmailer;
 import org.simplity.fm.core.infra.ITexter;

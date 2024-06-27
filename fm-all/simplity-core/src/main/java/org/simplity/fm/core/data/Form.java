@@ -29,7 +29,7 @@ import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
@@ -116,7 +116,7 @@ public abstract class Form<T extends Record> {
 	 * @throws SQLException
 	 */
 	public void readChildForms(final Object[] rawData,
-			final IOutputData outData, final ReadonlyHandle handle)
+			final IOutputData outData, final IReadonlyHandle handle)
 			throws SQLException {
 		if (this.childForms != null) {
 			for (final ChildForm<?> child : Form.this.childForms) {
@@ -236,7 +236,7 @@ public abstract class Form<T extends Record> {
 			}
 
 			final DbRecord rec = (DbRecord) Form.this.record;
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -272,7 +272,7 @@ public abstract class Form<T extends Record> {
 				logger.error("Error while validating the input payload");
 				return;
 			}
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
 				if (!rec.insert(handle)) {
 					logger.error("Insert operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -307,7 +307,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
 				if (!rec.update(handle)) {
 					logger.error("update operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -343,7 +343,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
 				if (!rec.delete(handle)) {
 					logger.error("Delete operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -383,10 +383,9 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				final List<Object[]> list = rec.dba.filter(
-						filter.getWhereClause(), filter.getWhereParamValues(),
-						handle);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+				final List<Object[]> list = rec.dba.filter(handle,
+						filter.getWhereClause(), filter.getWhereParamValues());
 				/*
 				 * instead of storing data and then serializing it, we have
 				 * designed this service to serialize data then-and-there

@@ -24,8 +24,8 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.rdb.ReadWriteHandle;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 
 /**
  * Represents an array of <code>DbRecord</code>. This wrapper class is created
@@ -60,10 +60,10 @@ public class DbTable<T extends DbRecord> extends Table<DbRecord> {
 	 * @throws SQLException
 	 */
 	public boolean filter(final String whereClauseStartingWithWhere,
-			final Object[] valuesForWhereClause, final ReadonlyHandle handle)
+			final Object[] valuesForWhereClause, final IReadonlyHandle handle)
 			throws SQLException {
-		this.rows = this.dbRecord.dba.filter(whereClauseStartingWithWhere,
-				valuesForWhereClause, handle);
+		this.rows = this.dbRecord.dba.filter(handle,
+				whereClauseStartingWithWhere, valuesForWhereClause);
 		return this.rows.size() > 0;
 	}
 
@@ -76,7 +76,7 @@ public class DbTable<T extends DbRecord> extends Table<DbRecord> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean insert(final ReadWriteHandle handle) throws SQLException {
+	public boolean insert(final IReadWriteHandle handle) throws SQLException {
 		return this.dbRecord.dba.insertAll(handle,
 				this.rows.toArray(new Object[0][]));
 	}
@@ -90,7 +90,7 @@ public class DbTable<T extends DbRecord> extends Table<DbRecord> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean update(final ReadWriteHandle handle) throws SQLException {
+	public boolean update(final IReadWriteHandle handle) throws SQLException {
 		return this.dbRecord.dba.updateAll(handle,
 				this.rows.toArray(new Object[0][]));
 	}
@@ -105,7 +105,7 @@ public class DbTable<T extends DbRecord> extends Table<DbRecord> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean save(final ReadWriteHandle handle) throws SQLException {
+	public boolean save(final IReadWriteHandle handle) throws SQLException {
 		return this.dbRecord.dba.saveAll(handle,
 				this.rows.toArray(new Object[0][]));
 	}

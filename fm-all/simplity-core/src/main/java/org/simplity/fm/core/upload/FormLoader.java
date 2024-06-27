@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.rdb.TransactionHandle;
+import org.simplity.fm.core.db.ITransactionHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -61,7 +61,8 @@ class FormLoader {
 	 *            must have exactly the right number and in the same order for
 	 *            the form fields
 	 */
-	FormLoader(final DbRecord record, final String generatedKeyOutputName, final IValueProvider[] valueProviders) {
+	FormLoader(final DbRecord record, final String generatedKeyOutputName,
+			final IValueProvider[] valueProviders) {
 		this.record = record;
 		this.generatedKeyOutputName = generatedKeyOutputName;
 		this.valueProviders = valueProviders;
@@ -82,12 +83,14 @@ class FormLoader {
 	 * @return true of all ok. false otherwise, in which case ctx will have the
 	 *         errors
 	 */
-	boolean validate(final Map<String, String> values, final IServiceContext ctx) {
+	boolean validate(final Map<String, String> values,
+			final IServiceContext ctx) {
 		return this.parseInput(values, ctx);
 
 	}
 
-	private boolean parseInput(final Map<String, String> values, final IServiceContext ctx) {
+	private boolean parseInput(final Map<String, String> values,
+			final IServiceContext ctx) {
 		int idx = -1;
 		for (final IValueProvider vp : this.valueProviders) {
 			idx++;
@@ -110,14 +113,16 @@ class FormLoader {
 	 *         errors
 	 * @throws SQLException
 	 */
-	boolean loadData(final Map<String, String> values, final TransactionHandle handle, final IServiceContext ctx)
+	boolean loadData(final Map<String, String> values,
+			final ITransactionHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		if (!this.parseInput(values, ctx)) {
 			return false;
 		}
 
 		if (!this.record.insert(handle)) {
-			ctx.addMessage(Message.newError("Row not inserted, probably because of database constraints"));
+			ctx.addMessage(Message.newError(
+					"Row not inserted, probably because of database constraints"));
 			return false;
 		}
 

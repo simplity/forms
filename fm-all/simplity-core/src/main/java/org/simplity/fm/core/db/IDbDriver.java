@@ -1,13 +1,10 @@
-package org.simplity.fm.core.data;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.rdb.DbReader;
-import org.simplity.fm.core.rdb.DbWriter;
-import org.simplity.fm.core.rdb.IDbTransacter;
-
 /**
  * APIs to be implemented by a Data-persistence infrastructure
+ *
  * @author simplity.org
  *
  */
@@ -20,7 +17,7 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void read(final DbReader reader) throws SQLException;
+	public void processReader(final IDbReader reader) throws SQLException;
 
 	/**
 	 * do read-only operations using a specific schema name
@@ -32,7 +29,8 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void read(final String schemaName, final DbReader reader) throws SQLException; 
+	public void processReader(final String schemaName, final IDbReader reader)
+			throws SQLException;
 	/**
 	 * do read-write operations on the rdbms within a transaction boundary. The
 	 * transaction is managed by the driver.
@@ -44,15 +42,14 @@ public interface IDbDriver {
 	 *            on exceptions as well.
 	 * @throws SQLException
 	 */
-	public void readWrite(final DbWriter updater) throws SQLException;
+	public void processWriter(final IDbWriter updater) throws SQLException;
 	/**
 	 * do read-write-operations in a transaction using a specific schema name
 	 *
 	 * @param schemaName
 	 *            non-null schema name that is different from the default schema
 	 *            do read-write operations on the rdbms within a transaction
-	 *            boundary. The
-	 *            transaction is managed by the driver.
+	 *            boundary. The transaction is managed by the driver.
 	 *
 	 * @param updater
 	 *            function that reads from db and writes to it within a
@@ -62,7 +59,8 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void readWrite(final String schemaName, final DbWriter updater) throws SQLException;
+	public void processWriter(final String schemaName, final IDbWriter updater)
+			throws SQLException;
 	/**
 	 * Meant for db operations that are to be committed/rolled-back possibly
 	 * more than once. Of course, it is rolled-back if the caller throws any
@@ -77,7 +75,8 @@ public interface IDbDriver {
 	 *             other SqlException
 	 *
 	 */
-	public void transact(final IDbTransacter transacter) throws SQLException;
+	public void processTransacter(final IDbTransacter transacter)
+			throws SQLException;
 	/**
 	 * Meant for db operations that are to be committed/rolled-back possibly
 	 * more than once. Of course, it is rolled-back if the caller throws any
@@ -94,5 +93,6 @@ public interface IDbDriver {
 	 *             other SqlException
 	 *
 	 */
-	public void transact(final String schemaName, final IDbTransacter transacter) throws SQLException;
+	public void processTransacter(final String schemaName,
+			final IDbTransacter transacter) throws SQLException;
 }

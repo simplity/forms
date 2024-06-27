@@ -39,7 +39,7 @@ import org.simplity.fm.core.conf.defalt.DefaultRequestLogger;
 import org.simplity.fm.core.conf.defalt.DefaultSessionCacher;
 import org.simplity.fm.core.conf.defalt.DefaultTexter;
 import org.simplity.fm.core.conf.impl.CompProvider;
-import org.simplity.fm.core.data.IDbDriver;
+import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.infra.IAccessController;
 import org.simplity.fm.core.infra.ICompProvider;
 import org.simplity.fm.core.infra.IEmailer;

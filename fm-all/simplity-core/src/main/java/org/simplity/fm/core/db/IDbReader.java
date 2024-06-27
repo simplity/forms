@@ -20,36 +20,27 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * interface for a class that wants to write/update/delete from the database
+ * interface/lambda for carrying out read-only operations on RDBMS. This
+ * interface is created instead of using standard functions because of the
+ * allowed throws clause
  *
  * @author simplity.org
  *
  */
-public interface IDbMultipleWriter {
+@FunctionalInterface
+public interface IDbReader {
 
 	/**
+	 * function that reads data from the db
 	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
-	 */
-	public String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared
-	 * statement parameters.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true if batch process is to continue. false if the last set got
-	 *         added.
+	 * @param handle
 	 * @throws SQLException
 	 */
-	public boolean setParams(PreparedStatement ps) throws SQLException;
+	void read(IReadonlyHandle handle) throws SQLException;
+
 }

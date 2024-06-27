@@ -26,8 +26,8 @@ import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.rdb.ReadWriteHandle;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
@@ -69,7 +69,7 @@ public class ChildForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public void read(final DbRecord parentRec, final IOutputData outData,
-			final ReadonlyHandle handle) throws SQLException {
+			final IReadonlyHandle handle) throws SQLException {
 		this.childMeta.read(parentRec, this.form, outData, handle);
 	}
 
@@ -82,7 +82,7 @@ public class ChildForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbRecord parentRec,
-			final IInputData inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final IReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.childMeta.save(parentRec, this.form, inputObject, handle,
@@ -98,7 +98,7 @@ public class ChildForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbRecord parentRec,
-			final IInputData inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final IReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.childMeta.save(parentRec, this.form, inputObject, handle,
@@ -113,10 +113,10 @@ public class ChildForm<T extends Record> {
 	 * @throws SQLException
 	 */
 	public boolean delete(final DbRecord parentRec,
-			final ReadWriteHandle handle, final IServiceContext ctx)
+			final IReadWriteHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		this.checkUpdatability();
-		return this.childMeta.delete(parentRec, this.form, handle);
+		return this.childMeta.delete(handle, parentRec, this.form);
 	}
 
 	private void checkUpdatability() {

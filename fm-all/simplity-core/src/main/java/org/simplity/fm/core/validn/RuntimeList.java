@@ -22,8 +22,6 @@
 
 package org.simplity.fm.core.validn;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +43,10 @@ import org.slf4j.LoggerFactory;
 public class RuntimeList implements IValueList {
 	protected static final Logger logger = LoggerFactory
 			.getLogger(RuntimeList.class);
+	private static final ValueType[] TYPES_FOR_ALL_ENTRIES = {ValueType.Text,
+			ValueType.Text, ValueType.Text};
+	private static final ValueType[] TYPES_FOR_KEYS = {ValueType.Text};
+	private static final ValueType[] TYPES_FOR_VALIDATION = {};
 	protected String name;
 	/**
 	 * sql that returns all the rows for a given key
@@ -55,6 +57,9 @@ public class RuntimeList implements IValueList {
 	 * sql that returns all rows, across all keys
 	 */
 	protected String allSql;
+	/**
+	 * validation sql
+	 */
 	protected String checkSql;
 	/**
 	 * sql that returns unique keys
@@ -65,6 +70,9 @@ public class RuntimeList implements IValueList {
 	protected boolean valueIsNumeric;
 	protected boolean isTenantSpecific;
 	protected boolean authenticationRequired;
+	private final ValueType[] typesForList = {
+			this.valueIsNumeric ? ValueType.Integer : ValueType.Text,
+			ValueType.Text};
 
 	@Override
 	public String getName() {
@@ -78,6 +86,11 @@ public class RuntimeList implements IValueList {
 
 	@Override
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
+		Object tenantId = ctx.getTenantId();
+		/*
+		 * we may have 0,1 or 2 params
+		 */
+		List<Object> params = new ArrayList<>();
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error(
@@ -85,26 +98,26 @@ public class RuntimeList implements IValueList {
 						this.name);
 				return null;
 			}
+			params.add(key);
 		}
-		long l = 0;
-		if (this.keyIsNumeric) {
-			try {
-				l = Long.parseLong(key.toString());
-			} catch (final Exception e) {
-				logger.error(
-						"Key should be numeric value for list {} but we got {}",
-						this.name, key);
-				return null;
-			}
+		if (tenantId != null) {
+			params.add(tenantId);
 		}
 
+		// list to accumulate list entries
 		final List<Object[]> list = new ArrayList<>();
-		ListReader asst = new ListReader(key.toString(), l, list, ctx);
 
 		try {
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				handle.read(asst);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+
+				handle.readMany(this.listSql, params.toArray(),
+						this.typesForList, row -> {
+							list.add(row);
+							return true;
+						});
+
 			});
+
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ",
@@ -131,19 +144,32 @@ public class RuntimeList implements IValueList {
 			}
 		}
 
-		final Validator validator = new Validator(fieldValue, keyValue, ctx);
+		List<Object> params = new ArrayList<>();
+		params.add(fieldValue);
+		if (keyValue != null) {
+			params.add(keyValue);
+		}
 
+		Object tenantId = ctx.getTenantId();
+		if (tenantId != null) {
+			params.add(tenantId);
+		}
+
+		boolean[] isValid = {false}; // so that lambda function can change this
 		try {
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				handle.read(validator);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+				Object[] result = handle.read(this.checkSql, params.toArray(),
+						TYPES_FOR_VALIDATION);
+				isValid[0] = result.length > 0;
 			});
+
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ",
 					this.name, msg);
 			return false;
 		}
-		return validator.isValid();
+		return isValid[0];
 	}
 
 	/**
@@ -155,19 +181,28 @@ public class RuntimeList implements IValueList {
 	 */
 	@Override
 	public Map<String, String> getAllEntries(final IServiceContext ctx) {
-		final Map<String, String> list = new HashMap<>();
+
+		final Map<String, String> entries = new HashMap<>();
 
 		try {
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				EntriesReader reader = new EntriesReader(list, ctx);
-				handle.read(reader);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+				final Object[] arr = {ctx.getTenantId()};
+				final Object[] params = (arr[0] == null) ? null : arr;
+
+				handle.readMany(this.allSql, params, TYPES_FOR_ALL_ENTRIES,
+						row -> {
+							entries.put(
+									row[0].toString() + "|" + row[1].toString(),
+									row[2].toString());
+							return true;
+						});
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ",
 					this.name, msg);
 		}
-		return list;
+		return entries;
 	}
 
 	@Override
@@ -175,23 +210,44 @@ public class RuntimeList implements IValueList {
 		if (this.allKeysSql == null) {
 			return null;
 		}
-		Map<String, Object[][]> lists = new HashMap<>();
+
+		final Map<String, Object[][]> lists = new HashMap<>();
+		final Object tenantId = ctx.getTenantId();
 
 		try {
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				List<String> keys = new ArrayList<>();
-				KeysReader keysAsst = new KeysReader(keys);
-				handle.read(keysAsst);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
 
+				// get all the keys first
+				Object[] params = null;
+				if (tenantId != null) {
+					params = new Object[1];
+					params[0] = tenantId;
+				}
+
+				final List<String> keys = new ArrayList<>();
+				handle.readMany(this.allKeysSql, params, TYPES_FOR_KEYS,
+						row -> {
+							keys.add(row[0].toString());
+							return true;
+						});
+
+				if (tenantId == null) {
+					params = new Object[1];
+				} else {
+					params = new Object[2];
+					params[1] = tenantId;
+				}
+
+				final Object[][] arr = new Object[0][];
 				for (String key : keys) {
-					long l = 0;
-					if (this.keyIsNumeric) {
-						l = Long.parseLong(key);
-					}
-					List<Object[]> list = new ArrayList<>();
-					ListReader allAsst = new ListReader(key, l, list, ctx);
-					handle.read(allAsst);
-					lists.put(key, (Object[][]) list.toArray());
+					params[0] = this.keyIsNumeric ? Long.parseLong(key) : key;
+					final List<Object[]> list = new ArrayList<>();
+					handle.readMany(this.listSql, params, this.typesForList,
+							row -> {
+								list.add(row);
+								return true;
+							});
+					lists.put(key, list.toArray(arr));
 				}
 			});
 
@@ -203,171 +259,8 @@ public class RuntimeList implements IValueList {
 		return lists;
 	}
 
-	private class KeysReader implements IDbReader {
-		private final List<String> keys;
-
-		protected KeysReader(List<String> keys) {
-			this.keys = keys;
-		}
-
-		@Override
-		public String getPreparedStatement() {
-			return RuntimeList.this.allKeysSql;
-		}
-
-		@Override
-		public void setParams(PreparedStatement ps) throws SQLException {
-		}
-
-		@Override
-		public boolean readARow(ResultSet rs) throws SQLException {
-			if (RuntimeList.this.keyIsNumeric) {
-				keys.add("" + rs.getLong(1));
-			} else {
-				keys.add(rs.getString(1));
-
-			}
-			return true;
-		}
-
-	}
-
-	private class ListReader implements IDbReader {
-		private final IServiceContext ctx;
-		private final String stringKey;
-		private final long numericKey;
-		private final List<Object[]> list;
-		protected ListReader(String stringKey, long numericKey,
-				List<Object[]> list, IServiceContext ctx) {
-			this.stringKey = stringKey;
-			this.numericKey = numericKey;
-			this.list = list;
-			this.ctx = ctx;
-		}
-		@Override
-		public String getPreparedStatement() {
-			return RuntimeList.this.listSql;
-		}
-
-		@Override
-		public void setParams(final PreparedStatement ps) throws SQLException {
-			int posn = 1;
-			if (RuntimeList.this.hasKey) {
-				if (RuntimeList.this.keyIsNumeric) {
-					ps.setLong(posn, numericKey);
-				} else {
-					ps.setString(posn, stringKey);
-				}
-				posn++;
-			}
-			if (RuntimeList.this.isTenantSpecific) {
-				ps.setLong(posn, (long) ctx.getTenantId());
-				posn++;
-			}
-		}
-
-		@Override
-		public boolean readARow(final ResultSet rs) throws SQLException {
-			final Object[] row = new Object[2];
-			if (RuntimeList.this.valueIsNumeric) {
-				row[0] = rs.getLong(1);
-			} else {
-				row[0] = rs.getString(1);
-			}
-			row[1] = rs.getString(2);
-			list.add(row);
-			return true;
-		}
-
-	}
-
-	private class EntriesReader implements IDbReader {
-
-		private final Map<String, String> entries;
-		private final IServiceContext ctx;
-
-		public EntriesReader(Map<String, String> entries, IServiceContext ctx) {
-			this.entries = entries;
-			this.ctx = ctx;
-		}
-		@Override
-		public String getPreparedStatement() {
-			return RuntimeList.this.allSql;
-		}
-
-		@Override
-		public void setParams(final PreparedStatement ps) throws SQLException {
-			if (RuntimeList.this.isTenantSpecific) {
-				ps.setLong(1, (long) ctx.getTenantId());
-			}
-		}
-
-		@Override
-		public boolean readARow(final ResultSet rs) throws SQLException {
-			final String id = rs.getString(1);
-			final String nam = rs.getString(2);
-			final String key = rs.getString(3);
-			entries.put(key + '|' + nam, id);
-			return true;
-		}
-	}
-
-	private class Validator implements IDbReader {
-
-		private boolean isValid;
-
-		private final Object fieldValue;
-		private final Object keyValue;
-		private final IServiceContext ctx;
-
-		protected Validator(Object fieldValue, Object keyValue,
-				IServiceContext ctx) {
-			this.fieldValue = fieldValue;
-			this.keyValue = keyValue;
-			this.ctx = ctx;
-		}
-
-		protected boolean isValid() {
-			return this.isValid;
-		}
-
-		@Override
-		public String getPreparedStatement() {
-			return RuntimeList.this.checkSql;
-		}
-
-		@Override
-		public void setParams(final PreparedStatement ps) throws SQLException {
-			if (RuntimeList.this.valueIsNumeric) {
-				ps.setLong(1, (Long) fieldValue);
-			} else {
-				ps.setString(1, (String) fieldValue);
-			}
-
-			if (RuntimeList.this.hasKey) {
-				if (RuntimeList.this.keyIsNumeric) {
-					ps.setLong(2, (Long) keyValue);
-				} else {
-					ps.setString(2, (String) keyValue);
-				}
-			}
-
-			if (RuntimeList.this.isTenantSpecific) {
-				ps.setLong(3, (long) ctx.getTenantId());
-			}
-
-		}
-
-		@Override
-		public boolean readARow(final ResultSet rs) throws SQLException {
-			this.isValid = true;
-			return false;
-		}
-
-	}
 	@Override
 	public boolean authenticationRequired() {
 		return this.authenticationRequired;
 	}
-
 }

@@ -22,19 +22,15 @@
 
 package org.simplity.fm.core.data;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.IDbReader;
-import org.simplity.fm.core.rdb.IDbWriter;
-import org.simplity.fm.core.rdb.ReadWriteHandle;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.rdb.RowProcessor;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.db.IRowProcessor;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
@@ -42,7 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages persistence related functionality for a <code>DbRecord</code>
+ * Manages persistence related functionality for a <code>DbRecord</code> NOTE:
+ * most of the methods are package-private rather than public. That is because
+ * this class itself is unlikely to be exposed to public. This is to keep the
+ * flexibility for re-factoring within the package as much as possible
  *
  * @author simplity.org
  *
@@ -56,8 +55,8 @@ public class Dba {
 	private final String nameInDb;
 
 	/**
-	 * operations like get etcc are valid?
-	 * array index corresponds to integer value of the enum IoType
+	 * operations like get etcc are valid? array index corresponds to integer
+	 * value of the enum IoType
 	 */
 	private final boolean[] allowedOperations;
 	/**
@@ -73,16 +72,16 @@ public class Dba {
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	private final FieldMetaData[] whereParams;
+	private final int[] whereIndexes;
 	/**
 	 * e.g. select a,b,c from t
 	 */
 	private final String selectClause;
 	/**
-	 * db parameters to be used to receive data from the result set of the
-	 * select query
+	 * for extracting values from select result
 	 */
-	private final FieldMetaData[] selectParams;
+	private final ValueType[] selectTypes;
+	private final int[] selectIndexes;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
@@ -90,7 +89,7 @@ public class Dba {
 	/**
 	 * db parameters for the insert sql
 	 */
-	private final FieldMetaData[] insertParams;
+	private final int[] insertIndexes;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
@@ -99,7 +98,7 @@ public class Dba {
 	/**
 	 * db parameters for the update sql
 	 */
-	private final FieldMetaData[] updateParams;
+	private final int[] updateIndexes;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
@@ -117,8 +116,7 @@ public class Dba {
 	private int[] keyIndexes;
 	/**
 	 * FINAL. db column name that is generated as internal key. null if this is
-	 * not
-	 * relevant
+	 * not relevant
 	 */
 	private String generatedColumnName;
 
@@ -129,8 +127,7 @@ public class Dba {
 
 	/**
 	 * FINAL. if this APP is designed for multi-tenant deployment, and this
-	 * table has
-	 * data across tenants..
+	 * table has data across tenants..
 	 */
 	private DbField tenantField;
 
@@ -156,9 +153,12 @@ public class Dba {
 	 * @param whereClause
 	 * @param whereIndexes
 	 */
-	public Dba(final Field[] allFields, final String nameInDb, final boolean[] opers, final String selectClause, final int[] selectIndexes,
-			final String insertClause, final int[] insertIndexes, final String updateClause, final int[] updateIndexes,
-			final String deleteClause, final String whereClause, final int[] whereIndexes) {
+	public Dba(final Field[] allFields, final String nameInDb,
+			final boolean[] opers, final String selectClause,
+			final int[] selectIndexes, final String insertClause,
+			final int[] insertIndexes, final String updateClause,
+			final int[] updateIndexes, final String deleteClause,
+			final String whereClause, final int[] whereIndexes) {
 
 		this.dbFields = new DbField[allFields.length];
 		this.prepareFields(allFields);
@@ -166,16 +166,26 @@ public class Dba {
 		this.allowedOperations = opers;
 		this.nameInDb = nameInDb;
 		this.selectClause = selectClause;
-		this.selectParams = this.prepareParams(selectIndexes);
+
+		this.selectIndexes = selectIndexes;
+		if (selectIndexes == null) {
+			this.selectTypes = null;
+		} else {
+			this.selectTypes = new ValueType[selectIndexes.length];
+			for (int i = 0; i < selectIndexes.length; i++) {
+				this.selectTypes[i] = this.dbFields[selectIndexes[i]]
+						.getValueType();
+			}
+		}
 
 		this.insertClause = insertClause;
-		this.insertParams = this.prepareParams(insertIndexes);
+		this.insertIndexes = insertIndexes;
 
 		this.updateClause = updateClause;
-		this.updateParams = this.prepareParams(updateIndexes);
+		this.updateIndexes = updateIndexes;
 
 		this.whereClause = whereClause;
-		this.whereParams = this.prepareParams(whereIndexes);
+		this.whereIndexes = whereIndexes;
 
 		this.deleteClause = deleteClause;
 
@@ -196,23 +206,23 @@ public class Dba {
 				continue;
 			}
 			switch (ct) {
-			case TenantKey:
+			case TenantKey :
 				this.tenantField = fld;
 				continue;
 
-			case GeneratedPrimaryKey:
+			case GeneratedPrimaryKey :
 				this.generatedColumnName = fld.getColumnName();
 				this.generatedKeyIdx = fld.getIndex();
 				keys[nbrKeys] = fld.getIndex();
 				nbrKeys++;
 				continue;
 
-			case PrimaryKey:
+			case PrimaryKey :
 				keys[nbrKeys] = fld.getIndex();
 				nbrKeys++;
 				continue;
 
-			default:
+			default :
 				continue;
 			}
 		}
@@ -220,17 +230,6 @@ public class Dba {
 			this.keyIndexes = Arrays.copyOf(keys, nbrKeys);
 		}
 
-	}
-
-	private FieldMetaData[] prepareParams(final int[] indexes) {
-		if (indexes == null) {
-			return null;
-		}
-		final FieldMetaData[] result = new FieldMetaData[indexes.length];
-		for (int i = 0; i < indexes.length; i++) {
-			result[i] = new FieldMetaData(this.dbFields[indexes[i]]);
-		}
-		return result;
 	}
 
 	/**
@@ -262,221 +261,283 @@ public class Dba {
 	}
 
 	/**
-	 * insert/create this form data into the db.
+	 * fetch data for this form from a db based on the primary key of this
+	 * record
 	 *
 	 * @param handle
+	 * @param row
+	 *            array of objects that can hold values for this record. this
+	 *            acts as both input and output for field values
+	 *
+	 * @return true if it is read. false if no data found for this record (key
+	 *         not found...)
+	 * @throws SQLException
+	 */
+	boolean read(final IReadonlyHandle handle, final Object[] row)
+			throws SQLException {
+		if (this.keyIndexes == null) {
+			return notAllowed(IoType.Get);
+		}
+
+		Object[] inp = copyFromRow(row, this.whereIndexes);
+
+		Object[] result = handle.read(
+				this.selectClause + ' ' + this.whereClause, inp,
+				this.selectTypes);
+
+		return this.copyToRow(result, row);
+	}
+
+	/**
+	 * select one row from the db based on the filtering criterion
+	 *
+	 * @param handle
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param inputValues
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use: String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @param row
+	 *            row data for this record to which the selected values are to
+	 *            be copied
+	 * @return true if a row was read. false otherwise
+	 * @throws SQLException
+	 */
+	boolean filterFirst(final IReadonlyHandle handle,
+			final String whereClauseStartingWithWhere,
+			final Object[] inputValues, final Object[] row)
+			throws SQLException {
+
+		Object[] result = handle.read(whereClauseStartingWithWhere, inputValues,
+				this.selectTypes);
+
+		return this.copyToRow(result, row);
+	}
+
+	/**
+	 * select multiple rows from the db based on the filtering criterion
+	 *
+	 * @param handle
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?". null if all rows are to be read.
+	 *            Best practice is to use parameters rather than dynamic sql.
+	 *            That is you should use a=? rather than a = 32
 	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use: String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @return non-null, possibly empty array of rows
+	 * @throws SQLException
+	 */
+	List<Object[]> filter(final IReadonlyHandle handle,
+			final String whereClauseStartingWithWhere, final Object[] values)
+			throws SQLException {
+
+		String sql = this.selectClause;
+		if (whereClauseStartingWithWhere != null) {
+			sql += ' ' + whereClauseStartingWithWhere;
+		}
+
+		final int nbrFields = this.dbFields.length;
+		final List<Object[]> rows = new ArrayList<>();
+
+		IRowProcessor processor = new IRowProcessor() {
+			@Override
+			public boolean process(Object[] outValues) throws SQLException {
+				Object[] row = new Object[nbrFields];
+				copyToRow(outValues, row);
+				rows.add(row);
+				return true;
+			}
+		};
+
+		handle.readMany(sql, values, this.selectTypes, processor);
+
+		return rows;
+	}
+
+	/**
+	 * process each row selected based on the where clause
+	 *
+	 * @param handle
+	 * @param where
+	 *            should start with 'where' e.g. 'where a=? and b=?...". null to
+	 *            select all rows from this table
+	 * @param inputValues
+	 *            values, in the right order, for the parameters in the where
+	 *            clause. null if were is null.
+	 * @param rowProcessor
+	 *            class/lambda that is called for each output row from the query
+	 * @throws SQLException
+	 */
+	void forEach(final IReadonlyHandle handle, final String where,
+			final Object[] inputValues, final IRowProcessor rowProcessor)
+			throws SQLException {
+
+		String sql = this.selectClause;
+		if (where != null) {
+			sql += this.selectClause + ' ' + where;
+		}
+
+		handle.readMany(sql, inputValues, this.selectTypes, rowProcessor);
+
+		return;
+	}
+
+	/**
+	 * insert/create this record into the db.
+	 *
+	 * @param handle
+	 * @param rowToInsert
+	 *            data for this record that has values for all the fields in the
+	 *            right order
 	 *
 	 * @return true if it is created. false in case it failed because of an an
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	boolean insert(final ReadWriteHandle handle, final Object[] values) throws SQLException {
+	boolean insert(final IReadWriteHandle handle, final Object[] rowToInsert)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
 
-		int n = 0;
+		final Object[] params = copyFromRow(rowToInsert, this.insertIndexes);
+
 		if (this.generatedColumnName == null) {
-			n = writeWorker(handle, this.insertClause, this.insertParams, values);
-			return n > 0;
+			return handle.write(this.insertClause, params) > 0;
+
 		}
 
-		try {
-			final long[] generatedKeys = new long[1];
-			n = handle.insertAndGenerateKey(getWriter(this.insertClause, this.insertParams, values),
-					this.generatedColumnName, generatedKeys);
-			final long id = generatedKeys[0];
-			if (id == 0) {
-				logger.error("DB handler did not return generated key");
-			} else {
-				values[this.generatedKeyIdx] = generatedKeys[0];
-				logger.info("Generated key {} assigned back to form data", id);
-			}
-			return n > 0;
-		} catch (final SQLException e) {
-			final String msg = toMessage(e, this.insertClause, this.insertParams, values);
-			logger.error(msg);
-			throw new SQLException(msg, e);
+		final long[] generatedKeys = new long[1];
+		int n = handle.writeWithKeyGeneration(this.insertClause, params,
+				generatedColumnName, generatedKeys);
+		if (n == 0) {
+			return false;
 		}
+
+		final long id = generatedKeys[0];
+		if (id == 0) {
+			logger.error("DB handler did not return generated key");
+		} else {
+			rowToInsert[this.generatedKeyIdx] = id;
+			logger.info("Generated key {} assigned back to form data", id);
+		}
+
+		return true;
+
 	}
 
 	/**
-	 * update this form data back into the db.
+	 * update this record data into the db.
 	 *
 	 * @param handle
-	 * @param values
+	 * @param rowToUpdate
 	 *
 	 * @return true if it is indeed updated. false in case there was no row to
 	 *         update
 	 * @throws SQLException
 	 */
-	boolean update(final ReadWriteHandle handle, final Object[] values) throws SQLException {
+	boolean update(final IReadWriteHandle handle, final Object[] rowToUpdate)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 
-		final int nbr = writeWorker(handle, this.updateClause, this.updateParams, values);
-		return nbr > 0;
+		final Object[] params = copyFromRow(rowToUpdate, this.updateIndexes);
+
+		return handle.write(this.updateClause, params) > 0;
+
 	}
 
 	/**
 	 * remove this form data from the db
 	 *
 	 * @param handle
-	 * @param values
+	 * @param rowToDelete
+	 *            row-data for this record that has values for the fields that
+	 *            are required to identify the row to be deleted
 	 *
-	 * @return true if it is indeed deleted happened. false otherwise
+	 * @return true if it is indeed deleted. false otherwise
 	 * @throws SQLException
 	 */
-	boolean delete(final ReadWriteHandle handle, final Object[] values) throws SQLException {
+	boolean delete(final IReadWriteHandle handle, final Object[] rowToDelete)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Delete);
 		}
 
-		final String sql = this.deleteClause + this.whereClause;
-		final int nbr = writeWorker(handle, sql, this.whereParams, values);
-		return nbr > 0;
-	}
+		final Object[] params = copyFromRow(rowToDelete, this.keyIndexes);
 
-	private static int writeWorker(final ReadWriteHandle handle, final String sql, final FieldMetaData[] params,
-			final Object[] values) throws SQLException {
-		try {
-			return handle.write(getWriter(sql, params, values));
-		} catch (final SQLException e) {
-			final String msg = toMessage(e, sql, params, values);
-			logger.error(msg);
-			throw new SQLException(msg, e);
-		}
-	}
+		return handle.write(this.deleteClause, params) > 0;
 
-	private static IDbWriter getWriter(final String sql, final FieldMetaData[] params, final Object[] values) {
-		return new IDbWriter() {
-
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public boolean setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 0;
-				final StringBuilder sbf = new StringBuilder("Parameter Values");
-				for (final FieldMetaData p : params) {
-					posn++;
-					final Object value = p.setPsParam(ps, values, posn);
-					sbf.append('\n').append(posn).append('=').append(value);
-				}
-				logger.info(sbf.toString());
-				return true;
-			}
-
-		};
 	}
 
 	/**
-	 * save all rows into the db. A row is inserted if it has no primary key,
-	 * and is updated if it has primary key.
-	 * NOTE: if any of the operation fails, we return a false. this may be used
-	 * to roll-back the transaction.
-	 *
-	 * @param handle
-	 *
-	 * @param rows
-	 *            data to be saved
-	 * @return true if all ok. false in case of any problem, caller should
-	 *         roll-back if this is false
-	 * @throws SQLException
-	 */
-	boolean saveAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
-		if (this.keyIndexes == null) {
-			return notAllowed(IoType.Update);
-		}
-
-		if (this.generatedKeyIdx == -1) {
-			logger.info("record has no generated key. Each rowis first updated, failing which it is inserted.");
-			return this.updateOrInsert(handle, rows);
-		}
-		final int nbrRows = rows.length;
-		/*
-		 * we create array with max length rather than list
-		 */
-		Object[][] inserts = new Object[nbrRows][];
-		Object[][] updates = new Object[nbrRows][];
-		int nbrInserts = 0;
-		int nbrUpdates = 0;
-
-		for (final Object[] row : rows) {
-			final Object key = row[this.generatedKeyIdx];
-			if (key != null && ((Long) key) != 0) {
-				updates[nbrUpdates] = row;
-				nbrUpdates++;
-			} else {
-				inserts[nbrInserts] = row;
-				nbrInserts++;
-			}
-		}
-
-		if (nbrUpdates == 0) {
-			return this.insertAll(handle, rows);
-		}
-
-		if (nbrInserts == 0) {
-			return this.updateAll(handle, rows);
-		}
-
-		inserts = Arrays.copyOf(inserts, nbrInserts);
-		updates = Arrays.copyOf(updates, nbrUpdates);
-		final boolean insertOk = writeMany(handle, this.insertClause, this.insertParams, inserts);
-		final boolean updateOk = writeMany(handle, this.updateClause, this.updateParams, updates);
-
-		return insertOk && updateOk;
-	}
-
-	/**
-	 * save all rows into the db. A row is inserted if it has no primary key,
-	 * and is updated if it has primary key.
-	 * NOTE: if any of the operation fails, we return a false. this may be used
-	 * to roll-back the transaction.
+	 * save a data-row rows into the db. The record must have a generated key as
+	 * its primary key fpr this operation to be meaningful. If the key exists in
+	 * the data-row, then it is updated, else it is inserted
 	 *
 	 * @param handle
 	 *
 	 * @param fieldValues
 	 *            data to be saved
-	 * @return true if it was indeed inserted or updated
+	 * @return true if the save succeeded, false otherwise. This value can be
+	 *         used to commit/roll-back the transaction
 	 * @throws SQLException
 	 */
-	boolean save(final ReadWriteHandle handle, final Object[] fieldValues) throws SQLException {
+	boolean save(final IReadWriteHandle handle, final Object[] fieldValues)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
-		if (this.generatedKeyIdx == -1) {
-			final String msg = "record has no generated key. save opertion is not possible.";
-			logger.error(msg);
-			throw new SQLException(msg);
+
+		boolean ok = this.update(handle, fieldValues);
+		if (!ok) {
+			ok = this.insert(handle, fieldValues);;
 		}
-		final Object key = fieldValues[this.generatedKeyIdx];
-		if (key == null || ((Long) key) == 0L) {
-			return this.insert(handle, fieldValues);
-		}
-		return this.update(handle, fieldValues);
+
+		return ok;
 	}
 
-	private boolean updateOrInsert(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
-		for (final Object[] row : rows) {
-			final boolean updated = this.update(handle, row);
-			if (updated) {
-				continue;
-			}
+	/**
+	 * save all rows into the db. Each row is inspected to check for the
+	 * generated primary key. If the key exists, that row is updated, else it is
+	 * inserted. .
+	 *
+	 * @param handle
+	 *
+	 * @param rows
+	 *            data to be saved
+	 * @return true if all ok. false in case one or more rows failed to save.
+	 *         This can be used to commit/roll-back the transaction
+	 * @throws SQLException
+	 */
+	boolean saveAll(final IReadWriteHandle handle, final Object[][] rows)
+			throws SQLException {
+		if (this.keyIndexes == null) {
+			return notAllowed(IoType.Update);
+		}
 
-			final boolean inserted = this.insert(handle, row);
-			if (!inserted) {
-				logger.error(
-						"Row failed to update or insert but with no error. Consdering this as business error, and raising an error flag and rolling back the transaction ");
-				return false;
+		boolean allOk = true;
+
+		for (final Object[] row : rows) {
+			boolean ok = this.update(handle, row);
+			if (!ok) {
+				ok = this.insert(handle, row);
+				if (!ok) {
+					allOk = false;
+				}
 			}
 		}
-		return true;
+		return allOk;
 	}
 
 	/**
@@ -491,12 +552,27 @@ public class Dba {
 	 *         to insert.
 	 * @throws SQLException
 	 */
-	boolean insertAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
+	boolean insertAll(final IReadWriteHandle handle, final Object[][] rows)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
 
-		return writeMany(handle, this.insertClause, this.insertParams, rows);
+		int nbrRows = rows.length;
+		final Object[][] paramValues = copyFromRows(rows, this.insertIndexes);
+		int nbrInserted = 0;
+
+		if (this.generatedColumnName == null) {
+			nbrInserted = handle.writeMany(this.insertClause, paramValues);
+		} else {
+			final long[] generatedKeys = new long[nbrRows];
+			nbrInserted = handle.writeManyWithKeyGeneration(this.insertClause,
+					paramValues, this.generatedColumnName, generatedKeys);
+			if (nbrInserted > 0) {
+				this.copyKeys(rows, generatedKeys);
+			}
+		}
+		return nbrInserted == nbrRows;
 	}
 
 	/**
@@ -511,262 +587,16 @@ public class Dba {
 	 *         row failed to update
 	 * @throws SQLException
 	 */
-	boolean updateAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
+	boolean updateAll(final IReadWriteHandle handle, final Object[][] rows)
+			throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 
-		return writeMany(handle, this.updateClause, this.updateParams, rows);
-	}
-
-	private static boolean writeMany(final ReadWriteHandle handle, final String sql, final FieldMetaData[] params,
-			final Object[][] values) throws SQLException {
-
-		final int nbrParams = params.length;
-		final int nbrRows = values.length;
-		/*
-		 * create valueTypes array
-		 */
-		final ValueType[] types = new ValueType[nbrParams];
-		final Object[][] rows = new Object[nbrRows][nbrParams];
-		int idx = -1;
-		for (final FieldMetaData p : params) {
-			idx++;
-			types[idx] = p.getValueType();
-		}
-
-		/*
-		 * create a new list of array, based on the params. Note that a row in
-		 * values[] is based on the fields in the record, but we need the array
-		 * based on the columns in the params. Hence we create a new list by
-		 * copying values in te right order
-		 *
-		 */
-		idx = -1;
-		for (final Object[] target : rows) {
-			idx++;
-			final Object[] source = values[idx];
-
-			int targetIdx = -1;
-			for (final FieldMetaData p : params) {
-				targetIdx++;
-				target[targetIdx] = source[p.getIndex()];
-			}
-		}
-
-		final int[] nbrs = handle.writeMany(sql, types, rows);
-
-		/*
-		 * we expect each element in nbrs to be 1.some times, rdbms returns -1
-		 * stating that it is not sure, which means that the operation was
-		 * actually successful. hence 0 means that the row failed to update
-		 */
-		idx = -1;
-		boolean allOk = true;
-		for (final int n : nbrs) {
-			idx++;
-			if (n == 0) {
-				logger.error("Row at index {} failed to write to the data base", idx);
-				allOk = false;
-			}
-		}
-		return allOk;
-	}
-
-	private static String toMessage(final SQLException e, final String sql, final FieldMetaData[] params,
-			final Object[] values) {
-		final StringBuilder buf = new StringBuilder();
-		buf.append("Sql Exception : ").append(e.getMessage());
-		buf.append("SQL:").append(sql).append("\nParameters");
-		final SQLException e1 = e.getNextException();
-		if (e1 != null) {
-			buf.append("\nLinked to the SqlExcpetion: ").append(e1.getMessage());
-		}
-		int idx = 1;
-		for (final FieldMetaData p : params) {
-			p.toMessage(buf, idx, values);
-			idx++;
-		}
-		return buf.toString();
-	}
-
-	/**
-	 * fetch data for this form from a db based on the primary key of this
-	 * record
-	 *
-	 * @param handle
-	 * @param values
-	 *            values array associated with this DataRow. in case this is
-	 *            called from outside of a DataRow, then the length has to be
-	 *            enough to extract values
-	 *
-	 * @return true if it is read.false if no data found for this form (key not
-	 *         found...)
-	 * @throws SQLException
-	 */
-	boolean read(final ReadonlyHandle handle, final Object[] values) throws SQLException {
-		if (this.keyIndexes == null) {
-			return notAllowed(IoType.Get);
-		}
-
-		final boolean[] result = new boolean[1];
-		final String sql = this.selectClause + ' ' + this.whereClause;
-		final FieldMetaData[] params = this.whereParams;
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 0;
-				for (final FieldMetaData p : params) {
-					posn++;
-					final Object value = p.setPsParam(ps, values, posn);
-					if (value == null) {
-						logger.error("fetch() invoked with key at index {} as null ", p.getIndex());
-						throw new SQLException(
-								"Primary key fields must be assigned values before a fetch() operations");
-					}
-				}
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				Dba.this.readWorker(rs, values);
-				result[0] = true;
-				/*
-				 * return false to ask the driver to stop reading.
-				 */
-				return false;
-			}
-		});
-		return result[0];
-	}
-
-	protected void readWorker(final ResultSet rs, final Object[] values) throws SQLException {
-		int posn = 0;
-		for (final FieldMetaData p : this.selectParams) {
-			posn++;
-			p.getFromRs(rs, posn, values);
-		}
-	}
-
-	/**
-	 * select multiple rows from the db based on the filtering criterion
-	 *
-	 * @param whereClauseStartingWithWhere
-	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
-	 *            practice is to use parameters rather than dynamic sql. That is
-	 *            you should use a=? rather than a = 32
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
-	 * @param readOnlyOne
-	 *            true if only the first row is to be read. false to read all
-	 *            rows as per filtering criterion
-	 *
-	 * @param handle
-	 * @return non-null, possibly empty array of rows
-	 * @throws SQLException
-	 */
-	List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values, final ReadonlyHandle handle)
-			throws SQLException {
-		final List<Object[]> result = new ArrayList<>();
-		this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
-
-		return result;
-	}
-
-	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
-			final Object[] outputValues, final ReadonlyHandle handle) throws SQLException {
-		return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
-	}
-
-	boolean filterWorker(final ReadonlyHandle handle, final String where, final Object[] inputValues,
-			final Object[] outputValues, final List<Object[]> outputRows) throws SQLException {
-
-		final boolean result[] = new boolean[1];
-		final String sql = where == null ? this.selectClause : (this.selectClause + ' ' + where);
-		final int nbrFields = this.dbFields.length;
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (inputValues == null || inputValues.length == 0) {
-					return;
-				}
-				int posn = 0;
-				for (final Object value : inputValues) {
-					posn++;
-					ValueType.setObjectAsPsParam(value, ps, posn);
-				}
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				/*
-				 * receive data into a new row if this is for multiple rows
-				 */
-				Object[] vals = outputValues;
-				if (vals == null) {
-					vals = new Object[nbrFields];
-					outputRows.add(vals);
-				}
-				Dba.this.readWorker(rs, vals);
-				result[0] = true;
-				/*
-				 * return false if we are to read just one row
-				 */
-				return outputValues == null;
-			}
-		});
-		return result[0];
-	}
-
-	void forEach(final ReadonlyHandle handle, final String where, final Object[] inputValues,
-			final RowProcessor rowProcessor) throws SQLException {
-
-		final String sql = where == null ? this.selectClause : (this.selectClause + ' ' + where);
-		final int nbrFields = this.dbFields.length;
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (inputValues == null || inputValues.length == 0) {
-					return;
-				}
-				int posn = 0;
-				for (final Object value : inputValues) {
-					posn++;
-					ValueType.setObjectAsPsParam(value, ps, posn);
-				}
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Object[] row = new Object[nbrFields];
-				Dba.this.readWorker(rs, row);
-				/*
-				 * return false if we are to read just one row
-				 */
-				return rowProcessor.process(row);
-			}
-		});
+		int nbrRows = rows.length;
+		final Object[][] paramValues = copyFromRows(rows, this.insertIndexes);
+		int n = handle.writeMany(this.updateClause, paramValues);
+		return n == nbrRows;
 	}
 
 	/**
@@ -781,8 +611,9 @@ public class Dba {
 	 * @return true if all ok. false if any error message is added to the
 	 *         context
 	 */
-	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
+	public boolean validate(final Object[] data, final boolean forInsert,
+			final IServiceContext ctx, final String tableName,
+			final int rowNbr) {
 		boolean ok = true;
 		for (final DbField field : this.dbFields) {
 			if (field != null) {
@@ -805,13 +636,15 @@ public class Dba {
 		}
 		final StringBuilder sbf = new StringBuilder();
 		for (final int idx : this.keyIndexes) {
-			sbf.append(this.dbFields[idx].getName()).append(" = ").append(values[idx]).append("  ");
+			sbf.append(this.dbFields[idx].getName()).append(" = ")
+					.append(values[idx]).append("  ");
 		}
 		return sbf.toString();
 	}
 
 	private static boolean notAllowed(final IoType operation) {
-		logger.error("THis record is not designed for '{}' operation", operation);
+		logger.error("THis record is not designed for '{}' operation",
+				operation);
 		return false;
 	}
 
@@ -820,7 +653,8 @@ public class Dba {
 	 * @param ctx
 	 * @return
 	 */
-	boolean parseKeys(final IInputData inputObject, final Object[] fieldValues, final IServiceContext ctx) {
+	boolean parseKeys(final IInputData inputObject, final Object[] fieldValues,
+			final IServiceContext ctx) {
 
 		if (this.tenantField != null) {
 			fieldValues[this.tenantField.getIndex()] = ctx.getTenantId();
@@ -837,7 +671,8 @@ public class Dba {
 			final DbField f = this.dbFields[idx];
 			final String value = inputObject.getString(f.getName());
 			if (value == null || value.isEmpty()) {
-				ctx.addMessage(Message.newFieldError(f.getName(), Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(f.getName(),
+						Message.FIELD_REQUIRED, ""));
 				ok = false;
 			}
 			/*
@@ -870,7 +705,8 @@ public class Dba {
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error
 	 */
-	public ParsedFilter parseFilter(final IInputData json, final IServiceContext ctx) {
+	public ParsedFilter parseFilter(final IInputData json,
+			final IServiceContext ctx) {
 		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
 	}
 
@@ -879,9 +715,74 @@ public class Dba {
 	 * @return true if this operation is allowed
 	 */
 	boolean operationAllowed(final IoType operation) {
-		if(operation == null) {
+		if (operation == null) {
 			return false;
 		}
 		return this.allowedOperations[operation.ordinal()];
 	}
+
+	/**
+	 * copy object values from a row of data to parameters based on indexes
+	 *
+	 * @param row
+	 *            row data for this record
+	 * @param indexes
+	 *            row elements to be copied
+	 * @return inputParams from a select statement
+	 */
+	private static Object[] copyFromRow(Object[] row, int[] indexes) {
+		Object[] params = new Object[indexes.length];
+
+		for (int i = 0; i < indexes.length; i++) {
+			params[i] = row[indexes[i]];
+		}
+
+		return params;
+	}
+
+	/**
+	 * copy object values from rows of data to parameters based on indexes
+	 *
+	 */
+	private static Object[][] copyFromRows(Object[][] rows, int[] indexes) {
+		Object[][] params = new Object[indexes.length][];
+		final int nbrCols = indexes.length;
+
+		for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+			final Object[] row = rows[rowIdx];
+			final Object[] param = new Object[nbrCols];
+			params[rowIdx] = param;
+
+			for (int colIdx = 0; colIdx < indexes.length; colIdx++) {
+				param[colIdx] = row[indexes[colIdx]];
+			}
+		}
+		return params;
+	}
+
+	/**
+	 * copy result of a select into the values for this record
+	 *
+	 * @param result
+	 * @param row
+	 * @return true if values are copied. false if result is null
+	 */
+	private boolean copyToRow(Object[] result, Object[] row) {
+		if (result == null) {
+			return false;
+		}
+
+		for (int i = 0; i < result.length; i++) {
+			row[this.selectIndexes[i]] = result[i];
+		}
+
+		return true;
+	}
+
+	private void copyKeys(Object[][] rows, long[] keys) {
+		for (int i = 0; i < rows.length; i++) {
+			rows[i][this.generatedKeyIdx] = keys[i];
+		}
+	}
+
 }

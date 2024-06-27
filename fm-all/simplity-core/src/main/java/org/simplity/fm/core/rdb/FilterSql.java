@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.db.RecordProcessor;
 
 /**
  * A Sql that is designed to read just one row from the RDBMS

@@ -26,7 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * interface for a class that wants to write/update/delete fromthe dta base
+ * interface for a class that wants to write/update/delete from the database
  *
  * @author simplity.org
  *

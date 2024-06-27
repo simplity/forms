@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
+package org.simplity.fm.core.db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -47,7 +47,8 @@ public class PreparedStatementParam {
 	 * @param value
 	 * @param valueType
 	 */
-	public PreparedStatementParam(final Object value, final ValueType valueType) {
+	public PreparedStatementParam(final Object value,
+			final ValueType valueType) {
 		this.value = value;
 		this.valueType = valueType;
 	}
@@ -64,7 +65,7 @@ public class PreparedStatementParam {
 	/**
 	 * @return the value
 	 */
-	public Object getValue() {
+	public Object getValueee() {
 		return this.value;
 	}
 
@@ -72,14 +73,14 @@ public class PreparedStatementParam {
 	 * @param value
 	 *            the value to set
 	 */
-	public void setValue(final Object value) {
+	public void setValueee(final Object value) {
 		this.value = value;
 	}
 
 	/**
 	 * @return the valueType
 	 */
-	public ValueType getValueType() {
+	public ValueType getValueTypeee() {
 		return this.valueType;
 	}
 
@@ -89,7 +90,8 @@ public class PreparedStatementParam {
 	 * @return value that is set
 	 * @throws SQLException
 	 */
-	public Object setPsParam(final PreparedStatement ps, final int oneBasedPosition) throws SQLException {
+	public Object setPsParam(final PreparedStatement ps,
+			final int oneBasedPosition) throws SQLException {
 		this.valueType.setPsParam(ps, oneBasedPosition, this.value);
 		return this.value;
 

@@ -26,6 +26,7 @@ import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.app.AppManager;
+import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,7 @@ public class OverrideUtil {
 		final Overrides[] overs = new Overrides[1];
 
 		try {
-			driver.read(handle -> {
+			driver.processReader(handle -> {
 				final Object[] result = handle.read(READ_OVR, values,
 						OVR_TYPES);
 				if (result == null) {
@@ -125,7 +126,7 @@ public class OverrideUtil {
 				String.join(COMMA, overs.records), id};
 
 		try {
-			driver.readWrite(handle -> {
+			driver.processWriter(handle -> {
 				if (handle.write(UPDATE_OVR, values) > 0) {
 					/*
 					 * update done
@@ -162,7 +163,7 @@ public class OverrideUtil {
 		final Object[] values = {id};
 
 		try {
-			driver.readWrite(handle -> {
+			driver.processWriter(handle -> {
 				if (handle.write(DELETE_OVR, values) == 0) {
 					/*
 					 * it is okay if n == 0, it means that it is not there
@@ -192,7 +193,7 @@ public class OverrideUtil {
 		final Object[] values = {recordJson, id, recordName};
 
 		try {
-			driver.readWrite(handle -> {
+			driver.processWriter(handle -> {
 				if (handle.write(UPDATE_REC, values) > 0) {
 					/*
 					 * updated.
@@ -235,7 +236,7 @@ public class OverrideUtil {
 		final Object[] values = {id, recordName};
 
 		try {
-			driver.readWrite(handle -> {
+			driver.processWriter(handle -> {
 				if (handle.write(DELETE_REC, values) == 0) {
 					/*
 					 * it is okay if n == 0, it means that it is not there
@@ -263,7 +264,7 @@ public class OverrideUtil {
 		final String[] texts = new String[1];
 
 		try {
-			driver.read(handle -> {
+			driver.processReader(handle -> {
 				final Object[] result = handle.read(READ_REC, values,
 						REC_TYPES);
 				if (result != null) {

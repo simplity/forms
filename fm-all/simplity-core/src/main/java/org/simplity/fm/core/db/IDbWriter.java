@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
@@ -34,7 +34,7 @@ import java.sql.SQLException;
  * @author simplity.org
  *
  */
-public interface DbWriter {
+public interface IDbWriter {
 
 	/**
 	 * function that accesses the db within a transaction boundary. The
@@ -45,6 +45,6 @@ public interface DbWriter {
 	 *         of which the transaction is to be cancelled.
 	 * @throws SQLException
 	 */
-	boolean readWrite(ReadWriteHandle handle) throws SQLException;
+	boolean readWrite(IReadWriteHandle handle) throws SQLException;
 
 }

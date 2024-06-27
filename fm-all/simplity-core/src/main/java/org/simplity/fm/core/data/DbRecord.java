@@ -28,9 +28,9 @@ import java.util.List;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.rdb.ReadWriteHandle;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
-import org.simplity.fm.core.rdb.RecordProcessor;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.db.RecordProcessor;
 import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
@@ -100,7 +100,7 @@ public abstract class DbRecord extends Record {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean read(final ReadonlyHandle handle) throws SQLException {
+	public boolean read(final IReadonlyHandle handle) throws SQLException {
 		return this.dba.read(handle, this.fieldValues);
 	}
 
@@ -112,7 +112,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void readOrFail(final ReadonlyHandle handle) throws SQLException {
+	public void readOrFail(final IReadonlyHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.fetchName()
 					+ this.dba.emitKeys(this.fieldValues));
@@ -139,9 +139,9 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public List<Object[]> filter(final String whereClauseStartingWithWhere,
-			final Object[] values, final ReadonlyHandle handle)
+			final Object[] values, final IReadonlyHandle handle)
 			throws SQLException {
-		return this.dba.filter(whereClauseStartingWithWhere, values, handle);
+		return this.dba.filter(handle, whereClauseStartingWithWhere, values);
 	}
 
 	/**
@@ -164,10 +164,10 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean filterFirst(final String whereClauseStartingWithWhere,
-			final Object[] values, final ReadonlyHandle handle)
+			final Object[] values, final IReadonlyHandle handle)
 			throws SQLException {
-		return this.dba.filterFirst(whereClauseStartingWithWhere, values,
-				this.fieldValues, handle);
+		return this.dba.filterFirst(handle, whereClauseStartingWithWhere,
+				values, this.fieldValues);
 	}
 
 	/**
@@ -191,10 +191,10 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void filterFirstOrFail(final String whereClauseStartingWithWhere,
-			final Object[] values, final ReadonlyHandle handle)
+			final Object[] values, final IReadonlyHandle handle)
 			throws SQLException {
-		if (this.dba.filterFirst(whereClauseStartingWithWhere, values,
-				this.fieldValues, handle)) {
+		if (this.dba.filterFirst(handle, whereClauseStartingWithWhere, values,
+				this.fieldValues)) {
 			return;
 		}
 
@@ -211,7 +211,7 @@ public abstract class DbRecord extends Record {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	public boolean insert(final ReadWriteHandle handle) throws SQLException {
+	public boolean insert(final IReadWriteHandle handle) throws SQLException {
 		return this.dba.insert(handle, this.fieldValues);
 	}
 
@@ -223,7 +223,8 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void insertOrFail(final ReadWriteHandle handle) throws SQLException {
+	public void insertOrFail(final IReadWriteHandle handle)
+			throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
 			throw new SQLException("Insert failed silently for "
 					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -239,7 +240,7 @@ public abstract class DbRecord extends Record {
 	 *         update
 	 * @throws SQLException
 	 */
-	public boolean update(final ReadWriteHandle handle) throws SQLException {
+	public boolean update(final IReadWriteHandle handle) throws SQLException {
 		return this.dba.update(handle, this.fieldValues);
 	}
 
@@ -251,7 +252,8 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void updateOrFail(final ReadWriteHandle handle) throws SQLException {
+	public void updateOrFail(final IReadWriteHandle handle)
+			throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
 			throw new SQLException("Update failed silently for "
 					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -266,7 +268,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it was indeed saved
 	 * @throws SQLException
 	 */
-	public boolean save(final ReadWriteHandle handle) throws SQLException {
+	public boolean save(final IReadWriteHandle handle) throws SQLException {
 		return this.dba.save(handle, this.fieldValues);
 	}
 
@@ -274,7 +276,7 @@ public abstract class DbRecord extends Record {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void saveOrFail(final ReadWriteHandle handle) throws SQLException {
+	public void saveOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
 			throw new SQLException("Save failed silently for "
 					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -290,7 +292,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean delete(final ReadWriteHandle handle) throws SQLException {
+	public boolean delete(final IReadWriteHandle handle) throws SQLException {
 		return this.dba.delete(handle, this.fieldValues);
 	}
 
@@ -302,7 +304,8 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void deleteOrFail(final ReadWriteHandle handle) throws SQLException {
+	public void deleteOrFail(final IReadWriteHandle handle)
+			throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
 			throw new SQLException("Delete failed silently for "
 					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -379,7 +382,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -408,15 +411,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
-				if (rec.insert(handle)) {
-					return true;
-				}
-
-				logger.error("Insert operation failed silently");
-				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
-				return false;
-			});
+			AppManager.getAppInfra().getDbDriver().processWriter(null);
 		}
 	}
 
@@ -436,7 +431,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
 				if (rec.update(handle)) {
 					return true;
 				}
@@ -463,7 +458,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().readWrite(handle -> {
+			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
 				if (rec.delete(handle)) {
 					return true;
 				}
@@ -493,10 +488,9 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 			final Object[][][] result = new Object[1][][];
-			AppManager.getAppInfra().getDbDriver().read(handle -> {
-				final List<Object[]> list = rec.dba.filter(
-						filter.getWhereClause(), filter.getWhereParamValues(),
-						handle);
+			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+				final List<Object[]> list = rec.dba.filter(handle,
+						filter.getWhereClause(), filter.getWhereParamValues());
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				}
@@ -540,7 +534,7 @@ public abstract class DbRecord extends Record {
 	 * @param rowProcessor
 	 * @throws SQLException
 	 */
-	public <T extends ReadonlyHandle> void forEach(final String whereClause,
+	public <T extends IReadonlyHandle> void forEach(final String whereClause,
 			final Object[] values, final T handle,
 			final RecordProcessor rowProcessor) throws SQLException {
 

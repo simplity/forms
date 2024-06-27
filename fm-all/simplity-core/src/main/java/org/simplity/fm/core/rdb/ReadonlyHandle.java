@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +44,9 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class ReadonlyHandle {
-	private static final Logger logger = LoggerFactory.getLogger(ReadonlyHandle.class);
+public class ReadonlyHandle implements IReadonlyHandle {
+	private static final Logger logger = LoggerFactory
+			.getLogger(ReadonlyHandle.class);
 	protected final Connection con;
 
 	/**
@@ -71,7 +73,9 @@ public class ReadonlyHandle {
 	 * @return true if a row was indeed read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean read(final String sql, final Record inputData, final Record outputData) throws SQLException {
+	@Override
+	public boolean read(final String sql, final Record inputData,
+			final Record outputData) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputData != null) {
 				inputData.setPsParams(ps);
@@ -101,16 +105,17 @@ public class ReadonlyHandle {
 	 * @return extracted data as an array of objects. null if no row is read
 	 * @throws SQLException
 	 */
-	public Object[] read(final String sql, final Object[] paramValues, final ValueType[] outputTypes)
-			throws SQLException {
+	@Override
+	public Object[] read(final String sql, final Object[] paramValues,
+			final ValueType[] outputTypes) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (paramValues != null) {
 				int posn = 0;
 				for (final Object val : paramValues) {
 					posn++;
 					if (val == null) {
-						throw new SQLException(
-								"Value at " + posn + " is null. Input parameter values must be non-null");
+						throw new SQLException("Value at " + posn
+								+ " is null. Input parameter values must be non-null");
 					}
 					ValueType.setObjectAsPsParam(val, ps, posn);
 				}
@@ -144,16 +149,16 @@ public class ReadonlyHandle {
 	 * @return extracted data as an array of rows. null if no row is read
 	 * @throws SQLException
 	 */
-	public Object[][] filter(final String sql, final Object[] paramValues, final ValueType[] outputTypes)
-			throws SQLException {
+	public Object[][] filter(final String sql, final Object[] paramValues,
+			final ValueType[] outputTypes) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (paramValues != null) {
 				int posn = 0;
 				for (final Object val : paramValues) {
 					posn++;
 					if (val == null) {
-						throw new SQLException(
-								"Value at " + posn + " is null. Input parameter values must be non-null");
+						throw new SQLException("Value at " + posn
+								+ " is null. Input parameter values must be non-null");
 					}
 					ValueType.setObjectAsPsParam(val, ps, posn);
 				}
@@ -192,10 +197,12 @@ public class ReadonlyHandle {
 	 * @return list of output Vos. could be empty, but not null
 	 * @throws SQLException
 	 */
-	public <T extends Record> List<T> filter(final String sql, final Record inputData, final T outputInstance)
+	public <T extends Record> List<T> filter(final String sql,
+			final Record inputData, final T outputInstance)
 			throws SQLException {
 
-		logger.info("Filter called with T = {} ", outputInstance.getClass().getName());
+		logger.info("Filter called with T = {} ",
+				outputInstance.getClass().getName());
 
 		final List<T> list = new ArrayList<>();
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
@@ -206,7 +213,8 @@ public class ReadonlyHandle {
 				while (rs.next()) {
 					@SuppressWarnings("unchecked")
 					final T vo = (T) outputInstance.newInstance();
-					logger.info("New instance of {} created for filtering", vo.getClass().getName());
+					logger.info("New instance of {} created for filtering",
+							vo.getClass().getName());
 					vo.readFromRs(rs);
 					list.add(vo);
 				}
@@ -216,8 +224,8 @@ public class ReadonlyHandle {
 	}
 
 	/**
-	 * Most flexible way to read from db. Caller has full control of what
-	 * and how to read.
+	 * Most flexible way to read from db. Caller has full control of what and
+	 * how to read.
 	 *
 	 * @param reader
 	 *            instance that wants to read from the database
@@ -264,11 +272,13 @@ public class ReadonlyHandle {
 		return this.con.createBlob();
 	}
 
-	protected static void warn(final String sql, final ValueType[] types, final Object[] vals) {
+	protected static void warn(final String sql, final ValueType[] types,
+			final Object[] vals) {
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append("RDBMS is not set up. Sql = ").append(sql);
 		for (int i = 0; i < types.length; i++) {
-			sbf.append('(').append(types[i]).append(", ").append(vals[i]).append(") ");
+			sbf.append('(').append(types[i]).append(", ").append(vals[i])
+					.append(") ");
 		}
 		logger.warn(sbf.toString());
 	}

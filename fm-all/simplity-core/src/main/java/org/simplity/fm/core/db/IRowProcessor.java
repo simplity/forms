@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,31 +20,23 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
 /**
- * interface for a class that wants to do db operations in batch. That is, more
- * than one transaction.
- * In this case, the client manages transactions (begin-trans, commit and
- * roll-back)
- *
- * NOTE: This interface is created because the java.util.functions can not
- * declare exceptions. Our function needs to declare a throws clause
- *
  * @author simplity.org
  *
  */
 @FunctionalInterface
-public interface IDbTransacter {
-
+public interface IRowProcessor {
 	/**
-	 * function that manages its own transactions, like commit and roll-back. It
-	 * is also possible to do the read-writes with auto-commits
+	 * lambda function to process a a row of data
 	 *
-	 * @param handle
+	 * @param row
+	 *            non-null array of objects
+	 * @return true to continue with the next. false to stop retrieving records
 	 * @throws SQLException
 	 */
-	void transact(TransactionHandle handle) throws SQLException;
+	boolean process(Object[] row) throws SQLException;
 }

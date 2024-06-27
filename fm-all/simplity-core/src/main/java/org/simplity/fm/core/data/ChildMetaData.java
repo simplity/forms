@@ -25,8 +25,8 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.ReadWriteHandle;
-import org.simplity.fm.core.rdb.ReadonlyHandle;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
@@ -221,7 +221,7 @@ public class ChildMetaData {
 	 * @throws SQLException
 	 */
 	public boolean read(final DbRecord parentRec, final Form<?> form,
-			final IOutputData outData, final ReadonlyHandle handle)
+			final IOutputData outData, final IReadonlyHandle handle)
 			throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
@@ -282,7 +282,7 @@ public class ChildMetaData {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbRecord parentRec, final Form<?> form,
-			final IInputData inputObject, final ReadWriteHandle handle,
+			final IInputData inputObject, final IReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
@@ -356,8 +356,8 @@ public class ChildMetaData {
 	 * @return true if all OK.
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbRecord parentRec, final Form<?> form,
-			final ReadWriteHandle handle) throws SQLException {
+	public boolean delete(final IReadWriteHandle handle,
+			final DbRecord parentRec, final Form<?> form) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;

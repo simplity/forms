@@ -44,7 +44,8 @@ public abstract class Sql {
 	}
 
 	/**
-	 * @return string that describe set the current state of this sql
+	 * @return string that shows this SQL with values from the current input
+	 *         context
 	 */
 	public String showDetails() {
 		final StringWriter sw = new StringWriter();

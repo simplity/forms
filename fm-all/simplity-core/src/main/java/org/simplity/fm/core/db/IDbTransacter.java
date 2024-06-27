@@ -20,27 +20,30 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
 /**
- * interface/lambda for carrying out read-only operations on RDBMS. This
- * interface is created instead of using standard functions because of the
- * allowed throws clause
+ * interface for a class that wants to do db operations in batch. That is, more
+ * than one transaction. In this case, the client manages transactions
+ * (begin-trans, commit and roll-back)
+ *
+ * NOTE: This interface is created because the java.util.functions can not
+ * declare exceptions. Our function needs to declare a throws clause
  *
  * @author simplity.org
  *
  */
 @FunctionalInterface
-public interface DbReader {
+public interface IDbTransacter {
 
 	/**
-	 * function that reads data from the db
+	 * function that manages its own transactions, like commit and roll-back. It
+	 * is also possible to do the read-writes with auto-commits
 	 *
 	 * @param handle
 	 * @throws SQLException
 	 */
-	void read(ReadonlyHandle handle) throws SQLException;
-
+	void transact(ITransactionHandle handle) throws SQLException;
 }
