@@ -93,11 +93,12 @@ public class OverrideUtil {
 	public static Overrides getOverides(final String id) {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {id};
+		final ValueType[] types = {ValueType.Text};
 		final Overrides[] overs = new Overrides[1];
 
 		try {
 			driver.processReader(handle -> {
-				final Object[] result = handle.read(READ_OVR, values,
+				final Object[] result = handle.read(READ_OVR, values, types,
 						OVR_TYPES);
 				if (result == null) {
 					logger.info("No overrides for key {}", id);
@@ -124,10 +125,12 @@ public class OverrideUtil {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {String.join(COMMA, overs.forms),
 				String.join(COMMA, overs.records), id};
+		final ValueType[] types = {ValueType.Text, ValueType.Text,
+				ValueType.Text};
 
 		try {
 			driver.processWriter(handle -> {
-				if (handle.write(UPDATE_OVR, values) > 0) {
+				if (handle.write(UPDATE_OVR, values, types) > 0) {
 					/*
 					 * update done
 					 */
@@ -136,7 +139,7 @@ public class OverrideUtil {
 				/*
 				 * non-existing row? let us insert
 				 */
-				if (handle.write(INSERT_OVR, values) > 0) {
+				if (handle.write(INSERT_OVR, values, types) > 0) {
 					return true;
 				}
 				/*
@@ -161,10 +164,11 @@ public class OverrideUtil {
 	public static void deleteOverides(final String id) {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {id};
+		final ValueType[] types = {ValueType.Text};
 
 		try {
 			driver.processWriter(handle -> {
-				if (handle.write(DELETE_OVR, values) == 0) {
+				if (handle.write(DELETE_OVR, values, types) == 0) {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
@@ -191,10 +195,12 @@ public class OverrideUtil {
 			final String recordJson) {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {recordJson, id, recordName};
+		final ValueType[] types = {ValueType.Text, ValueType.Text,
+				ValueType.Text};
 
 		try {
 			driver.processWriter(handle -> {
-				if (handle.write(UPDATE_REC, values) > 0) {
+				if (handle.write(UPDATE_REC, values, types) > 0) {
 					/*
 					 * updated.
 					 */
@@ -203,7 +209,7 @@ public class OverrideUtil {
 				/*
 				 * non existing row? let us inser
 				 */
-				if (handle.write(INSERT_REC, values) > 0) {
+				if (handle.write(INSERT_REC, values, types) > 0) {
 					return true;
 				}
 				final String msg = "Error while saving into st_rec_overrides. update/insert failed with no errors";
@@ -234,10 +240,11 @@ public class OverrideUtil {
 	public static void deleteRecord(final String id, final String recordName) {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {id, recordName};
+		final ValueType[] types = {ValueType.Text, ValueType.Text};
 
 		try {
 			driver.processWriter(handle -> {
-				if (handle.write(DELETE_REC, values) == 0) {
+				if (handle.write(DELETE_REC, values, types) == 0) {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
@@ -261,11 +268,12 @@ public class OverrideUtil {
 			final String recordName) {
 		final IDbDriver driver = AppManager.getAppInfra().getDbDriver();
 		final Object[] values = {id, recordName};
+		final ValueType[] types = {ValueType.Text, ValueType.Text};
 		final String[] texts = new String[1];
 
 		try {
 			driver.processReader(handle -> {
-				final Object[] result = handle.read(READ_REC, values,
+				final Object[] result = handle.read(READ_REC, values, types,
 						REC_TYPES);
 				if (result != null) {
 					texts[0] = (String) result[0];

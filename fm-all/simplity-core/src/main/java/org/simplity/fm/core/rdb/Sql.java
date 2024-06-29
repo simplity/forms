@@ -37,10 +37,10 @@ import org.slf4j.LoggerFactory;
 public abstract class Sql {
 	protected static final Logger logger = LoggerFactory.getLogger(Sql.class);
 	protected String sqlText;
-	protected Record inputData;
+	protected Record inputRecord;
 
 	protected void setInputValue(final int idx, final Object value) {
-		this.inputData.assignValue(idx, value);
+		this.inputRecord.assignValue(idx, value);
 	}
 
 	/**
@@ -51,7 +51,7 @@ public abstract class Sql {
 		final StringWriter sw = new StringWriter();
 		final IOutputData outData = JsonUtil.newOutputData(sw);
 		outData.beginObject();
-		outData.addRecord(this.inputData);
+		outData.addRecord(this.inputRecord);
 		outData.endObject();
 		return "SQL= " + this.sqlText + "\n" + outData.toString();
 	}

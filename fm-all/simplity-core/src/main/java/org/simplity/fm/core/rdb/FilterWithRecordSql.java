@@ -26,8 +26,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.db.RecordProcessor;
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.db.IRecordProcessor;
 
 /**
  * A Sql that is designed to filter rows from the RDBMS. That is, result may
@@ -38,8 +38,8 @@ import org.simplity.fm.core.db.RecordProcessor;
  *            record that describes the result-set row returned by this sql
  *
  */
-public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
-	protected T record;
+public abstract class FilterWithRecordSql<T extends Record> extends Sql {
+	protected T outputRecord;
 
 	/**
 	 * filter rows into a data table
@@ -49,14 +49,15 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 *         empty
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("unchecked")
 	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
-		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
-		final List<T> result = new ArrayList<>(rows.size());
-		for (final Object[] row : rows) {
-			result.add((T) this.record.newInstance(row));
-		}
-		return result;
+		final List<T> list = new ArrayList<>();
+
+		handle.readMany(this.sqlText, this.inputRecord, this.outputRecord,
+				record -> {
+					list.add(record);
+					return true;
+				});
+		return list;
 	}
 
 	/**
@@ -64,21 +65,17 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 * hence the caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @return non-null non-empty dbTable with all filtered with the
-	 *         first filtered row
+	 * @return non-null non-empty dbTable with all filtered with the first
+	 *         filtered row
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	@SuppressWarnings("unchecked")
-	public List<T> filterOrFail(final ReadonlyHandle handle) throws SQLException {
-
-		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
-		if (rows.size() == 0) {
-			throw new SQLException("Filter did not return any row. " + this.showDetails());
-		}
-		final List<T> result = new ArrayList<>(rows.size());
-		for (final Object[] row : rows) {
-			result.add((T) this.record.newInstance(row));
+	public List<T> filterOrFail(final ReadonlyHandle handle)
+			throws SQLException {
+		List<T> result = this.filter(handle);
+		if (result.size() == 0) {
+			throw new SQLException(
+					"Filter did not return any row. " + this.showDetails());
 		}
 		return result;
 	}
@@ -89,13 +86,15 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 *
 	 * @param handle
 	 * @param recordProcessor
-	 *            call back function that takes record as parameter, and
-	 *            returns true to continue to read, and false if it is not
-	 *            interested in getting any more rows
+	 *            call back function that takes record as parameter, and returns
+	 *            true to continue to read, and false if it is not interested in
+	 *            getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final ReadonlyHandle handle, final RecordProcessor recordProcessor) throws SQLException {
-		this.record.forEach(this.sqlText, this.inputData.fetchRawData(), handle, recordProcessor);
+	public void forEach(final ReadonlyHandle handle,
+			final IRecordProcessor<T> recordProcessor) throws SQLException {
+		handle.readMany(this.sqlText, this.inputRecord, this.outputRecord,
+				recordProcessor);
 	}
 
 }

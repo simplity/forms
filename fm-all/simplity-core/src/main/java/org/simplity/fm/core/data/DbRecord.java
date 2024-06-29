@@ -30,7 +30,6 @@ import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
-import org.simplity.fm.core.db.RecordProcessor;
 import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
@@ -142,64 +141,6 @@ public abstract class DbRecord extends Record {
 			final Object[] values, final IReadonlyHandle handle)
 			throws SQLException {
 		return this.dba.filter(handle, whereClauseStartingWithWhere, values);
-	}
-
-	/**
-	 * use filter-criterion, but only one row is expected, and hence read it
-	 * into this record. This API is meant for utility programs,and not for
-	 * end-programmers. filter-sqls are a better choice for end-programmers as
-	 * they provide type-safe way to set/get values
-	 *
-	 * @param whereClauseStartingWithWhere
-	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
-	 *            practice is to use parameters rather than dynamic sql. That is
-	 *            you should use a=? rather than a = 32
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
-	 * @param handle
-	 * @return true if the first row is read. false otherwise
-	 * @throws SQLException
-	 */
-	public boolean filterFirst(final String whereClauseStartingWithWhere,
-			final Object[] values, final IReadonlyHandle handle)
-			throws SQLException {
-		return this.dba.filterFirst(handle, whereClauseStartingWithWhere,
-				values, this.fieldValues);
-	}
-
-	/**
-	 * use filter-criterion, but only one row is expected, and hence read it
-	 * into this record.
-	 *
-	 * This API is meant for utility programs,and not for end-programmers.
-	 * filter-sqls are a better choice for end-programmers as they provide
-	 * type-safe way to set/get values
-	 *
-	 * @param whereClauseStartingWithWhere
-	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
-	 *            practice is to use parameters rather than dynamic sql. That is
-	 *            you should use a=? rather than a = 32
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
-	 * @param handle
-	 * @throws SQLException
-	 */
-	public void filterFirstOrFail(final String whereClauseStartingWithWhere,
-			final Object[] values, final IReadonlyHandle handle)
-			throws SQLException {
-		if (this.dba.filterFirst(handle, whereClauseStartingWithWhere, values,
-				this.fieldValues)) {
-			return;
-		}
-
-		throw new SQLException(
-				"Filter operation is expected to get one row, but none turned-up!");
 	}
 
 	/**
@@ -524,23 +465,4 @@ public abstract class DbRecord extends Record {
 		return this.dba.getGeneratedKeyIndex();
 	}
 
-	/**
-	 * API meant for utility programs. End-programmers should use filter-sql
-	 * instead
-	 *
-	 * @param whereClause
-	 * @param values
-	 * @param handle
-	 * @param rowProcessor
-	 * @throws SQLException
-	 */
-	public <T extends IReadonlyHandle> void forEach(final String whereClause,
-			final Object[] values, final T handle,
-			final RecordProcessor rowProcessor) throws SQLException {
-
-		this.dba.forEach(handle, whereClause, values, row -> {
-			final DbRecord rec = DbRecord.this.newInstance(row);
-			return rowProcessor.process(rec);
-		});
-	}
 }

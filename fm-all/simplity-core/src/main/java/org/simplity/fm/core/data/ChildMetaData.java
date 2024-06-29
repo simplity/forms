@@ -31,6 +31,7 @@ import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,7 +212,9 @@ public class ChildMetaData {
 				this.childFormName);
 	}
 	/**
-	 * our current design is to write to the serializer directly
+	 * read rows from the child-table for the keys in the parent record. the
+	 * rows are directly written to the output stream to avoid repeated copying
+	 * of data
 	 *
 	 * @param parentRec
 	 * @param form
@@ -228,39 +231,48 @@ public class ChildMetaData {
 			return false;
 		}
 
-		final Object[] values = this.getWhereValues(parentRec);
+		final ValuesAndTypes vt = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
 		outData.addName(this.childName);
 		final Field[] fields = thisRecord.fetchFields();
+		final ValueType[] outputTypes = thisRecord.fetchValueTypes();
 		if (this.isTable) {
 			outData.beginArray();
-			for (final Object[] row : thisRecord.filter(this.linkWhereClause,
-					values, handle)) {
-				outData.beginObject();
-				outData.addFields(fields, row);
-				form.readChildForms(row, outData, handle);
-				outData.endObject();
-			}
+			handle.readMany(this.linkWhereClause, vt.values, vt.types,
+					outputTypes, row -> {
+						outData.beginObject();
+						outData.addFields(fields, row);
+						form.readChildForms(row, outData, handle);
+						outData.endObject();
+						return true;
+					});
 			outData.endArray();
 			return true;
 		}
 
 		outData.beginObject();
-		if (thisRecord.filterFirst(this.linkWhereClause, values, handle)) {
-			outData.addRecord(thisRecord);
+		final Object[] row = handle.read(this.linkWhereClause, vt.values,
+				vt.types, outputTypes);
+		if (row != null) {
+			outData.addFields(fields, row);
 		}
+
 		outData.endObject();
 		return true;
 	}
 
-	private Object[] getWhereValues(final Record parentRec) {
+	private ValuesAndTypes getWhereValues(final Record parentRec) {
 		final int nbr = this.parentIndexes.length;
 		final Object[] values = new Object[nbr];
+		final ValueType[] types = new ValueType[nbr];
+		final Field[] fields = parentRec.fetchFields();
 		for (int i = 0; i < nbr; i++) {
-			values[i] = parentRec.fetchValue(this.parentIndexes[i]);
+			int idx = this.parentIndexes[i];
+			values[i] = parentRec.fetchValue(idx);
+			types[i] = fields[idx].getValueType();
 		}
-		return values;
+		return new ValuesAndTypes(values, types);
 	}
 
 	private void copyParentKeys(final Record parentRec,
@@ -363,10 +375,23 @@ public class ChildMetaData {
 			return false;
 		}
 
-		handle.write(this.deleteSql, this.getWhereValues(parentRec));
+		ValuesAndTypes vt = this.getWhereValues(parentRec);
+		handle.write(this.deleteSql, vt.values, vt.types);
 		/*
 		 * 0 delete also is okay
 		 */
 		return true;
+	}
+
+	/**
+	 * local data-structure for passing data between methods
+	 */
+	class ValuesAndTypes {
+		final Object[] values;
+		final ValueType[] types;
+		ValuesAndTypes(final Object[] values, final ValueType[] types) {
+			this.values = values;
+			this.types = types;
+		}
 	}
 }

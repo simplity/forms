@@ -23,7 +23,6 @@
 package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
-import java.util.List;
 
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
@@ -37,110 +36,111 @@ import org.simplity.fm.core.valueschema.ValueType;
 public interface IReadonlyHandle {
 
 	/**
-	 * method to be used to read into a valueObject using a sql component.
+	 * read a row of data as an array of values
 	 *
 	 * @param sql
-	 *            non-null valid prepared statement to read from the database
-	 * @param inputData
+	 *            valid prepared statement to read from the database
+	 * @param parameterValues
 	 *            null if the prepared statement has no parameters. must contain
-	 *            the right values in the right order
-	 * @param outputData
-	 *            non-null. must have the right fields in the right order to
-	 *            receive data from the result set
-	 * @return true if a row was indeed read. false otherwise
+	 *            the right values in the right order for parameters in the
+	 *            prepared statement
+	 * @param parameterTypes
+	 *            value type of parameters
+	 * @param outputTypes
+	 *            must have the right types in the right order to receive data
+	 *            from the result set
+	 * @return extracted data as an array of objects. Array length matches with
+	 *         that of the outputTypes. null if no row is read
 	 * @throws SQLException
 	 */
-	public boolean read(final String sql, final Record inputData,
-			final Record outputData) throws SQLException;
+	public Object[] read(final String sql, final Object[] parameterValues,
+			final ValueType[] parameterTypes, final ValueType[] outputTypes)
+			throws SQLException;
 
 	/**
-	 * method to be used to read into a valueObject using a sql component.
+	 * read a row of data as an array of values
 	 *
 	 * @param sql
-	 *            non-null valid prepared statement to read from the database
-	 * @param paramValues
-	 *            null if the prepared statement has no parameters. must contain
-	 *            the right non-values in the right order for parameters in the
-	 *            select sql
-	 * @param outputTypes
-	 *            non-null. must have the right types in the right order to
-	 *            receive data from the result set
-	 * @return extracted data as an array of objects. null if no row is read
+	 *            valid prepared statement to read from the database
+	 * @param inputRecord
+	 *            record that has its fields that are to be used as parameters
+	 *            for the sql/prepared statement null if the prepared statement
+	 *            has no parameters.
+	 * @param outputRecord
+	 *            that has the fields that match in number and type with the
+	 *            result set of the sql
+	 * @return true if a row was indeed read, false otherwise
 	 * @throws SQLException
 	 */
-	public Object[] read(final String sql, final Object[] paramValues,
-			final ValueType[] outputTypes) throws SQLException;
-
+	public boolean read(final String sql, final Record inputRecord,
+			final Record outputRecord) throws SQLException;
 	/**
-	 * method to be used to read into a valueObject using a sql component.
+	 * read one or more rows from the database
 	 *
 	 * @param sql
 	 *            non-null valid prepared statement to read from the database
-	 * @param paramValues
+	 * @param parameterValues
 	 *            null if the prepared statement has no parameters. must contain
-	 *            the right non-values in the right order for parameters in the
-	 *            select sql
+	 *            the right values in the right order for parameters in the
+	 *            prepared statement
+	 * @param parameterTypes
+	 *            value type of parameters
 	 * @param outputTypes
-	 *            non-null. must have the right types in the right order to
-	 *            receive data from the result set
+	 *            must have the right types in the right order to receive data
+	 *            from the result set
 	 * @return extracted data as an array of rows. null if no row is read
 	 * @throws SQLException
 	 */
-	public Object[][] readMany(final String sql, final Object[] paramValues,
-			final ValueType[] outputTypes) throws SQLException;
+	public Object[][] readMany(final String sql, final Object[] parameterValues,
+			final ValueType[] parameterTypes, final ValueType[] outputTypes)
+			throws SQLException;
 
 	/**
-	 * method to be used to process each of the row returned by the query,
-	 * instead of returning them
+	 * fetch one or more rows from the database, and invoke the row processor
+	 * for each of the row. It s possible for the row-processor to abandon
+	 * further reading at any point
 	 *
 	 * @param sql
 	 *            non-null valid prepared statement to read from the database
-	 * @param paramValues
+	 * @param parameterValues
 	 *            null if the prepared statement has no parameters. must contain
 	 *            the right non-values in the right order for parameters in the
 	 *            select sql
+	 * @param parameterTypes
+	 *            value type of parameters
 	 * @param outputTypes
-	 *            non-null. must have the right types in the right order to
-	 *            receive data from the result set
+	 *            must have the right types in the right order to receive data
+	 *            from the result set
 	 * @param rowProcessor
 	 *            lambda function to process one row at a time from the result
 	 *            set
 	 * @return number of rows processed
 	 * @throws SQLException
 	 */
-	public int readMany(final String sql, final Object[] paramValues,
-			final ValueType[] outputTypes, IRowProcessor rowProcessor)
-			throws SQLException;
+	public int readMany(final String sql, final Object[] parameterValues,
+			final ValueType[] parameterTypes, final ValueType[] outputTypes,
+			IRowProcessor rowProcessor) throws SQLException;
 
 	/**
-	 * method to be used to read possibly more than one rows into a valueTable
-	 * using a prepared statement
+	 * read rows from the db as records and process each with the processor
 	 *
+	 * @param <T>
+	 *            App-specific extended (generally generated) class that is to
+	 *            be used for output fields of the query
 	 * @param sql
-	 *            non-null valid prepared statement for reading from the
-	 *            database
-	 * @param inputData
-	 *            null if the prepared statement has no parameters. must contain
-	 *            the right values in the right order
-	 * @param outputInstance
-	 *            an instance of the VO for output. This instance is not
-	 *            modified, but used to create instances of new VOs
-	 * @return list of output Vos. could be empty, but not null
+	 *            prepared statement for the read operation
+	 * @param inputRecord
+	 *            with fields that match in number and in type the parameters of
+	 *            the sql. null if the sql does not use any parameters
+	 * @param instanceToClone
+	 *            this instance is cloned for each row in the sql output
+	 * @param processor
+	 *            record processor that supplies a new instance of record for
+	 *            each row, and processes it after it is populated with the
+	 *            extracted values
 	 * @throws SQLException
 	 */
-	public <T extends Record> List<T> readMany(final String sql,
-			final Record inputData, final T outputInstance) throws SQLException;
-
-	/**
-	 * Most flexible way to read from db. Caller has full control of what and
-	 * how to read.
-	 *
-	 * @param reader
-	 *            instance that wants to read from the database
-	 * @return number of rows actually read by the reader.
-	 * @throws SQLException
-	 *
-	 */
-	// public int read(final IDbReader reader) throws SQLException;
-
+	public <T extends Record> void readMany(final String sql,
+			final Record inputRecord, T instanceToClone,
+			final IRecordProcessor<T> processor) throws SQLException;
 }

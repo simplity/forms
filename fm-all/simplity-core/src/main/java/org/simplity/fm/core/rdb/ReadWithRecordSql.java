@@ -24,7 +24,7 @@ package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.DbRecord;
+import org.simplity.fm.core.data.Record;
 
 /**
  * A Sql that is designed to read just one row from the RDBMS.
@@ -34,20 +34,22 @@ import org.simplity.fm.core.data.DbRecord;
  *            record returned when reading
  *
  */
-public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
-	protected DbRecord record;
+public abstract class ReadWithRecordSql<T extends Record> extends Sql {
+	protected T outputRecord;
 
 	/**
-	 * read a row suing this sql
+	 * read a row using this sql
 	 *
 	 * @param handle
 	 * @return null if read did not succeed.
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("unchecked")
-	public T filterFirst(final ReadonlyHandle handle) throws SQLException {
-		if (this.record.filterFirst(this.sqlText, this.inputData.fetchRawData(), handle)) {
-			return (T) this.record;
+	public T read(final ReadonlyHandle handle) throws SQLException {
+		@SuppressWarnings("unchecked")
+		final T rec = (T) this.outputRecord.newInstance();
+		boolean ok = handle.read(this.sqlText, this.inputRecord, rec);
+		if (ok) {
+			return rec;
 		}
 		return null;
 	}
@@ -61,11 +63,12 @@ public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public T filterFirstOrFail(final ReadonlyHandle handle) throws SQLException {
-		final T result = this.filterFirst(handle);
+	public T readOrFail(final ReadonlyHandle handle) throws SQLException {
+		final T result = this.read(handle);
 
 		if (result == null) {
-			throw new SQLException("Filter First did not return any row. " + this.showDetails());
+			throw new SQLException("Filter First did not return any row. "
+					+ this.showDetails());
 		}
 		return result;
 	}

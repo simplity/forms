@@ -24,6 +24,7 @@ package org.simplity.fm.core.validn;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,35 +88,48 @@ public class RuntimeList implements IValueList {
 	@Override
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		Object tenantId = ctx.getTenantId();
-		/*
-		 * we may have 0,1 or 2 params
-		 */
-		List<Object> params = new ArrayList<>();
-		if (this.hasKey) {
-			if (key == null) {
-				logger.error(
-						"ist {} requires value for its key. Value not receoved",
-						this.name);
-				return null;
-			}
-			params.add(key);
-		}
-		if (tenantId != null) {
-			params.add(tenantId);
-		}
+		if (this.hasKey && key == null) {
+			logger.error(
+					"ist {} requires value for its key. Value not receoved",
+					this.name);
+			return null;
 
+		}
 		// list to accumulate list entries
 		final List<Object[]> list = new ArrayList<>();
 
 		try {
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+				/*
+				 * we may have 0,1 or 2 params
+				 */
+				Object[] params = new Object[3];
+				ValueType[] paramTypes = new ValueType[3];
+				int nbr = 0;
 
-				handle.readMany(this.listSql, params.toArray(),
+				if (this.hasKey) {
+					params[0] = key;
+					paramTypes[0] = this.keyIsNumeric
+							? ValueType.Integer
+							: ValueType.Text;
+					nbr = 1;
+				}
+
+				if (tenantId != null) {
+					params[nbr] = tenantId;
+					paramTypes[nbr] = ValueType.Integer;
+					nbr++;
+				}
+
+				if (nbr != 2) {
+					params = Arrays.copyOf(params, nbr);
+					paramTypes = Arrays.copyOf(paramTypes, nbr);
+				}
+				handle.readMany(this.listSql, params, paramTypes,
 						this.typesForList, row -> {
 							list.add(row);
 							return true;
 						});
-
 			});
 
 		} catch (final SQLException e) {
@@ -137,30 +151,35 @@ public class RuntimeList implements IValueList {
 	@Override
 	public boolean isValid(final Object fieldValue, final Object keyValue,
 			final IServiceContext ctx) {
-		if (this.hasKey) {
-			if (keyValue == null) {
-				logger.error("Key should have value for list {}", this.name);
-				return false;
-			}
-		}
-
-		List<Object> params = new ArrayList<>();
-		params.add(fieldValue);
-		if (keyValue != null) {
-			params.add(keyValue);
-		}
-
-		Object tenantId = ctx.getTenantId();
-		if (tenantId != null) {
-			params.add(tenantId);
+		if (this.hasKey && keyValue == null) {
+			logger.error("Key should have value for list {}", this.name);
+			return false;
 		}
 
 		boolean[] isValid = {false}; // so that lambda function can change this
 		try {
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
-				Object[] result = handle.read(this.checkSql, params.toArray(),
+				/*
+				 * we may have 1 or 2 params
+				 */
+				Object[] params = new Object[1];
+				ValueType[] paramTypes = new ValueType[1];
+
+				Object tenantId = ctx.getTenantId();
+				if (tenantId != null) {
+					params = new Object[2];
+					paramTypes = new ValueType[2];
+					params[1] = tenantId;
+					paramTypes[1] = ValueType.Integer;
+				}
+				params[0] = fieldValue;
+				paramTypes[0] = this.valueIsNumeric
+						? ValueType.Integer
+						: ValueType.Text;
+
+				Object[] result = handle.read(this.checkSql, params, paramTypes,
 						TYPES_FOR_VALIDATION);
-				isValid[0] = result.length > 0;
+				isValid[0] = result != null;
 			});
 
 		} catch (final SQLException e) {
@@ -188,9 +207,10 @@ public class RuntimeList implements IValueList {
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
 				final Object[] arr = {ctx.getTenantId()};
 				final Object[] params = (arr[0] == null) ? null : arr;
+				final ValueType[] paramTypes = {ValueType.Integer};
 
-				handle.readMany(this.allSql, params, TYPES_FOR_ALL_ENTRIES,
-						row -> {
+				handle.readMany(this.allSql, params, paramTypes,
+						TYPES_FOR_ALL_ENTRIES, row -> {
 							entries.put(
 									row[0].toString() + "|" + row[1].toString(),
 									row[2].toString());
@@ -216,17 +236,17 @@ public class RuntimeList implements IValueList {
 
 		try {
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
-
 				// get all the keys first
-				Object[] params = null;
-				if (tenantId != null) {
-					params = new Object[1];
-					params[0] = tenantId;
+				Object[] params = {tenantId};
+				ValueType[] paramTypes = {ValueType.Integer};
+				if (tenantId == null) {
+					params = null;
+					paramTypes = null;
 				}
 
 				final List<String> keys = new ArrayList<>();
-				handle.readMany(this.allKeysSql, params, TYPES_FOR_KEYS,
-						row -> {
+				handle.readMany(this.allKeysSql, params, paramTypes,
+						TYPES_FOR_KEYS, row -> {
 							keys.add(row[0].toString());
 							return true;
 						});
@@ -238,16 +258,15 @@ public class RuntimeList implements IValueList {
 					params[1] = tenantId;
 				}
 
-				final Object[][] arr = new Object[0][];
 				for (String key : keys) {
 					params[0] = this.keyIsNumeric ? Long.parseLong(key) : key;
 					final List<Object[]> list = new ArrayList<>();
-					handle.readMany(this.listSql, params, this.typesForList,
-							row -> {
+					handle.readMany(this.listSql, params, paramTypes,
+							this.typesForList, row -> {
 								list.add(row);
 								return true;
 							});
-					lists.put(key, list.toArray(arr));
+					lists.put(key, list.toArray(new Object[0][]));
 				}
 			});
 

@@ -23,9 +23,6 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -187,6 +184,20 @@ public class Record {
 	 */
 	public Object[] fetchRawData() {
 		return this.fieldValues;
+	}
+
+	/**
+	 *
+	 * @return value-types for the fields in that order
+	 */
+	public ValueType[] fetchValueTypes() {
+		final Field[] fields = this.metaData.getFields();
+		final int n = fields.length;
+		final ValueType[] types = new ValueType[n];
+		for (int i = 0; i < fields.length; i++) {
+			types[i] = fields[i].getValueType();
+		}
+		return types;
 	}
 
 	/**
@@ -658,37 +669,6 @@ public class Record {
 	 */
 	public Record newInstance() {
 		return this.newInstance(null);
-	}
-
-	/**
-	 * set parameter values to a prepared statement that uses this Vo as input
-	 * source.
-	 *
-	 * @param ps
-	 * @throws SQLException
-	 */
-	public void setPsParams(final PreparedStatement ps) throws SQLException {
-		int idx = 0;
-		for (final Field field : this.fetchFields()) {
-			final Object value = this.fieldValues[idx];
-			idx++;
-			field.getValueType().setPsParam(ps, idx, value);
-		}
-	}
-
-	/**
-	 * read values from a result set for which this VO is designed as output
-	 * data structure
-	 *
-	 * @param rs
-	 * @throws SQLException
-	 */
-	public void readFromRs(final ResultSet rs) throws SQLException {
-		int idx = 0;
-		for (final Field field : this.fetchFields()) {
-			this.fieldValues[idx] = field.getValueType().getFromRs(rs, idx + 1);
-			idx++;
-		}
 	}
 
 	/**

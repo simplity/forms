@@ -24,6 +24,9 @@ package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.valueschema.ValueType;
+
 /**
  * Db Handle that takes care of all DB operations
  *
@@ -33,75 +36,112 @@ import java.sql.SQLException;
 public interface IReadWriteHandle extends IReadonlyHandle {
 
 	/**
-	 * API that is close to the JDBC API for updating/inserting/deleting
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param inputRecord
+	 *            with fields that match in number and type with the parameters
+	 *            in the SQL
+	 * @return number of rows affected by this operation. -1 if the driver was
+	 *         unable to count the affected rows.
+	 * @throws SQLException
+	 */
+	public int write(final String sql, final Record inputRecord)
+			throws SQLException;
+
+	/**
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param paramaterValues
+	 *            parameters to be set the prepared statement
+	 * @param parameterTypes
+	 * @return number of rows affected by this operation. -1 if the driver was
+	 *         unable to count the affected rows.
+	 * @throws SQLException
+	 */
+	public int write(final String sql, final Object[] paramaterValues,
+			ValueType[] parameterTypes) throws SQLException;
+
+	/**
+	 * insert a row based on the data in a record and update the generated key
+	 * filed in the record
 	 *
 	 * @param sql
 	 *            a prepared statement that manipulates data.
-	 * @param paramValues
-	 *            parameters to be set the prepared statement
+	 * @param parameterValues
+	 *            values to be set to the query parameters in the prepared
+	 *            statement
+	 * @param parameterTypes
+	 *            value-types for the parameters, in the right number and order
+	 * @param generatedColumnName
+	 *            the database column name that is generated when a row is
+	 *            inserted
+	 * @param generatedKeys
+	 *            array with at least one element. 0-the element is populated
+	 *            with the generated key. it is not touched if no key is
+	 *            generated with the specified column name
 	 * @return number of affected rows. -1 if the driver was unable to determine
 	 *         it
 	 * @throws SQLException
 	 */
-	public int write(final String sql, final Object[] paramValues)
+	public int insertWithKeyGeneration(final String sql,
+			final Object[] parameterValues, ValueType[] parameterTypes,
+			String generatedColumnName, long[] generatedKeys)
 			throws SQLException;
 
 	/**
-	 * API that is close to the JDBC API for updating/inserting/deleting
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param inputRecords
+	 *            each with fields that match in number and type with the
+	 *            parameters in the SQL
+	 * @return number of rows affected by this operation. -1 if the driver was
+	 *         unable to count the affected rows.
+	 * @throws SQLException
+	 */
+	public int writeMany(final String sql, final Record[] inputRecords)
+			throws SQLException;
+
+	/**
+	 * execute a prepared statement repeatedly for each record in the input
+	 * records collection
 	 *
 	 * @param sql
 	 *            a prepared statement that manipulates data.
-	 * @param paramValues
-	 *            parameters to be set the prepared statement
+	 * @param parameterValues
+	 *            Each element is a non-null array that contains values in the
+	 *            right order for the query parameters in the prepared statement
+	 * @param parameterTypes
+	 *            value types corresponding to the values in each row
+	 * @return number of affected rows. Not reliable. If the driver returns -1,
+	 *         we assume it to be 1 for the sake of counting
+	 * @throws SQLException
+	 */
+	public int writeMany(final String sql, final Object[][] parameterValues,
+			ValueType[] parameterTypes) throws SQLException;
+
+	/**
+	 * insert many rows and return the primary keys generated for these rows
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param rowsToInsert
+	 *            rows of data to be inserted into the database
+	 * @param parameterTypes
+	 *            value-types for the parameters, in the right number and order
 	 * @param generatedColumnName
-	 *            null if generated primary key is not required
+	 *            the database column name that is generated when a row is
+	 *            inserted
 	 * @param generatedKeys
-	 *            null if keys are not required. array must have required number
-	 *            of elements based on the query being executed
+	 *            array with at least one element. 0-the element is populated
+	 *            with the generated key. it is not touched if no key is
+	 *            generated with the specified column name
 	 * @return number of affected rows. -1 if the driver was unable to determine
 	 *         it
 	 * @throws SQLException
 	 */
-	public int writeWithKeyGeneration(final String sql,
-			final Object[] paramValues, String generatedColumnName,
-			long[] generatedKeys) throws SQLException;
-
-	/**
-	 * use a prepared statement, and values for the parameters to run it
-	 *
-	 * @param sql
-	 *            a prepared statement that manipulates data.
-	 * @param paramValues
-	 *            Each element is a non-null array that contains non-null values
-	 *            for each parameter in the prepared statement. to be set to the
-	 *            prepared statement.
-	 * @return number of affected rows. Not reliable. If driver returns -1, we
-	 *         assume it to be 1
-	 * @throws SQLException
-	 */
-	public int writeMany(final String sql, final Object[][] paramValues)
+	public int insertWithKeyGenerations(final String sql,
+			final Object[][] rowsToInsert, ValueType[] parameterTypes,
+			String generatedColumnName, long[] generatedKeys)
 			throws SQLException;
-
-	/**
-	 * use a prepared statement, and values for the parameters to run it
-	 *
-	 * @param sql
-	 *            a prepared statement that manipulates data.
-	 * @param paramValues
-	 *            Each element is a non-null array that contains non-null values
-	 *            for each parameter in the prepared statement. to be set to the
-	 *            prepared statement.
-	 * @param generatedColumnName
-	 *            null if generated primary key is not required
-	 * @param generatedKeys
-	 *            null if keys are not required. array must have required number
-	 *            of elements based on the query being executed
-	 * @return number of affected rows. Not reliable. If driver returns -1, we
-	 *         assume it to be 1
-	 * @throws SQLException
-	 */
-	public int writeManyWithKeyGeneration(final String sql,
-			final Object[][] paramValues, String generatedColumnName,
-			long[] generatedKeys) throws SQLException;
 
 }

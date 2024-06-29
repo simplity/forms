@@ -29,6 +29,7 @@ import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.db.IDbReader;
 import org.simplity.fm.core.db.IDbTransacter;
 import org.simplity.fm.core.db.IDbWriter;
+import org.simplity.fm.core.db.ITransactionHandle;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,13 +62,6 @@ public class RdbDriver implements IDbDriver {
 		//
 	}
 
-	/**
-	 * do read-only operation on the rdbms
-	 *
-	 * @param reader function that reds from the db
-	 * @throws SQLException
-	 *
-	 */
 	@Override
 	public void processReader(final IDbReader reader) throws SQLException {
 		this.checkFactory();
@@ -76,17 +70,8 @@ public class RdbDriver implements IDbDriver {
 		}
 	}
 
-	/**
-	 * do read-only operations using a specific schema name
-	 *
-	 * @param reader     function that reds from the db
-	 * @param schemaName non-null schema name that is different from the default
-	 *                   schema
-	 * @throws SQLException
-	 *
-	 */
 	@Override
-	public void ProcessReader(final String schemaName, final IDbReader reader)
+	public void processReader(final String schemaName, final IDbReader reader)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -98,37 +83,23 @@ public class RdbDriver implements IDbDriver {
 	 * do read-write operations on the rdbms within a transaction boundary. The
 	 * transaction is managed by the driver.
 	 *
-	 * @param updater function that reads from db and writes to it within a
-	 *                transaction boundary. returns true to commit the
-	 *                transaction, or false to signal a roll-back. The
-	 *                transaction is rolled back on exceptions as well.
+	 * @param updater
+	 *            function that reads from db and writes to it within a
+	 *            transaction boundary. returns true to commit the transaction,
+	 *            or false to signal a roll-back. The transaction is rolled back
+	 *            on exceptions as well.
 	 * @throws SQLException
 	 */
 	@Override
-	public void readWrite(final IDbWriter updater) throws SQLException {
+	public void processWriter(final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doReadWrite(con, updater);
 		}
 	}
 
-	/**
-	 * do read-write-operations in a transaction using a specific schema name
-	 *
-	 * @param schemaName non-null schema name that is different from the default
-	 *                   schema do read-write operations on the rdbms within a
-	 *                   transaction boundary. The transaction is managed by the
-	 *                   driver.
-	 *
-	 * @param updater    function that reads from db and writes to it within a
-	 *                   transaction boundary. returns true to commit the
-	 *                   transaction, or false to signal a roll-back. The
-	 *                   transaction is rolled back on exceptions as well.
-	 * @throws SQLException
-	 *
-	 */
 	@Override
-	public void readWrite(final String schemaName, final IDbWriter updater)
+	public void processWriter(final String schemaName, final IDbWriter updater)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -136,41 +107,17 @@ public class RdbDriver implements IDbDriver {
 		}
 	}
 
-	/**
-	 * Meant for db operations that are to be committed/rolled-back possibly
-	 * more than once. Of course, it is rolled-back if the caller throws any
-	 * exception
-	 *
-	 * @param transacter function that accesses the db with transactions managed
-	 *                   with commit/roll-back or with auto-commit mode. Driver
-	 *                   does not do any transaction management.
-	 * @throws SQLException if update is attempted after setting readOnly=true,
-	 *                      or any other SqlException
-	 *
-	 */
 	@Override
-	public void transact(final IDbTransacter transacter) throws SQLException {
+	public void processTransacter(final IDbTransacter transacter)
+			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doBatch(con, transacter);
 		}
 	}
 
-	/**
-	 * Meant for db operations that are to be committed/rolled-back possibly
-	 * more than once. Of course, it is rolled-back if the caller throws any
-	 * exception
-	 *
-	 * @param schemaName name of the non-default schema to be used in the db
-	 * @param transacter function that accesses the db with transactions managed
-	 *                   with commit/roll-back or with auto-commit mode. Driver
-	 *                   does not do any transaction management.
-	 * @throws SQLException if update is attempted after setting readOnly=true,
-	 *                      or any other SqlException
-	 *
-	 */
 	@Override
-	public void transact(final String schemaName,
+	public void processTransacter(final String schemaName,
 			final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -191,7 +138,7 @@ public class RdbDriver implements IDbDriver {
 		final ReadonlyHandle handle = new ReadonlyHandle(con);
 		try {
 			con.setReadOnly(true);
-			reader.processReader(handle);
+			reader.read(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error(
@@ -228,7 +175,7 @@ public class RdbDriver implements IDbDriver {
 
 	private static void doBatch(final Connection con,
 			final IDbTransacter transacter) throws SQLException {
-		final TransactionHandle handle = new TransactionHandle(con);
+		final ITransactionHandle handle = new TransactionHandle(con);
 		try {
 			transacter.transact(handle);
 		} catch (final Exception e) {

@@ -34,6 +34,7 @@ import org.simplity.fm.core.data.Record;
  */
 public abstract class WriteSql extends Sql {
 	private List<Record> batchData;
+	private Record[] emptyArray = new Record[0];
 
 	/**
 	 *
@@ -43,9 +44,10 @@ public abstract class WriteSql extends Sql {
 	 */
 	public int write(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
-			throw new SQLException("Sql is prepared for batch, but write is issued.");
+			throw new SQLException(
+					"Sql is prepared for batch, but write is issued.");
 		}
-		return handle.write(this.sqlText, this.inputData);
+		return handle.write(this.sqlText, this.inputRecord);
 	}
 
 	/**
@@ -59,14 +61,16 @@ public abstract class WriteSql extends Sql {
 	 */
 	public int writeOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
-			throw new SQLException("Sql is prepared for batch, but write is issued.");
+			throw new SQLException(
+					"Sql is prepared for batch, but write is issued.");
 		}
-		final int n = handle.write(this.sqlText, this.inputData);
+		final int n = handle.write(this.sqlText, this.inputRecord);
 		if (n > 0) {
 			return n;
 		}
 		logger.error(this.showDetails());
-		throw new SQLException("Sql is expected to affect at least one row, but no rows are affected.");
+		throw new SQLException(
+				"Sql is expected to affect at least one row, but no rows are affected.");
 	}
 
 	/**
@@ -77,9 +81,11 @@ public abstract class WriteSql extends Sql {
 	 */
 	public int writeBatch(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData == null) {
-			throw new SQLException("Sql is not prepared for batch, but writeBatch is issued.");
+			throw new SQLException(
+					"Sql is not prepared for batch, but writeBatch is issued.");
 		}
-		final int n = handle.writeMany(this.sqlText, this.batchData);
+		final int n = handle.writeMany(this.sqlText,
+				this.batchData.toArray(this.emptyArray));
 		this.batchData = null;
 		return n;
 	}
@@ -98,6 +104,6 @@ public abstract class WriteSql extends Sql {
 		/*
 		 * important to add a copy, and the value itself
 		 */
-		this.batchData.add(this.inputData.makeACopy());
+		this.batchData.add(this.inputRecord.makeACopy());
 	}
 }

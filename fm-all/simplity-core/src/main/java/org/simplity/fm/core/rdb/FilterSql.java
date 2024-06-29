@@ -22,13 +22,11 @@
 
 package org.simplity.fm.core.rdb;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.db.RecordProcessor;
 
 /**
  * A Sql that is designed to read just one row from the RDBMS
@@ -44,68 +42,41 @@ public abstract class FilterSql<T extends Record> extends Sql {
 	protected abstract T newOutputData();
 
 	/**
-	 * read a row from the db. must be called ONLY AFTER setting all input
-	 * parameters
+	 * read many rows from the database
 	 *
 	 * @param handle
-	 * @return array of value object with output data. empty, but not null if
-	 *         there are no rows.
+	 * @return list of records. empty, but not null if there are no rows.
 	 * @throws SQLException
 	 */
 	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
-		final T instance = this.newOutputData();
-		return handle.filter(this.sqlText, this.inputData, instance);
+		final List<T> list = new ArrayList<>();
+
+		handle.readMany(this.sqlText, this.inputRecord, this.newOutputData(),
+				record -> {
+					list.add(record);
+					return true;
+				});
+
+		return list;
 	}
 
 	/**
-	 * read a row from the db. must be called ONLY AFTER setting all input
-	 * parameters
+	 * read at least one row from teh database, else throw an exception
 	 *
 	 * @param handle
 	 * @return array of value object with output data. empty, but not null if
 	 *         there are no rows.
 	 * @throws SQLException
 	 */
-	public List<T> filterOrFail(final ReadonlyHandle handle) throws SQLException {
-		final T instance = this.newOutputData();
-		final List<T> list = handle.filter(this.sqlText, this.inputData, instance);
+	public List<T> filterOrFail(final ReadonlyHandle handle)
+			throws SQLException {
+		final List<T> list = filter(handle);
 		if (list.size() > 0) {
 			return list;
 		}
 		logger.error(this.showDetails());
-		throw new SQLException("Sql is expected to return at least one row, but it didn't.");
+		throw new SQLException(
+				"Sql is expected to return at least one row, but it didn't.");
 	}
 
-	/**
-	 * iterator on the result of filtering. To be used if we have no need to get
-	 * the entire dataTable,
-	 *
-	 * @param handle
-	 * @param fn
-	 *            call back function that takes Vo as parameter, and
-	 *            returns true to continue to read, and false if it is not
-	 *            interested in getting any more rows
-	 * @throws SQLException
-	 */
-	public void forEach(final ReadonlyHandle handle, final RecordProcessor fn) throws SQLException {
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				return FilterSql.this.sqlText;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				FilterSql.this.inputData.setPsParams(ps);
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Record record = FilterSql.this.newOutputData();
-				record.readFromRs(rs);
-				return fn.process(record);
-			}
-		});
-	}
 }

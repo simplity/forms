@@ -28,17 +28,19 @@ import org.simplity.fm.core.data.Record;
 
 /**
  * @author simplity.org
+ * @param <T>
+ *            Type of record that this lambda function is designed to process
  *
  */
 @FunctionalInterface
-public interface RecordProcessor {
+public interface IRecordProcessor<T extends Record> {
 	/**
-	 * lambda function to process a record
+	 * process a record
 	 *
 	 * @param record
-	 *            non-null record that is coming from the db
+	 *            record that is coming from the db
 	 * @return true to continue with the next. false to stop retrieving records
 	 * @throws SQLException
 	 */
-	boolean process(Record record) throws SQLException;
+	boolean process(T record) throws SQLException;
 }

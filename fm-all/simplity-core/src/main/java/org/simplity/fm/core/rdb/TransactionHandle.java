@@ -25,13 +25,17 @@ package org.simplity.fm.core.rdb;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.simplity.fm.core.db.ITransactionHandle;
+
 /**
  * db handle that allows multiple transactions.
  *
  * @author simplity.org
  *
  */
-public class TransactionHandle extends ReadWriteHandle {
+public class TransactionHandle extends ReadWriteHandle
+		implements
+			ITransactionHandle {
 
 	/**
 	 * @param con
@@ -40,32 +44,17 @@ public class TransactionHandle extends ReadWriteHandle {
 		super(con);
 	}
 
-	/**
-	 * turn on/off auto commit mode. If it is on, commit/roll-backs are not
-	 * valid
-	 *
-	 * @param mode
-	 * @throws SQLException
-	 */
+	@Override
 	public void setAutoCommitMode(final boolean mode) throws SQLException {
 		this.con.setAutoCommit(mode);
 	}
 
-	/**
-	 * commit all write operations after the last commit/roll-back
-	 *
-	 * @throws SQLException
-	 */
+	@Override
 	public void commit() throws SQLException {
 		this.con.commit();
 	}
 
-	/**
-	 * roll back any writes. This is to be used only to handle any exception. We
-	 * strongly suggest that this should never be called by design.
-	 *
-	 * @throws SQLException
-	 */
+	@Override
 	public void rollback() throws SQLException {
 		this.con.rollback();
 	}

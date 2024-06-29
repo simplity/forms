@@ -22,10 +22,6 @@
 
 package org.simplity.fm.core.data;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import org.simplity.fm.core.valueschema.ValueType;
 
 /**
@@ -39,8 +35,8 @@ public class FieldMetaData {
 	 */
 	private final int idx;
 	/**
-	 * value type of this parameter based on which set/get method is ssued
-	 * on the statement
+	 * value type of this parameter based on which set/get method is ssued on
+	 * the statement
 	 */
 	private final ValueType valueType;
 
@@ -74,7 +70,8 @@ public class FieldMetaData {
 	 * @param values
 	 * @return buffer for convenience
 	 */
-	public StringBuilder toMessage(final StringBuilder buf, final int posn, final Object[] values) {
+	public StringBuilder toMessage(final StringBuilder buf, final int posn,
+			final Object[] values) {
 		buf.append('\n').append(posn).append(". type=").append(this.valueType);
 		buf.append(" value=").append(values[this.idx]);
 		return buf;
@@ -95,35 +92,4 @@ public class FieldMetaData {
 		return this.valueType;
 	}
 
-	/**
-	 * set object value to the prepared statement
-	 *
-	 * @param ps
-	 * @param values
-	 * @param oneBasedPosn
-	 * @return value that is set to the ps. can be null
-	 * @throws SQLException
-	 */
-	public Object setPsParam(final PreparedStatement ps, final Object[] values, final int oneBasedPosn)
-			throws SQLException {
-		final Object value = values[this.idx];
-		this.valueType.setPsParam(ps, oneBasedPosn, value);
-		return value;
-	}
-
-	/**
-	 *
-	 * @param rs
-	 * @param oneBasedPosn
-	 * @param rowToExtractTo
-	 * @return value that is extracted from the result set that is already set
-	 *         to the right element in the array. It is returned for the caller
-	 *         to do anything else with it, like logging..
-	 * @throws SQLException
-	 */
-	public Object getFromRs(final ResultSet rs, final int oneBasedPosn, final Object[] rowToExtractTo)
-			throws SQLException {
-
-		return rowToExtractTo[this.idx] = this.valueType.getFromRs(rs, oneBasedPosn);
-	}
 }
