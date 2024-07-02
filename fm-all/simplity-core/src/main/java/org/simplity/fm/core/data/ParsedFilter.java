@@ -29,7 +29,7 @@ import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.FilterCondition;
+import org.simplity.fm.core.db.FilterOperator;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
@@ -56,11 +56,13 @@ class ParsedFilter {
 
 	final private String whereClause;
 	final private Object[] whereParamValues;
+	final private ValueType[] whereParamTypes;
 
 	ParsedFilter(final String whereClauseStartingWithWhere,
-			final Object[] whereParamValues) {
+			final Object[] whereParamValues, ValueType[] whereParamTypes) {
 		this.whereClause = whereClauseStartingWithWhere;
 		this.whereParamValues = whereParamValues;
+		this.whereParamTypes = whereParamTypes;
 	}
 
 	String getWhereClause() {
@@ -69,6 +71,10 @@ class ParsedFilter {
 
 	Object[] getWhereParamValues() {
 		return this.whereParamValues;
+	}
+
+	ValueType[] getWhereParamTypes() {
+		return this.whereParamTypes;
 	}
 
 	static ParsedFilter parse(final IInputData inputObject,
@@ -97,6 +103,7 @@ class ParsedFilter {
 		}
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
+		final List<ValueType> types = new ArrayList<>();
 
 		/*
 		 * force a condition on tenant id if required
@@ -104,8 +111,12 @@ class ParsedFilter {
 		if (tenantField != null) {
 			sql.append(tenantField.getColumnName()).append("=?");
 			values.add(ctx.getTenantId());
+			types.add(ValueType.Integer);
 		}
 
+		/*
+		 * get a look-up map of fields by fieldName
+		 */
 		final Map<String, DbField> map = new HashMap<>();
 		for (final DbField field : fields) {
 			map.put(field.getName(), field);
@@ -113,7 +124,7 @@ class ParsedFilter {
 
 		if (conditions != null) {
 			final boolean ok = parseConditions(map, conditions, ctx, values,
-					sql);
+					types, sql);
 			if (!ok) {
 				return null;
 			}
@@ -156,7 +167,7 @@ class ParsedFilter {
 		 */
 		if (sql.length() == 0) {
 			logger.info("Filter has no conditions or sort orders");
-			return new ParsedFilter(null, null);
+			return new ParsedFilter(null, null, null);
 		}
 
 		final String sqlText = sql.toString();
@@ -164,7 +175,7 @@ class ParsedFilter {
 		final int n = values.size();
 		if (n == 0) {
 			logger.info("Filter clause has no parametrs.");
-			return new ParsedFilter(sqlText, null);
+			return new ParsedFilter(sqlText, null, null);
 		}
 
 		final StringBuilder sbf = new StringBuilder();
@@ -172,18 +183,20 @@ class ParsedFilter {
 			sbf.append('\n').append(i).append("= ").append(values.get(i));
 		}
 		logger.info("Filter parameters : {}", sbf.toString());
-		return new ParsedFilter(sqlText, values.toArray(new Object[0]));
+		return new ParsedFilter(sqlText, values.toArray(),
+				types.toArray(new ValueType[0]));
 	}
 
 	private static boolean parseConditions(final Map<String, DbField> fields,
-			final IInputData object, final IServiceContext ctx,
-			final List<Object> values, final StringBuilder sql) {
+			final IInputData inputObject, final IServiceContext ctx,
+			final List<Object> values, final List<ValueType> types,
+			final StringBuilder sql) {
 
 		/*
 		 * fairly long inside the loop for each field. But it is just serial
 		 * code. Hence left it that way
 		 */
-		for (final String fieldName : object.getMemberNames()) {
+		for (final String fieldName : inputObject.getMemberNames()) {
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
 				logger.warn(
@@ -192,7 +205,7 @@ class ParsedFilter {
 				continue;
 			}
 
-			final IInputData node = object.getData(fieldName);
+			final IInputData node = inputObject.getData(fieldName);
 			if (node == null) {
 				logger.error(
 						"Filter condition for field {} should be an object, but it is {}",
@@ -200,6 +213,7 @@ class ParsedFilter {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
+
 			final String condnText = node
 					.getString(Conventions.Request.TAG_FILTER_COMP);
 			if (condnText == null || condnText.isEmpty()) {
@@ -209,7 +223,8 @@ class ParsedFilter {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-			final FilterCondition condn = FilterCondition.parse(condnText);
+
+			final FilterOperator condn = FilterOperator.parse(condnText);
 			if (condn == null) {
 				logger.error("{} is not a valid filter condition", condnText);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -222,8 +237,9 @@ class ParsedFilter {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
+
 			String value2 = null;
-			if (condn == FilterCondition.Between) {
+			if (condn == FilterOperator.Between) {
 				value2 = node
 						.getString(Conventions.Request.TAG_FILTER_VALUE_TO);
 				if (value2 == null || value2.isEmpty()) {
@@ -246,8 +262,8 @@ class ParsedFilter {
 			 * complex ones first.. we have to append ? to sql, and add type and
 			 * value to the lists for each case
 			 */
-			if ((condn == FilterCondition.Contains
-					|| condn == FilterCondition.StartsWith)) {
+			if ((condn == FilterOperator.Contains
+					|| condn == FilterOperator.StartsWith)) {
 				if (vt != ValueType.Text) {
 					logger.error(
 							"Condition {} is not a valid for field {} which is of value type {}",
@@ -258,14 +274,15 @@ class ParsedFilter {
 
 				sql.append(LIKE);
 				value = escapeLike(value) + WILD_CARD;
-				if (condn == FilterCondition.Contains) {
+				if (condn == FilterOperator.Contains) {
 					value = WILD_CARD + value;
 				}
 				values.add(value);
+				types.add(vt);
 				continue;
 			}
 
-			if (condn == FilterCondition.In) {
+			if (condn == FilterOperator.In) {
 				sql.append(IN);
 				boolean firstOne = true;
 				for (final String part : value.split(",")) {
@@ -285,6 +302,7 @@ class ParsedFilter {
 						sql.append(",?");
 					}
 					values.add(obj);
+					types.add(vt);
 				}
 				sql.append(')');
 				continue;
@@ -299,7 +317,7 @@ class ParsedFilter {
 				return false;
 			}
 
-			if (condn == FilterCondition.Between) {
+			if (condn == FilterOperator.Between) {
 				Object obj2 = null;
 				if (value2 != null) {
 					obj2 = vt.parse(value2);
@@ -313,7 +331,9 @@ class ParsedFilter {
 				}
 				sql.append(BETWEEN);
 				values.add(obj);
+				types.add(vt);
 				values.add(obj2);
+				types.add(vt);
 				continue;
 			}
 
@@ -321,7 +341,6 @@ class ParsedFilter {
 			values.add(obj);
 		}
 		return true;
-
 	}
 
 	/**

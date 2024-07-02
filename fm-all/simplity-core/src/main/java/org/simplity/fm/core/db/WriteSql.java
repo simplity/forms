@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public abstract class WriteSql extends Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int write(final ReadWriteHandle handle) throws SQLException {
+	public int write(final IReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
 			throw new SQLException(
 					"Sql is prepared for batch, but write is issued.");
@@ -59,7 +59,7 @@ public abstract class WriteSql extends Sql {
 	 * @throws SQLException
 	 *             if number of affected rows 0, or on any sql exception
 	 */
-	public int writeOrFail(final ReadWriteHandle handle) throws SQLException {
+	public int writeOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
 			throw new SQLException(
 					"Sql is prepared for batch, but write is issued.");
@@ -79,7 +79,7 @@ public abstract class WriteSql extends Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int writeBatch(final ReadWriteHandle handle) throws SQLException {
+	public int writeBatch(final IReadWriteHandle handle) throws SQLException {
 		if (this.batchData == null) {
 			throw new SQLException(
 					"Sql is not prepared for batch, but writeBatch is issued.");

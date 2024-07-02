@@ -20,14 +20,13 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.db.IRecordProcessor;
 
 /**
  * A Sql that is designed to filter rows from the RDBMS. That is, result may
@@ -49,7 +48,7 @@ public abstract class FilterWithRecordSql<T extends Record> extends Sql {
 	 *         empty
 	 * @throws SQLException
 	 */
-	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
+	public List<T> filter(final IReadonlyHandle handle) throws SQLException {
 		final List<T> list = new ArrayList<>();
 
 		handle.readMany(this.sqlText, this.inputRecord, this.outputRecord,
@@ -70,7 +69,7 @@ public abstract class FilterWithRecordSql<T extends Record> extends Sql {
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public List<T> filterOrFail(final ReadonlyHandle handle)
+	public List<T> filterOrFail(final IReadonlyHandle handle)
 			throws SQLException {
 		List<T> result = this.filter(handle);
 		if (result.size() == 0) {
@@ -91,7 +90,7 @@ public abstract class FilterWithRecordSql<T extends Record> extends Sql {
 	 *            getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final ReadonlyHandle handle,
+	public void forEach(final IReadonlyHandle handle,
 			final IRecordProcessor<T> recordProcessor) throws SQLException {
 		handle.readMany(this.sqlText, this.inputRecord, this.outputRecord,
 				recordProcessor);

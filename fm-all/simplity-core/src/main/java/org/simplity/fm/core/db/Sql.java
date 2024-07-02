@@ -20,34 +20,39 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.io.StringWriter;
+
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.json.JsonUtil;
+import org.simplity.fm.core.service.IOutputData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * interface for a class that wants to write/update/delete from the database
- *
  * @author simplity.org
  *
  */
-public interface IDbWriter {
+public abstract class Sql {
+	protected static final Logger logger = LoggerFactory.getLogger(Sql.class);
+	protected String sqlText;
+	protected Record inputRecord;
+
+	protected void setInputValue(final int idx, final Object value) {
+		this.inputRecord.assignValue(idx, value);
+	}
 
 	/**
-	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
+	 * @return string that shows this SQL with values from the current input
+	 *         context
 	 */
-	String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true to continue, false to abandon the operation
-	 * @throws SQLException
-	 */
-	boolean setParams(PreparedStatement ps) throws SQLException;
+	public String showDetails() {
+		final StringWriter sw = new StringWriter();
+		final IOutputData outData = JsonUtil.newOutputData(sw);
+		outData.beginObject();
+		outData.addRecord(this.inputRecord);
+		outData.endObject();
+		return "SQL= " + this.sqlText + "\n" + outData.toString();
+	}
 }

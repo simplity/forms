@@ -48,6 +48,7 @@ public class RuntimeList implements IValueList {
 			ValueType.Text, ValueType.Text};
 	private static final ValueType[] TYPES_FOR_KEYS = {ValueType.Text};
 	private static final ValueType[] TYPES_FOR_VALIDATION = {};
+
 	protected String name;
 	/**
 	 * sql that returns all the rows for a given key
@@ -71,9 +72,6 @@ public class RuntimeList implements IValueList {
 	protected boolean valueIsNumeric;
 	protected boolean isTenantSpecific;
 	protected boolean authenticationRequired;
-	private final ValueType[] typesForList = {
-			this.valueIsNumeric ? ValueType.Integer : ValueType.Text,
-			ValueType.Text};
 
 	@Override
 	public String getName() {
@@ -121,12 +119,17 @@ public class RuntimeList implements IValueList {
 					nbr++;
 				}
 
-				if (nbr != 2) {
+				if (nbr != 3) {
 					params = Arrays.copyOf(params, nbr);
 					paramTypes = Arrays.copyOf(paramTypes, nbr);
 				}
-				handle.readMany(this.listSql, params, paramTypes,
-						this.typesForList, row -> {
+
+				final ValueType[] typesForList = {this.valueIsNumeric
+						? ValueType.Integer
+						: ValueType.Text, ValueType.Text};
+
+				handle.readMany(this.listSql, params, paramTypes, typesForList,
+						row -> {
 							list.add(row);
 							return true;
 						});
@@ -165,11 +168,10 @@ public class RuntimeList implements IValueList {
 				Object[] params = new Object[1];
 				ValueType[] paramTypes = new ValueType[1];
 
-				Object tenantId = ctx.getTenantId();
-				if (tenantId != null) {
+				if (this.isTenantSpecific) {
 					params = new Object[2];
 					paramTypes = new ValueType[2];
-					params[1] = tenantId;
+					params[1] = ctx.getTenantId();
 					paramTypes[1] = ValueType.Integer;
 				}
 				params[0] = fieldValue;
@@ -205,9 +207,12 @@ public class RuntimeList implements IValueList {
 
 		try {
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
-				final Object[] arr = {ctx.getTenantId()};
-				final Object[] params = (arr[0] == null) ? null : arr;
-				final ValueType[] paramTypes = {ValueType.Integer};
+				Object[] params = {ctx.getTenantId()};
+				ValueType[] paramTypes = {ValueType.Integer};
+				if (this.isTenantSpecific == false) {
+					params = null;
+					paramTypes = null;
+				}
 
 				handle.readMany(this.allSql, params, paramTypes,
 						TYPES_FOR_ALL_ENTRIES, row -> {
@@ -253,16 +258,24 @@ public class RuntimeList implements IValueList {
 
 				if (tenantId == null) {
 					params = new Object[1];
+					paramTypes = new ValueType[1];
 				} else {
 					params = new Object[2];
 					params[1] = tenantId;
+					paramTypes = new ValueType[2];
+					paramTypes[1] = ValueType.Integer;
 				}
 
+				final ValueType[] typesForList = {ValueType.Text,
+						ValueType.Text};
+				if (this.keyIsNumeric) {
+					typesForList[0] = ValueType.Integer;
+				}
 				for (String key : keys) {
 					params[0] = this.keyIsNumeric ? Long.parseLong(key) : key;
 					final List<Object[]> list = new ArrayList<>();
 					handle.readMany(this.listSql, params, paramTypes,
-							this.typesForList, row -> {
+							typesForList, row -> {
 								list.add(row);
 								return true;
 							});

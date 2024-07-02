@@ -20,22 +20,22 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.jdbc;
 
 import java.sql.Blob;
+import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.db.DbUtil;
 import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.db.IRecordProcessor;
 import org.simplity.fm.core.db.IRowProcessor;
+import org.simplity.fm.core.db.StoredProcedureResult;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,8 @@ import org.slf4j.LoggerFactory;
 public class ReadonlyHandle implements IReadonlyHandle {
 	private static final Logger logger = LoggerFactory
 			.getLogger(ReadonlyHandle.class);
+
+	private static final Object[][] EMPTY_ARRAY = new Object[0][];
 	protected final Connection con;
 
 	/**
@@ -94,21 +96,6 @@ public class ReadonlyHandle implements IReadonlyHandle {
 		}
 	}
 
-	/**
-	 * method to be used to read into a valueObject using a sql component.
-	 *
-	 * @param sql
-	 *            non-null valid prepared statement to read from the database
-	 * @param parameterValues
-	 *            null if the prepared statement has no parameters. must contain
-	 *            the right non-values in the right order for parameters in the
-	 *            select sql
-	 * @param outputTypes
-	 *            non-null. must have the right types in the right order to
-	 *            receive data from the result set
-	 * @return extracted data as an array of rows. null if no row is read
-	 * @throws SQLException
-	 */
 	@Override
 	public Object[][] readMany(final String sql, final Object[] parameterValues,
 			final ValueType[] parameterTypes, final ValueType[] outputTypes)
@@ -119,14 +106,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 			}
 
 			try (ResultSet rs = ps.executeQuery()) {
-				final List<Object[]> result = new ArrayList<>();
-				while (rs.next()) {
-					result.add(DbUtil.getValuesFromRs(rs, outputTypes));
-				}
-				if (result.size() == 0) {
-					return null;
-				}
-				return result.toArray(new Object[0][]);
+				return DbUtil.getRowsFromRs(rs, outputTypes)
+						.toArray(EMPTY_ARRAY);
 			}
 		}
 	}
@@ -141,17 +122,7 @@ public class ReadonlyHandle implements IReadonlyHandle {
 			}
 
 			try (ResultSet rs = ps.executeQuery()) {
-				int nbr = 0;
-				while (rs.next()) {
-					final boolean toContinue = rowProcessor
-							.process(DbUtil.getValuesFromRs(rs, outputTypes));
-					nbr++;
-
-					if (!toContinue) {
-						break;
-					}
-				}
-				return nbr;
+				return DbUtil.processRowsFromRs(rs, outputTypes, rowProcessor);
 			}
 		}
 
@@ -178,6 +149,78 @@ public class ReadonlyHandle implements IReadonlyHandle {
 
 	}
 
+	@Override
+	public StoredProcedureResult readFromStoredProcedure(String callableSql,
+			Object[] parameterValues, ValueType[] parameterTypes,
+			ValueType returnedValueType, ValueType[][] outputTypes)
+			throws SQLException {
+		return this.callStoredProcedure(callableSql, parameterValues,
+				parameterTypes, returnedValueType, outputTypes);
+	}
+
+	protected StoredProcedureResult callStoredProcedure(String callableSql,
+			Object[] parameterValues, ValueType[] parameterTypes,
+			ValueType returnedValueType, ValueType[][] outputTypes)
+			throws SQLException {
+		try (CallableStatement cstmt = con.prepareCall(callableSql);) {
+
+			int startAt = 1;
+			if (returnedValueType != null) {
+				DbUtil.registerOutputParam(cstmt, 1, returnedValueType);
+				startAt = 2;
+			}
+
+			if (parameterValues != null) {
+				DbUtil.setPsParamValues(cstmt, parameterValues, parameterTypes,
+						startAt);
+			}
+
+			cstmt.execute();
+			int nbrRowsAffected = cstmt.getUpdateCount();
+
+			Object returnedValue = null;
+			if (returnedValueType != null) {
+				returnedValue = DbUtil.getValueFromCs(cstmt, startAt,
+						returnedValueType);
+			}
+
+			Object[][][] outputData = null;
+			if (outputTypes != null) {
+				int nbr = outputTypes.length;
+				outputData = new Object[nbr][][];
+				for (int i = 0; i < nbr; i++) {
+					ValueType[] types = outputTypes[i];
+					if (types == null) {
+						// this is a write statement
+						int nbrRows = cstmt.getUpdateCount();
+						if (nbrRows == -1) {
+							throw new SQLException(
+									"Improper output specification for stored procedure at index "
+											+ i
+											+ ". ValueTypes are null implying an update operation but -1 is returned by the JDBC driver");
+						}
+						Object[][] row = {{nbrRows}};
+						outputData[i] = row;
+						continue;
+					}
+
+					try (ResultSet rs = cstmt.getResultSet()) {
+						if (rs == null) {
+							throw new SQLException(
+									"Improper output specification for stored procedure at index "
+											+ i
+											+ ". ValueTypes are specified but no result set is returned by the JDBC driver");
+						}
+						outputData[i] = DbUtil.getRowsFromRs(rs, types)
+								.toArray(EMPTY_ARRAY);
+					}
+				}
+			}
+			return new StoredProcedureResult(returnedValue, nbrRowsAffected,
+					outputData);
+		}
+
+	}
 	/**
 	 *
 	 * @return blob object
@@ -210,4 +253,5 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	protected static void warn(final String sql) {
 		logger.error("RDBMS is not set up. Sql = ", sql);
 	}
+
 }

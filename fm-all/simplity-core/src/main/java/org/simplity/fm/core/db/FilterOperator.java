@@ -20,14 +20,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 import org.simplity.fm.core.Conventions;
 /**
  *
  * @author simplity.org
  *
  */
-public enum FilterCondition {
+public enum FilterOperator {
 	/** equal */
 	Equal(Conventions.Filter.EQ),
 	/** not equal */
@@ -53,7 +53,7 @@ public enum FilterCondition {
 	In(Conventions.Filter.IN_LIST);
 	private String textValue;
 
-	private FilterCondition(String text) {
+	private FilterOperator(String text) {
 		this.textValue = text;
 	}
 
@@ -64,11 +64,11 @@ public enum FilterCondition {
 	 *            text to be parsed into enum
 	 * @return filter condition, or null if there is no filter for this text
 	 */
-	public static FilterCondition parse(String text) {
+	public static FilterOperator parse(String text) {
 		if (text == null || text.isEmpty() || text.equals(Equal.textValue)) {
 			return Equal;
 		}
-		for (FilterCondition f : FilterCondition.values()) {
+		for (FilterOperator f : FilterOperator.values()) {
 			if (f.textValue.equals(text)) {
 				return f;
 			}

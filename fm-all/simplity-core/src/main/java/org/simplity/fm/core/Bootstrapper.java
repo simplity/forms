@@ -24,7 +24,7 @@ package org.simplity.fm.core;
 
 import org.simplity.fm.core.app.AppConfigInfo;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
-import org.simplity.fm.core.rdb.DefaultConnectionFactory;
+import org.simplity.fm.core.jdbc.DefaultConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

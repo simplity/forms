@@ -47,7 +47,7 @@ public class Field {
 	private final String name;
 
 	/**
-	 * 0-based index of the field in the record. T;
+	 * 0-based index of the field in the record.;
 	 */
 	private final int index;
 	/**

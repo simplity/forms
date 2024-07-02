@@ -20,11 +20,9 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.simplity.fm.core.data.Record;
 
@@ -37,46 +35,43 @@ import org.simplity.fm.core.data.Record;
  *            the out data elements
  *
  */
-public abstract class FilterSql<T extends Record> extends Sql {
+public abstract class ReadSql<T extends Record> extends Sql {
 
 	protected abstract T newOutputData();
 
 	/**
-	 * read many rows from the database
+	 * read a row from the db. must be called ONLY AFTER setting all input
+	 * parameters
 	 *
 	 * @param handle
-	 * @return list of records. empty, but not null if there are no rows.
+	 * @return value object with output data. null if data is not read.
 	 * @throws SQLException
 	 */
-	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
-		final List<T> list = new ArrayList<>();
-
-		handle.readMany(this.sqlText, this.inputRecord, this.newOutputData(),
-				record -> {
-					list.add(record);
-					return true;
-				});
-
-		return list;
+	public T read(final IReadonlyHandle handle) throws SQLException {
+		final T result = this.newOutputData();
+		final boolean ok = handle.read(this.sqlText, this.inputRecord, result);
+		if (ok) {
+			return result;
+		}
+		return null;
 	}
 
 	/**
-	 * read at least one row from teh database, else throw an exception
+	 * read a row from the db. must be called ONLY AFTER setting all input
+	 * parameters
 	 *
 	 * @param handle
-	 * @return array of value object with output data. empty, but not null if
-	 *         there are no rows.
+	 * @return value object with output data. null if data is not read.
 	 * @throws SQLException
 	 */
-	public List<T> filterOrFail(final ReadonlyHandle handle)
-			throws SQLException {
-		final List<T> list = filter(handle);
-		if (list.size() > 0) {
-			return list;
+	public T readOrFail(final IReadonlyHandle handle) throws SQLException {
+		final T result = this.newOutputData();
+		final boolean ok = handle.read(this.sqlText, this.inputRecord, result);
+		if (ok) {
+			return result;
 		}
 		logger.error(this.showDetails());
 		throw new SQLException(
-				"Sql is expected to return at least one row, but it didn't.");
+				"Sql is expected to return one row, but it didn't.");
 	}
-
 }

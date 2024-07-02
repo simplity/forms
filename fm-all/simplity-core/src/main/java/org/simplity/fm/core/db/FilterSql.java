@@ -20,56 +20,64 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.simplity.fm.core.data.Record;
 
 /**
- * A Sql that is designed to read just one row from the RDBMS.
+ * Component that represents a SQL that is to be used to get several rows from a
+ * DB
  *
  * @author simplity.org
  * @param <T>
- *            record returned when reading
+ *            concrete class of output value object that can be used to access
+ *            the out data elements
  *
  */
-public abstract class ReadWithRecordSql<T extends Record> extends Sql {
-	protected T outputRecord;
+public abstract class FilterSql<T extends Record> extends Sql {
+
+	protected abstract T newOutputData();
 
 	/**
-	 * read a row using this sql
+	 * read many rows from the database
 	 *
 	 * @param handle
-	 * @return null if read did not succeed.
+	 * @return list of records. empty, but not null if there are no rows.
 	 * @throws SQLException
 	 */
-	public T read(final ReadonlyHandle handle) throws SQLException {
-		@SuppressWarnings("unchecked")
-		final T rec = (T) this.outputRecord.newInstance();
-		boolean ok = handle.read(this.sqlText, this.inputRecord, rec);
-		if (ok) {
-			return rec;
-		}
-		return null;
+	public List<T> filter(final IReadonlyHandle handle) throws SQLException {
+		final List<T> list = new ArrayList<>();
+
+		handle.readMany(this.sqlText, this.inputRecord, this.newOutputData(),
+				record -> {
+					list.add(record);
+					return true;
+				});
+
+		return list;
 	}
 
 	/**
-	 * to be used when a row is expected as per our db design, and hence the
-	 * caller need not handle the case with no rows
+	 * read at least one row from teh database, else throw an exception
 	 *
 	 * @param handle
-	 * @return non-null record with the first filtered row
+	 * @return array of value object with output data. empty, but not null if
+	 *         there are no rows.
 	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public T readOrFail(final ReadonlyHandle handle) throws SQLException {
-		final T result = this.read(handle);
-
-		if (result == null) {
-			throw new SQLException("Filter First did not return any row. "
-					+ this.showDetails());
+	public List<T> filterOrFail(final IReadonlyHandle handle)
+			throws SQLException {
+		final List<T> list = filter(handle);
+		if (list.size() > 0) {
+			return list;
 		}
-		return result;
+		logger.error(this.showDetails());
+		throw new SQLException(
+				"Sql is expected to return at least one row, but it didn't.");
 	}
+
 }

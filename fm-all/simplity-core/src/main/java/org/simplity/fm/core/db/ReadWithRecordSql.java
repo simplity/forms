@@ -20,36 +20,56 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.db;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.Record;
+
 /**
- * interface for a class that wants to write/update/delete from the database
+ * A Sql that is designed to read just one row from the RDBMS.
  *
  * @author simplity.org
+ * @param <T>
+ *            record returned when reading
  *
  */
-public interface IDbMultipleWriter {
+public abstract class ReadWithRecordSql<T extends Record> extends Sql {
+	protected T outputRecord;
 
 	/**
+	 * read a row using this sql
 	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
-	 */
-	public String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared
-	 * statement parameters.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true if batch process is to continue. false if the last set got
-	 *         added.
+	 * @param handle
+	 * @return null if read did not succeed.
 	 * @throws SQLException
 	 */
-	public boolean setParams(PreparedStatement ps) throws SQLException;
+	public T read(final IReadonlyHandle handle) throws SQLException {
+		@SuppressWarnings("unchecked")
+		final T rec = (T) this.outputRecord.newInstance();
+		boolean ok = handle.read(this.sqlText, this.inputRecord, rec);
+		if (ok) {
+			return rec;
+		}
+		return null;
+	}
+
+	/**
+	 * to be used when a row is expected as per our db design, and hence the
+	 * caller need not handle the case with no rows
+	 *
+	 * @param handle
+	 * @return non-null record with the first filtered row
+	 * @throws SQLException
+	 *             thrown when any SQL exception, OR when no rows are filtered
+	 */
+	public T readOrFail(final IReadonlyHandle handle) throws SQLException {
+		final T result = this.read(handle);
+
+		if (result == null) {
+			throw new SQLException("Filter First did not return any row. "
+					+ this.showDetails());
+		}
+		return result;
+	}
 }

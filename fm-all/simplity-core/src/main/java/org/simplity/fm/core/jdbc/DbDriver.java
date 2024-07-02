@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,9 +46,9 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class RdbDriver implements IDbDriver {
+public class DbDriver implements IDbDriver {
 	protected static final Logger logger = LoggerFactory
-			.getLogger(RdbDriver.class);
+			.getLogger(DbDriver.class);
 
 	private final IDbConnectionFactory factory;
 
@@ -57,7 +57,7 @@ public class RdbDriver implements IDbDriver {
 	 *
 	 * @param factory
 	 */
-	public RdbDriver(final IDbConnectionFactory factory) {
+	public DbDriver(final IDbConnectionFactory factory) {
 		this.factory = factory;
 		//
 	}
@@ -112,7 +112,7 @@ public class RdbDriver implements IDbDriver {
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
-			doBatch(con, transacter);
+			doTransact(con, transacter);
 		}
 	}
 
@@ -121,7 +121,7 @@ public class RdbDriver implements IDbDriver {
 			final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
-			doBatch(con, transacter);
+			doTransact(con, transacter);
 		}
 	}
 
@@ -173,7 +173,7 @@ public class RdbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doBatch(final Connection con,
+	private static void doTransact(final Connection con,
 			final IDbTransacter transacter) throws SQLException {
 		final ITransactionHandle handle = new TransactionHandle(con);
 		try {

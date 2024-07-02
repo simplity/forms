@@ -34,6 +34,7 @@ import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,6 +124,7 @@ public abstract class DbRecord extends Record {
 	 * for use by frame-work and utilities. End programmers should not use this
 	 * API. They should use a filter-sql instead.
 	 *
+	 * @param handle
 	 * @param whereClauseStartingWithWhere
 	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
 	 *            practice is to use parameters rather than dynamic sql. That is
@@ -133,14 +135,16 @@ public abstract class DbRecord extends Record {
 	 *            objects we use String, Long, Double, Boolean, LocalDate,
 	 *            Instant
 	 *
-	 * @param handle
+	 * @param types
+	 *            value types of values array
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
-	public List<Object[]> filter(final String whereClauseStartingWithWhere,
-			final Object[] values, final IReadonlyHandle handle)
-			throws SQLException {
-		return this.dba.filter(handle, whereClauseStartingWithWhere, values);
+	public List<Object[]> filter(final IReadonlyHandle handle,
+			final String whereClauseStartingWithWhere, final Object[] values,
+			ValueType[] types) throws SQLException {
+		return this.dba.filter(handle, whereClauseStartingWithWhere, values,
+				types);
 	}
 
 	/**
@@ -431,7 +435,8 @@ public abstract class DbRecord extends Record {
 			final Object[][][] result = new Object[1][][];
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
 				final List<Object[]> list = rec.dba.filter(handle,
-						filter.getWhereClause(), filter.getWhereParamValues());
+						filter.getWhereClause(), filter.getWhereParamValues(),
+						filter.getWhereParamTypes());
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				}

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.jdbc;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,6 +31,7 @@ import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.db.DbUtil;
 import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.StoredProcedureResult;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,6 +142,14 @@ public class ReadWriteHandle extends ReadonlyHandle
 		}
 	}
 
+	@Override
+	public StoredProcedureResult writeUsingStoredProcedure(String callableSql,
+			Object[] parameterValues, ValueType[] parameterTypes,
+			ValueType returnedValueType, ValueType[][] outputTypes)
+			throws SQLException {
+		return super.callStoredProcedure(callableSql, parameterValues,
+				parameterTypes, returnedValueType, outputTypes);
+	}
 	/**
 	 * the array of counts returned by the driver may contain -1 as value
 	 *

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

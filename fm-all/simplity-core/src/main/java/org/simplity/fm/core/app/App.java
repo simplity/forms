@@ -48,8 +48,8 @@ import org.simplity.fm.core.infra.IRequestLogger;
 import org.simplity.fm.core.infra.IServiceContextFactory;
 import org.simplity.fm.core.infra.ISessionCache;
 import org.simplity.fm.core.infra.ITexter;
+import org.simplity.fm.core.jdbc.DbDriver;
 import org.simplity.fm.core.json.JsonUtil;
-import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.service.IService;
@@ -128,9 +128,9 @@ class App implements IApp, IAppInfra {
 
 		if (config.dbConnectionFactory == null) {
 			logger.warn("No DB connection configured. No db access");
-			this.rdbDriver = new RdbDriver(new DefaultDbConFactory());
+			this.rdbDriver = new DbDriver(new DefaultDbConFactory());
 		} else {
-			this.rdbDriver = new RdbDriver(config.dbConnectionFactory);
+			this.rdbDriver = new DbDriver(config.dbConnectionFactory);
 		}
 
 		if (config.exceptionListener == null) {

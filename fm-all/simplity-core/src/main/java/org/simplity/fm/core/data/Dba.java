@@ -34,7 +34,6 @@ import org.simplity.fm.core.db.IRowProcessor;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
-import org.simplity.fm.core.valueschema.ValueTypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,6 +117,7 @@ public class Dba {
 	 * internally generated
 	 */
 	private int[] keyIndexes;
+	private ValueType[] keyTypes;
 	/**
 	 * FINAL. db column name that is generated as internal key. null if this is
 	 * not relevant
@@ -166,7 +166,9 @@ public class Dba {
 
 		this.dbFields = new DbField[allFields.length];
 		this.prepareFields(allFields);
-
+		if (this.keyIndexes != null) {
+			this.keyTypes = typesOfFields(allFields, this.keyIndexes);
+		}
 		this.allowedOperations = opers;
 		this.nameInDb = nameInDb;
 
@@ -190,6 +192,13 @@ public class Dba {
 
 	}
 
+	/**
+	 * get types-array for the given fields array
+	 *
+	 * @param fields
+	 * @param indexes
+	 * @return
+	 */
 	private static ValueType[] typesOfFields(Field[] fields, int[] indexes) {
 		if (indexes == null) {
 			return null;
@@ -200,6 +209,7 @@ public class Dba {
 		}
 		return types;
 	}
+
 	private void prepareFields(final Field[] allFields) {
 
 		final int keys[] = new int[allFields.length];
@@ -275,8 +285,10 @@ public class Dba {
 	 *
 	 * @param handle
 	 * @param row
-	 *            array of objects that can hold values for this record. this
-	 *            acts as both input and output for field values
+	 *            row-data for this record. Array of objects, one for each field
+	 *            in this record this acts as source of values for where-clause
+	 *            parameter, as well as destination for selected fields in the
+	 *            query
 	 *
 	 * @return true if it is read. false if no data found for this record (key
 	 *         not found...)
@@ -288,13 +300,14 @@ public class Dba {
 			return notAllowed(IoType.Get);
 		}
 
-		Object[] inp = copyFromRow(row, this.whereIndexes);
+		// sql parameters from row-data
+		Object[] params = copyFromRow(row, this.whereIndexes);
 
 		Object[] result = handle.read(
-				this.selectClause + ' ' + this.whereClause, inp,
+				this.selectClause + ' ' + this.whereClause, params,
 				this.whereTypes, this.selectTypes);
-
-		return this.copyToRow(result, row);
+		// copy selected fields into row-data
+		return this.copySelectedValues(result, row);
 	}
 
 	/**
@@ -306,17 +319,19 @@ public class Dba {
 	 *            e.g. "WHERE a=? and b=?". null if all rows are to be read.
 	 *            Best practice is to use parameters rather than dynamic sql.
 	 *            That is you should use a=? rather than a = 32
-	 * @param values
+	 * @param parameterValues
 	 *            null or empty if where-clause is null or has no parameters.
 	 *            every element MUST be non-null and must be one of the standard
 	 *            objects we use: String, Long, Double, Boolean, LocalDate,
 	 *            Instant
+	 * @param parameterTypes
+	 *            value types of the values
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
 	List<Object[]> filter(final IReadonlyHandle handle,
-			final String whereClauseStartingWithWhere, final Object[] values)
-			throws SQLException {
+			final String whereClauseStartingWithWhere, final Object[] parameterValues,
+			final ValueType[] parameterTypes) throws SQLException {
 
 		String sql = this.selectClause;
 		if (whereClauseStartingWithWhere != null) {
@@ -326,14 +341,13 @@ public class Dba {
 		final int nbrFields = this.dbFields.length;
 		final List<Object[]> rows = new ArrayList<>();
 
-		handle.readMany(sql, values, ValueTypeUtil.valueTypesOf(values),
-				this.selectTypes, outputRow -> {
-					final Object[] row = new Object[nbrFields];
-					Dba.this.copyToRow(outputRow, row);
-					rows.add(row);
-					return true;
+		handle.readMany(sql, parameterValues, parameterTypes, this.selectTypes, outputRow -> {
+			final Object[] row = new Object[nbrFields];
+			Dba.this.copySelectedValues(outputRow, row);
+			rows.add(row);
+			return true;
 
-				});
+		});
 
 		return rows;
 	}
@@ -345,24 +359,25 @@ public class Dba {
 	 * @param where
 	 *            should start with 'where' e.g. 'where a=? and b=?...". null to
 	 *            select all rows from this table
-	 * @param inputValues
+	 * @param parameterValues
 	 *            values, in the right order, for the parameters in the where
 	 *            clause. null if were is null.
+	 * @param value
+	 *            types of parameter values
 	 * @param rowProcessor
 	 *            class/lambda that is called for each output row from the query
 	 * @throws SQLException
 	 */
 	void forEach(final IReadonlyHandle handle, final String where,
-			final Object[] inputValues, final IRowProcessor rowProcessor)
-			throws SQLException {
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			final IRowProcessor rowProcessor) throws SQLException {
 
 		String sql = this.selectClause;
 		if (where != null) {
 			sql += this.selectClause + ' ' + where;
 		}
 
-		handle.readMany(sql, inputValues,
-				ValueTypeUtil.valueTypesOf(inputValues), this.selectTypes,
+		handle.readMany(sql, parameterValues, parameterTypes, this.selectTypes,
 				rowProcessor);
 
 		return;
@@ -387,15 +402,15 @@ public class Dba {
 		}
 
 		final Object[] params = copyFromRow(rowToInsert, this.insertIndexes);
-		final ValueType[] paramTypes = ValueTypeUtil.valueTypesOf(params);
 		if (this.generatedColumnName == null) {
-			return handle.write(this.insertClause, params, paramTypes) > 0;
+			return handle.write(this.insertClause, params,
+					this.insertTypes) > 0;
 
 		}
 
 		final long[] generatedKeys = new long[1];
 		int n = handle.insertWithKeyGeneration(this.insertClause, params,
-				paramTypes, generatedColumnName, generatedKeys);
+				this.insertTypes, generatedColumnName, generatedKeys);
 		if (n == 0) {
 			return false;
 		}
@@ -429,9 +444,8 @@ public class Dba {
 		}
 
 		final Object[] params = copyFromRow(rowToUpdate, this.updateIndexes);
-		final ValueType[] paramTypes = ValueTypeUtil.valueTypesOf(params);
 
-		return handle.write(this.updateClause, params, paramTypes) > 0;
+		return handle.write(this.updateClause, params, this.updateTypes) > 0;
 
 	}
 
@@ -453,9 +467,7 @@ public class Dba {
 		}
 
 		final Object[] params = copyFromRow(rowToDelete, this.keyIndexes);
-		final ValueType[] paramTypes = ValueTypeUtil.valueTypesOf(params);
-
-		return handle.write(this.deleteClause, params, paramTypes) > 0;
+		return handle.write(this.deleteClause, params, this.keyTypes) > 0;
 
 	}
 
@@ -542,11 +554,13 @@ public class Dba {
 		int nbrInserted = 0;
 
 		if (this.generatedColumnName == null) {
-			nbrInserted = handle.writeMany(this.insertClause, paramValues);
+			nbrInserted = handle.writeMany(this.insertClause, paramValues,
+					this.insertTypes);
 		} else {
 			final long[] generatedKeys = new long[nbrRows];
-			nbrInserted = handle.writeManyWithKeyGeneration(this.insertClause,
-					paramValues, this.generatedColumnName, generatedKeys);
+			nbrInserted = handle.insertWithKeyGenerations(this.insertClause,
+					paramValues, this.insertTypes, generatedColumnName,
+					generatedKeys);
 			if (nbrInserted > 0) {
 				this.copyKeys(rows, generatedKeys);
 			}
@@ -573,8 +587,10 @@ public class Dba {
 		}
 
 		int nbrRows = rows.length;
-		final Object[][] paramValues = copyFromRows(rows, this.insertIndexes);
-		int n = handle.writeMany(this.updateClause, paramValues);
+		final Object[][] updateValues = copyFromRows(rows, this.updateIndexes);
+
+		int n = handle.writeMany(this.updateClause, updateValues,
+				this.updateTypes);
 		return n == nbrRows;
 	}
 
@@ -746,7 +762,7 @@ public class Dba {
 	 * @param row
 	 * @return true if values are copied. false if result is null
 	 */
-	private boolean copyToRow(Object[] result, Object[] row) {
+	private boolean copySelectedValues(Object[] result, Object[] row) {
 		if (result == null) {
 			return false;
 		}

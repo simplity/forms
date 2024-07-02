@@ -27,11 +27,11 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.rdb.FilterSql;
-import org.simplity.fm.core.rdb.FilterWithRecordSql;
-import org.simplity.fm.core.rdb.ReadSql;
-import org.simplity.fm.core.rdb.ReadWithRecordSql;
-import org.simplity.fm.core.rdb.WriteSql;
+import org.simplity.fm.core.db.FilterSql;
+import org.simplity.fm.core.db.FilterWithRecordSql;
+import org.simplity.fm.core.db.ReadSql;
+import org.simplity.fm.core.db.ReadWithRecordSql;
+import org.simplity.fm.core.db.WriteSql;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

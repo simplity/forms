@@ -20,39 +20,43 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.jdbc;
 
-import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
 
-import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.json.JsonUtil;
-import org.simplity.fm.core.service.IOutputData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.simplity.fm.core.db.ITransactionHandle;
 
 /**
+ * db handle that allows multiple transactions.
+ *
  * @author simplity.org
  *
  */
-public abstract class Sql {
-	protected static final Logger logger = LoggerFactory.getLogger(Sql.class);
-	protected String sqlText;
-	protected Record inputRecord;
-
-	protected void setInputValue(final int idx, final Object value) {
-		this.inputRecord.assignValue(idx, value);
-	}
+public class TransactionHandle extends ReadWriteHandle
+		implements
+			ITransactionHandle {
 
 	/**
-	 * @return string that shows this SQL with values from the current input
-	 *         context
+	 * @param con
 	 */
-	public String showDetails() {
-		final StringWriter sw = new StringWriter();
-		final IOutputData outData = JsonUtil.newOutputData(sw);
-		outData.beginObject();
-		outData.addRecord(this.inputRecord);
-		outData.endObject();
-		return "SQL= " + this.sqlText + "\n" + outData.toString();
+	TransactionHandle(final Connection con) {
+		super(con);
 	}
+
+	@Override
+	public void setAutoCommitMode(final boolean mode) throws SQLException {
+		this.con.setAutoCommit(mode);
+	}
+
+	@Override
+	public void commit() throws SQLException {
+		this.con.commit();
+	}
+
+	@Override
+	public void rollback() throws SQLException {
+		this.con.rollback();
+	}
+
 }
