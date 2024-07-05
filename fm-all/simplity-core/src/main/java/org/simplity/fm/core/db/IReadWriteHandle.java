@@ -24,6 +24,7 @@ package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -38,19 +39,6 @@ public interface IReadWriteHandle extends IReadonlyHandle {
 	/**
 	 * @param sql
 	 *            a prepared statement that manipulates data.
-	 * @param inputRecord
-	 *            with fields that match in number and type with the parameters
-	 *            in the SQL
-	 * @return number of rows affected by this operation. -1 if the driver was
-	 *         unable to count the affected rows.
-	 * @throws SQLException
-	 */
-	public int write(final String sql, final Record inputRecord)
-			throws SQLException;
-
-	/**
-	 * @param sql
-	 *            a prepared statement that manipulates data.
 	 * @param paramaterValues
 	 *            parameters to be set the prepared statement
 	 * @param parameterTypes
@@ -60,6 +48,19 @@ public interface IReadWriteHandle extends IReadonlyHandle {
 	 */
 	public int write(final String sql, final Object[] paramaterValues,
 			ValueType[] parameterTypes) throws SQLException;
+
+	/**
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param inputRecord
+	 *            with fields that match in number and type with the parameters
+	 *            in the SQL
+	 * @return number of rows affected by this operation. -1 if the driver was
+	 *         unable to count the affected rows.
+	 * @throws SQLException
+	 */
+	public int writeFromRecord(final String sql, final Record inputRecord)
+			throws SQLException;
 
 	/**
 	 * insert a row based on the data in a record and update the generated key
@@ -89,19 +90,6 @@ public interface IReadWriteHandle extends IReadonlyHandle {
 			throws SQLException;
 
 	/**
-	 * @param sql
-	 *            a prepared statement that manipulates data.
-	 * @param inputRecords
-	 *            each with fields that match in number and type with the
-	 *            parameters in the SQL
-	 * @return number of rows affected by this operation. -1 if the driver was
-	 *         unable to count the affected rows.
-	 * @throws SQLException
-	 */
-	public int writeMany(final String sql, final Record[] inputRecords)
-			throws SQLException;
-
-	/**
 	 * execute a prepared statement repeatedly for each record in the input
 	 * records collection
 	 *
@@ -118,6 +106,18 @@ public interface IReadWriteHandle extends IReadonlyHandle {
 	 */
 	public int writeMany(final String sql, final Object[][] parameterValues,
 			ValueType[] parameterTypes) throws SQLException;
+
+	/**
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param dataTable
+	 *            each row from the data table is used for the write operation
+	 * @return number of rows affected by this operation. -1 if the driver was
+	 *         unable to count the affected rows.
+	 * @throws SQLException
+	 */
+	public <T extends Record> int writeFromDataTable(final String sql,
+			final DataTable<T> dataTable) throws SQLException;
 
 	/**
 	 * insert many rows and return the primary keys generated for these rows

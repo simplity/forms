@@ -23,9 +23,8 @@
 package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 
 /**
@@ -33,21 +32,53 @@ import org.simplity.fm.core.data.Record;
  *
  */
 public abstract class WriteSql extends Sql {
-	private List<Record> batchData;
+	private DataTable<Record> batchData;
 	private Record[] emptyArray = new Record[0];
 
 	/**
+	 * to be used by the extended class if it uses fields for input
 	 *
 	 * @param handle
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int write(final IReadWriteHandle handle) throws SQLException {
+	protected int write(final IReadWriteHandle handle) throws SQLException {
+		this.checkBatch();
+		return handle.writeFromRecord(this.sqlText, this.inputRecord);
+	}
+
+	/**
+	 * to be used by the concrete class if it is based on record
+	 *
+	 * @param handle
+	 * @return number of affected rows. could be 0.
+	 * @throws SQLException
+	 */
+	protected int write(final IReadWriteHandle handle, Record record)
+			throws SQLException {
+		this.checkBatch();
+		return handle.writeFromRecord(this.sqlText, record);
+	}
+
+	private void checkBatch() throws SQLException {
 		if (this.batchData != null) {
 			throw new SQLException(
 					"Sql is prepared for batch, but write is issued.");
 		}
-		return handle.write(this.sqlText, this.inputRecord);
+
+	}
+	/**
+	 * caller expects at least one row to be affected, failing which we are to
+	 * raise an exception
+	 *
+	 * @param handle
+	 * @return non-zero number of affected rows.
+	 * @throws SQLException
+	 *             if number of affected rows 0, or on any sql exception
+	 */
+	protected int writeOrFail(final IReadWriteHandle handle)
+			throws SQLException {
+		return this.writeOrFail(handle, this.inputRecord);
 	}
 
 	/**
@@ -59,12 +90,10 @@ public abstract class WriteSql extends Sql {
 	 * @throws SQLException
 	 *             if number of affected rows 0, or on any sql exception
 	 */
-	public int writeOrFail(final IReadWriteHandle handle) throws SQLException {
-		if (this.batchData != null) {
-			throw new SQLException(
-					"Sql is prepared for batch, but write is issued.");
-		}
-		final int n = handle.write(this.sqlText, this.inputRecord);
+	protected int writeOrFail(final IReadWriteHandle handle, Record record)
+			throws SQLException {
+		this.checkBatch();
+		final int n = handle.writeFromRecord(this.sqlText, record);
 		if (n > 0) {
 			return n;
 		}
@@ -79,31 +108,12 @@ public abstract class WriteSql extends Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int writeBatch(final IReadWriteHandle handle) throws SQLException {
+	protected int writeMany(final IReadWriteHandle handle,
+			DataTable<Record> table) throws SQLException {
 		if (this.batchData == null) {
 			throw new SQLException(
 					"Sql is not prepared for batch, but writeBatch is issued.");
 		}
-		final int n = handle.writeMany(this.sqlText,
-				this.batchData.toArray(this.emptyArray));
-		this.batchData = null;
-		return n;
-	}
-
-	/**
-	 * add a batch after setting value to all the fields. Note that this MUST be
-	 * called before invoking writeBatch();
-	 *
-	 * @throws SQLException
-	 *             if any field in the Vo is null
-	 */
-	public void addBatch() throws SQLException {
-		if (this.batchData == null) {
-			this.batchData = new ArrayList<>();
-		}
-		/*
-		 * important to add a copy, and the value itself
-		 */
-		this.batchData.add(this.inputRecord.makeACopy());
+		return handle.writeFromDataTable(this.sqlText, table);
 	}
 }

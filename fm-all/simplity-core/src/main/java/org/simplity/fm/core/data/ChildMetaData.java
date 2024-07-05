@@ -239,7 +239,7 @@ public class ChildMetaData {
 		final ValueType[] outputTypes = thisRecord.fetchValueTypes();
 		if (this.isTable) {
 			outData.beginArray();
-			handle.readMany(this.linkWhereClause, vt.values, vt.types,
+			handle.readWithRowProcessor(this.linkWhereClause, vt.values, vt.types,
 					outputTypes, row -> {
 						outData.beginObject();
 						outData.addFields(fields, row);

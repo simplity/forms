@@ -2,31 +2,36 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
+  <url>http://maven.apache.org</url>
+ 
+ <parent>
     <groupId>org.simplity.fm</groupId>
     <artifactId>fm-all</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
+
   <artifactId>simplity-example</artifactId>
   <name>simplity-example</name>
-  <url>http://maven.apache.org</url>
-  <properties>
-  </properties>
+
+
   <dependencies>
  		<dependency>
 			<groupId>org.simplity.fm</groupId>
 			<artifactId>simplity-http</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
  		<dependency>
 			<groupId>org.simplity.fm</groupId>
 			<artifactId>simplity-gen</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
     <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.db.DbUtil;
 import org.simplity.fm.core.db.IReadonlyHandle;
@@ -65,26 +66,10 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public boolean read(final String sql, final Record inputData,
-			final Record outputData) throws SQLException {
-		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (inputData != null) {
-				DbUtil.setPsParamValues(ps, inputData);
-			}
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					DbUtil.rsToRecord(rs, outputData);
-					return true;
-				}
-				return false;
-			}
-		}
-	}
-
-	@Override
 	public Object[] read(final String sql, final Object[] parameterValues,
 			ValueType[] parameterTypes, final ValueType[] outputTypes)
 			throws SQLException {
+
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -97,9 +82,47 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
+	public boolean readIntoRecord(final String sql, final Record inputRecord,
+			final Record outputRecord) throws SQLException {
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (inputRecord != null) {
+				DbUtil.setPsParamValues(ps, inputRecord);
+			}
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					DbUtil.rsToRecord(rs, outputRecord);
+					return true;
+				}
+				return false;
+			}
+		}
+	}
+
+	@Override
+	public boolean readIntoRecord(String sql, Object[] parameterValues,
+			ValueType[] parameterTypes, Record outputRecord)
+			throws SQLException {
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (parameterValues != null) {
+				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
+			}
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					DbUtil.rsToRecord(rs, outputRecord);
+					return true;
+				}
+				return false;
+			}
+		}
+	}
+
+	@Override
 	public Object[][] readMany(final String sql, final Object[] parameterValues,
 			final ValueType[] parameterTypes, final ValueType[] outputTypes)
 			throws SQLException {
+
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (parameterValues != null) {
 				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
@@ -113,12 +136,68 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public int readMany(final String sql, final Object[] paramValues,
-			final ValueType[] parameterTypes, final ValueType[] outputTypes,
-			IRowProcessor rowProcessor) throws SQLException {
+	public Object[][] readMany(final String sql, final Record inputRecord,
+			final ValueType[] outputTypes) throws SQLException {
+
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (paramValues != null) {
-				DbUtil.setPsParamValues(ps, paramValues, parameterTypes);
+			if (inputRecord != null) {
+				DbUtil.setPsParamValues(ps, inputRecord);
+			}
+
+			try (ResultSet rs = ps.executeQuery()) {
+				return DbUtil.getRowsFromRs(rs, outputTypes)
+						.toArray(EMPTY_ARRAY);
+			}
+		}
+	}
+
+	@Override
+	public <T extends Record> void readIntoDataTable(String sql,
+			Record inputRecord, DataTable<T> outputTable) throws SQLException {
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (inputRecord != null) {
+				DbUtil.setPsParamValues(ps, inputRecord);
+			}
+
+			ValueType[] types = outputTable.fetchValueTypes();
+			try (ResultSet rs = ps.executeQuery()) {
+				DbUtil.processRowsFromRs(rs, types, row -> {
+					outputTable.addRow(row);
+					return true;
+				});
+			}
+		}
+	}
+
+	@Override
+	public <T extends Record> void readIntoDataTable(String sql,
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			DataTable<T> outputTable) throws SQLException {
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (parameterValues != null) {
+				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
+			}
+
+			ValueType[] types = outputTable.fetchValueTypes();
+			try (ResultSet rs = ps.executeQuery()) {
+				DbUtil.processRowsFromRs(rs, types, row -> {
+					outputTable.addRow(row);
+					return true;
+				});
+			}
+		}
+	}
+
+	@Override
+	public int readWithRowProcessor(final String sql,
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			final ValueType[] outputTypes, IRowProcessor rowProcessor)
+			throws SQLException {
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (parameterValues != null) {
+				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
 			}
 
 			try (ResultSet rs = ps.executeQuery()) {
@@ -129,9 +208,10 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public <T extends Record> void readMany(final String sql,
+	public <T extends Record> void readWithRecordProcessor(final String sql,
 			final Record inputRecord, T instanceToClone,
 			final IRecordProcessor<T> processor) throws SQLException {
+
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputRecord != null) {
 				DbUtil.setPsParamValues(ps, inputRecord);

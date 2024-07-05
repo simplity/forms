@@ -28,7 +28,7 @@ import java.util.List;
 
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.data.Table;
+import org.simplity.fm.core.data.DataTable;
 
 /**
  * API for a component that serializes arbitrary object structure for
@@ -191,7 +191,7 @@ public interface IOutputData {
 	 * @param table
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addArrayElements(Table<?> table);
+	IOutputData addArrayElements(DataTable<?> table);
 
 	/**
 	 * to be called inside an array, (Not directly inside an object) Each record
@@ -205,7 +205,7 @@ public interface IOutputData {
 	 *            be null or empty
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addArray(String memberName, Table<?> table);
+	IOutputData addArray(String memberName, DataTable<?> table);
 
 	/**
 	 * to be called inside an array, (Not directly inside an object) Each record

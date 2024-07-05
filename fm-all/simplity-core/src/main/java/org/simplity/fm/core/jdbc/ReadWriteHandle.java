@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.db.DbUtil;
 import org.simplity.fm.core.db.IReadWriteHandle;
@@ -57,7 +58,7 @@ public class ReadWriteHandle extends ReadonlyHandle
 	}
 
 	@Override
-	public int write(final String sql, final Record inputRecord)
+	public int writeFromRecord(final String sql, final Record inputRecord)
 			throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			DbUtil.setPsParamValues(ps, inputRecord);
@@ -92,11 +93,12 @@ public class ReadWriteHandle extends ReadonlyHandle
 	}
 
 	@Override
-	public int writeMany(final String sql, final Record[] inputRecords)
-			throws SQLException {
+	public <T extends Record> int writeFromDataTable(final String sql,
+			final DataTable<T> dataTable) throws SQLException {
 		logger.info("Generic Batch SQL:{}", sql);
+
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			for (final Record record : inputRecords) {
+			for (T record : dataTable) {
 				DbUtil.setPsParamValues(ps, record);
 				ps.addBatch();
 			}
@@ -200,4 +202,5 @@ public class ReadWriteHandle extends ReadonlyHandle
 			}
 		}
 	}
+
 }

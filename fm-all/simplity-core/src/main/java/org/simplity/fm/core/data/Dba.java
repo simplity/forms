@@ -341,7 +341,7 @@ public class Dba {
 		final int nbrFields = this.dbFields.length;
 		final List<Object[]> rows = new ArrayList<>();
 
-		handle.readMany(sql, parameterValues, parameterTypes, this.selectTypes, outputRow -> {
+		handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes, outputRow -> {
 			final Object[] row = new Object[nbrFields];
 			Dba.this.copySelectedValues(outputRow, row);
 			rows.add(row);
@@ -377,7 +377,7 @@ public class Dba {
 			sql += this.selectClause + ' ' + where;
 		}
 
-		handle.readMany(sql, parameterValues, parameterTypes, this.selectTypes,
+		handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes,
 				rowProcessor);
 
 		return;

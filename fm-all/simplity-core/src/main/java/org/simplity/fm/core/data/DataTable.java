@@ -1,11 +1,14 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.simplity.fm.core.db.IRowProcessor;
 import org.simplity.fm.core.service.IOutputData;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * A Tabular data structure that contains meta data about the fields iin each
@@ -13,7 +16,7 @@ import org.simplity.fm.core.service.IOutputData;
  *
  * @param <T>
  */
-public class Table<T extends Record> implements Iterable<T> {
+public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	private final T record;
 	protected List<Object[]> rows = new ArrayList<>();
 	/**
@@ -21,8 +24,16 @@ public class Table<T extends Record> implements Iterable<T> {
 	 *
 	 * @param record
 	 */
-	public Table(final T record) {
+	public DataTable(final T record) {
 		this.record = record;
+	}
+
+	/**
+	 *
+	 * @return value types of the fields/columns of this data table
+	 */
+	public ValueType[] fetchValueTypes() {
+		return this.record.fetchValueTypes();
 	}
 	/**
 	 * add a record
@@ -33,7 +44,13 @@ public class Table<T extends Record> implements Iterable<T> {
 		this.rows.add(rec.fieldValues.clone());
 	}
 
-	protected void addRow(final Object[] row) {
+	/**
+	 * TO BE USED BY UTILITY PROGRAMS ONLY. caller MUST ensure that the values
+	 * in the row are of the right types
+	 *
+	 * @param row
+	 */
+	public void addRow(final Object[] row) {
 		this.rows.add(row);
 	}
 
@@ -96,9 +113,14 @@ public class Table<T extends Record> implements Iterable<T> {
 
 			@Override
 			public T next() {
-				return Table.this.fetchRecord(this.idx++);
+				return DataTable.this.fetchRecord(this.idx++);
 			}
 		};
+	}
+	@Override
+	public boolean process(Object[] row) throws SQLException {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

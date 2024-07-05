@@ -24,6 +24,7 @@ package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -58,7 +59,28 @@ public interface IReadonlyHandle {
 			throws SQLException;
 
 	/**
-	 * read a row of data as an array of values
+	 * read a row of data into a record
+	 *
+	 * @param sql
+	 *            valid prepared statement to read from the database
+	 * @param parameterValues
+	 *            null if the prepared statement has no parameters. must contain
+	 *            the right values in the right order for parameters in the
+	 *            prepared statement
+	 * @param parameterTypes
+	 *            value type of parameters
+	 * @param outputRecord
+	 *            that has the fields that match in number and type with the
+	 *            result set of the sql
+	 * @return true if a row was indeed read, false otherwise
+	 * @throws SQLException
+	 */
+	public boolean readIntoRecord(final String sql,
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			final Record outputRecord) throws SQLException;
+
+	/**
+	 * read a row of data into a record
 	 *
 	 * @param sql
 	 *            valid prepared statement to read from the database
@@ -72,7 +94,7 @@ public interface IReadonlyHandle {
 	 * @return true if a row was indeed read, false otherwise
 	 * @throws SQLException
 	 */
-	public boolean read(final String sql, final Record inputRecord,
+	public boolean readIntoRecord(final String sql, final Record inputRecord,
 			final Record outputRecord) throws SQLException;
 	/**
 	 * read one or more rows from the database
@@ -96,6 +118,24 @@ public interface IReadonlyHandle {
 			throws SQLException;
 
 	/**
+	 * read one or more rows from the database
+	 *
+	 * @param sql
+	 *            non-null valid prepared statement to read from the database
+	 * @param inputRecord
+	 *            record that has its fields that are to be used as parameters
+	 *            for the sql/prepared statement null if the prepared statement
+	 *            has no parameters.
+	 * @param outputTypes
+	 *            must have the right types in the right order to receive data
+	 *            from the result set
+	 * @return extracted data as an array of rows. null if no row is read
+	 * @throws SQLException
+	 */
+	public Object[][] readMany(final String sql, final Record inputRecord,
+			final ValueType[] outputTypes) throws SQLException;
+
+	/**
 	 * fetch one or more rows from the database, and invoke the row processor
 	 * for each of the row. It s possible for the row-processor to abandon
 	 * further reading at any point
@@ -117,9 +157,10 @@ public interface IReadonlyHandle {
 	 * @return number of rows processed
 	 * @throws SQLException
 	 */
-	public int readMany(final String sql, final Object[] parameterValues,
-			final ValueType[] parameterTypes, final ValueType[] outputTypes,
-			IRowProcessor rowProcessor) throws SQLException;
+	public int readWithRowProcessor(final String sql,
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			final ValueType[] outputTypes, IRowProcessor rowProcessor)
+			throws SQLException;
 
 	/**
 	 * read rows from the db as records and process each with the processor
@@ -140,9 +181,46 @@ public interface IReadonlyHandle {
 	 *            extracted values
 	 * @throws SQLException
 	 */
-	public <T extends Record> void readMany(final String sql,
+	public <T extends Record> void readWithRecordProcessor(final String sql,
 			final Record inputRecord, T instanceToClone,
 			final IRecordProcessor<T> processor) throws SQLException;
+
+	/**
+	 * read rows from the db into a DataTable
+	 *
+	 * @param <T>
+	 *            underlying record for the output table
+	 * @param sql
+	 *            prepared statement for the read operation
+	 * @param inputRecord
+	 *            with fields that match in number and in type the parameters of
+	 *            the sql. null if the sql does not use any parameters
+	 * @param outputTable
+	 * @throws SQLException
+	 */
+	public <T extends Record> void readIntoDataTable(final String sql,
+			final Record inputRecord, DataTable<T> outputTable)
+			throws SQLException;
+
+	/**
+	 * read rows from the db into a DataTable
+	 *
+	 * @param <T>
+	 *            underlying record for the output table
+	 * @param sql
+	 *            prepared statement for the read operation
+	 * @param parameterValues
+	 *            null if the prepared statement has no parameters. must contain
+	 *            the right non-values in the right order for parameters in the
+	 *            select sql
+	 * @param parameterTypes
+	 *            value type of parameters
+	 * @param outputTable
+	 * @throws SQLException
+	 */
+	public <T extends Record> void readIntoDataTable(String sql,
+			final Object[] parameterValues, final ValueType[] parameterTypes,
+			DataTable<T> outputTable) throws SQLException;
 
 	/**
 	 * executes the stored-procedure and returns the result. A stored procedure

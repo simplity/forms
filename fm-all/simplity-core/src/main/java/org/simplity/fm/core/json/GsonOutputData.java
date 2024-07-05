@@ -31,7 +31,7 @@ import java.util.List;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.data.Table;
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.service.IOutputData;
 
 import com.google.gson.stream.JsonWriter;
@@ -247,7 +247,7 @@ class GsonOutputData implements IOutputData {
 
 	@Override
 	public GsonOutputData addArray(final String memberName,
-			final Table<?> table) {
+			final DataTable<?> table) {
 		try {
 			this.writer.name(memberName);
 			this.writer.beginArray();
@@ -262,7 +262,7 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
-	public GsonOutputData addArrayElements(final Table<?> table) {
+	public GsonOutputData addArrayElements(final DataTable<?> table) {
 		table.forEach(rec -> {
 			try {
 				this.writer.beginObject();

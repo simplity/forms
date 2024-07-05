@@ -24,17 +24,19 @@ package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 
 /**
- * A Sql that is designed to read just one row from the RDBMS.
+ * Base class for generating SQLS based on the meta-data designed specifically
+ * for generated SQL-classes.
  *
  * @author simplity.org
  * @param <T>
  *            record returned when reading
  *
  */
-public abstract class ReadWithRecordSql<T extends Record> extends Sql {
+public abstract class SqlBasedReader<T extends Record> extends Sql {
 	protected T outputRecord;
 
 	/**
@@ -44,14 +46,40 @@ public abstract class ReadWithRecordSql<T extends Record> extends Sql {
 	 * @return null if read did not succeed.
 	 * @throws SQLException
 	 */
-	public T read(final IReadonlyHandle handle) throws SQLException {
+	protected T read(final IReadonlyHandle handle) throws SQLException {
+
+		if (this.hasInputFields && this.inputRecord == null) {
+			throw new SQLException("No inputs received for the sql");
+		}
+
 		@SuppressWarnings("unchecked")
 		final T rec = (T) this.outputRecord.newInstance();
-		boolean ok = handle.read(this.sqlText, this.inputRecord, rec);
+		boolean ok = handle.readIntoRecord(this.sqlText, this.inputRecord,
+				this.outputRecord);
 		if (ok) {
 			return rec;
 		}
 		return null;
+	}
+
+	/**
+	 * read rows using this sql
+	 *
+	 * @param handle
+	 * @return null if read did not succeed.
+	 * @throws SQLException
+	 */
+	protected DataTable<T> readMany(final IReadonlyHandle handle)
+			throws SQLException {
+		if (this.hasInputFields && this.inputRecord == null) {
+			throw new SQLException("No inputs received for the sql");
+		}
+
+		@SuppressWarnings("unchecked")
+		final T rec = (T) this.outputRecord.newInstance();
+		DataTable<T> dt = new DataTable<>(rec);
+		handle.readIntoDataTable(this.sqlText, this.inputRecord, dt);
+		return dt;
 	}
 
 	/**
@@ -63,12 +91,12 @@ public abstract class ReadWithRecordSql<T extends Record> extends Sql {
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public T readOrFail(final IReadonlyHandle handle) throws SQLException {
+	protected T readOrFail(final IReadonlyHandle handle) throws SQLException {
 		final T result = this.read(handle);
 
 		if (result == null) {
-			throw new SQLException("Filter First did not return any row. "
-					+ this.showDetails());
+			throw new SQLException(
+					"Expected one row, but none found" + this.showDetails());
 		}
 		return result;
 	}

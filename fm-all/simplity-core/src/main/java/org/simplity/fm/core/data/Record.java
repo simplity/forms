@@ -628,7 +628,7 @@ public class Record {
 			}
 		} ;
 		/*
-		 * empty least means we encountered some error
+		 * empty list means we encountered some error
 		 */
 		if (list.isEmpty()) {
 			return null;

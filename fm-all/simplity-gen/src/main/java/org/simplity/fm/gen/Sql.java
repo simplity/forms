@@ -29,8 +29,7 @@ import java.util.Map;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.db.FilterSql;
 import org.simplity.fm.core.db.FilterWithRecordSql;
-import org.simplity.fm.core.db.ReadSql;
-import org.simplity.fm.core.db.ReadWithRecordSql;
+import org.simplity.fm.core.db.SqlBasedReader;
 import org.simplity.fm.core.db.WriteSql;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
@@ -50,7 +49,8 @@ public class Sql {
 	String name;
 	String sqlType;
 	String sql;
-	Field[] sqlParams;
+	Field[] inputParameters;
+	String inputRecord;
 	Field[] outputFields;
 	String outputRecord;
 	private boolean hasDate = false;
@@ -62,8 +62,8 @@ public class Sql {
 		/*
 		 * see if we have any date /time fields
 		 */
-		if (this.sqlParams != null) {
-			this.initArr(this.sqlParams, schemas);
+		if (this.inputParameters != null) {
+			this.initArr(this.inputParameters, schemas);
 		}
 
 		if (this.outputFields != null) {
@@ -91,8 +91,8 @@ public class Sql {
 				&& this.outputRecord.isEmpty() == false;
 		final boolean hasOutFields = this.outputFields != null
 				&& this.outputFields.length > 0;
-		final boolean hasParams = this.sqlParams != null
-				&& this.sqlParams.length > 0;
+		final boolean hasParams = this.inputParameters != null
+				&& this.inputParameters.length > 0;
 		boolean isWrite = false;
 
 		String msg = null;
@@ -175,7 +175,7 @@ public class Sql {
 		sbf.append(P).append("String SQL = ")
 				.append(Util.quotedString(this.sql)).append(';');
 		sbf.append(P).append("Field[] IN = ");
-		emitFields(sbf, this.sqlParams);
+		emitFields(sbf, this.inputParameters);
 		sbf.append(';');
 
 		/*
@@ -213,9 +213,9 @@ public class Sql {
 		 */
 		sbf.append(P).append("String SQL = ")
 				.append(Util.quotedString(this.sql)).append(';');
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams);
+			emitFields(sbf, this.inputParameters);
 			sbf.append(';');
 		}
 
@@ -225,13 +225,13 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
 				.append(this.className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
 
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			this.emitSetters(sbf);
 		}
 		sbf.append("\n}\n");
@@ -240,7 +240,7 @@ public class Sql {
 
 	void emitReadWithRecord(final StringBuilder sbf, final String rootPackage) {
 
-		Util.emitImport(sbf, ReadWithRecordSql.class);
+		Util.emitImport(sbf, SqlBasedReader.class);
 		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
 		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(';');
@@ -259,9 +259,9 @@ public class Sql {
 		 */
 		sbf.append(P).append("String SQL = ")
 				.append(Util.quotedString(this.sql)).append(';');
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams);
+			emitFields(sbf, this.inputParameters);
 			sbf.append(';');
 		}
 
@@ -271,20 +271,20 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
 				.append(this.className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
 
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			this.emitSetters(sbf);
 		}
 		sbf.append("\n}\n");
 	}
 
 	void emitRead(final StringBuilder sbf) {
-		Util.emitImport(sbf, ReadSql.class);
+		Util.emitImport(sbf, ReadRecordWithSql.class);
 		/*
 		 * class
 		 */
@@ -299,9 +299,9 @@ public class Sql {
 		 */
 		sbf.append(P).append("String SQL = ")
 				.append(Util.quotedString(this.sql)).append(';');
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams);
+			emitFields(sbf, this.inputParameters);
 			sbf.append(';');
 		}
 
@@ -315,12 +315,12 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
 				.append(this.className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t}");
 
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			this.emitSetters(sbf);
 		}
 		this.emitOutMethods(sbf);
@@ -344,9 +344,9 @@ public class Sql {
 		 */
 		sbf.append(P).append("String SQL = ")
 				.append(Util.quotedString(this.sql)).append(';');
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.sqlParams);
+			emitFields(sbf, this.inputParameters);
 			sbf.append(';');
 		}
 
@@ -360,12 +360,12 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
 				.append(this.className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t}");
 
-		if (this.sqlParams != null) {
+		if (this.inputParameters != null) {
 			this.emitSetters(sbf);
 		}
 		this.emitOutMethods(sbf);
@@ -415,7 +415,7 @@ public class Sql {
 	}
 
 	private void emitSetters(final StringBuilder sbf) {
-		for (final Field f : this.sqlParams) {
+		for (final Field f : this.inputParameters) {
 			final ValueSchema vs = f.schemaInstance;
 			String typ = "unknownBecauseOfUnknownDataType";
 			if (vs == null) {

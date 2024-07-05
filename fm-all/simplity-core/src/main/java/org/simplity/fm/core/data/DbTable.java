@@ -37,7 +37,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  *            DbRecord rows this class is to contain
  *
  */
-public class DbTable<T extends DbRecord> extends Table<DbRecord> {
+public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
 	private final T dbRecord;
 
 	/**

@@ -128,7 +128,7 @@ public class RuntimeList implements IValueList {
 						? ValueType.Integer
 						: ValueType.Text, ValueType.Text};
 
-				handle.readMany(this.listSql, params, paramTypes, typesForList,
+				handle.readWithRowProcessor(this.listSql, params, paramTypes, typesForList,
 						row -> {
 							list.add(row);
 							return true;
@@ -214,7 +214,7 @@ public class RuntimeList implements IValueList {
 					paramTypes = null;
 				}
 
-				handle.readMany(this.allSql, params, paramTypes,
+				handle.readWithRowProcessor(this.allSql, params, paramTypes,
 						TYPES_FOR_ALL_ENTRIES, row -> {
 							entries.put(
 									row[0].toString() + "|" + row[1].toString(),
@@ -250,7 +250,7 @@ public class RuntimeList implements IValueList {
 				}
 
 				final List<String> keys = new ArrayList<>();
-				handle.readMany(this.allKeysSql, params, paramTypes,
+				handle.readWithRowProcessor(this.allKeysSql, params, paramTypes,
 						TYPES_FOR_KEYS, row -> {
 							keys.add(row[0].toString());
 							return true;
@@ -274,7 +274,7 @@ public class RuntimeList implements IValueList {
 				for (String key : keys) {
 					params[0] = this.keyIsNumeric ? Long.parseLong(key) : key;
 					final List<Object[]> list = new ArrayList<>();
-					handle.readMany(this.listSql, params, paramTypes,
+					handle.readWithRowProcessor(this.listSql, params, paramTypes,
 							typesForList, row -> {
 								list.add(row);
 								return true;
