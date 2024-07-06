@@ -230,7 +230,7 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public StoredProcedureResult readFromStoredProcedure(String callableSql,
+	public StoredProcedureResult readFromSp(String callableSql,
 			Object[] parameterValues, ValueType[] parameterTypes,
 			ValueType returnedValueType, ValueType[][] outputTypes)
 			throws SQLException {

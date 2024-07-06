@@ -1,0 +1,108 @@
+package org.simplity.fm.core.db;
+
+import java.sql.SQLException;
+
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.valueschema.ValueType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Represents a Stored Procedure of an RDBMS.
+ *
+ * 1. All the parameters for the procedure are to be Input. That is no Output or
+ * In-out parameters. (this feature will be developed on a need basis)
+ *
+ * 2. return value, if any, can only be a simple value. complex structures like
+ * arrays and tables are not handled.
+ *
+ * 3. procedure can output one or more result sets
+ *
+ *
+ * @author org.simplity
+ *
+ */
+public abstract class SP {
+	protected static final Logger logger = LoggerFactory
+			.getLogger(SP.class);
+
+	/**
+	 * unique name across all defined procedures
+	 */
+	protected String procedureName;
+
+	/**
+	 * null if this procedure has no input parameters
+	 */
+	protected Record inputData;
+
+	/**
+	 * null if the procedure does not produce any result sets. record is null
+	 * for an element if it corresponds to an SQL that is meant for data
+	 * manipulation
+	 */
+	protected Record[] outputData;
+
+	/**
+	 * value type of the value being returned by this procedure. null if no
+	 * value is returned
+	 */
+	protected ValueType retrunedType;
+
+	private ValueType[] parameterTypes;
+	private ValueType[][] outputTypes;
+	private String sql;
+
+	/**
+	 * call the stored procedure
+	 *
+	 * @param handle
+	 * @return result of this call process
+	 * @throws SQLException
+	 */
+	protected StoredProcedureResult callSp(IReadonlyHandle handle)
+			throws SQLException {
+
+		Object[] parameterValues = null;
+		if (this.inputData != null) {
+			parameterValues = this.inputData.fetchRawData();
+		}
+
+		return handle.readFromSp(this.sql, parameterValues,
+				this.parameterTypes, this.retrunedType, this.outputTypes);
+	}
+
+	/**
+	 * to be called
+	 */
+	protected void init() {
+		StringBuilder sbf = new StringBuilder("{ ");
+		if (this.retrunedType != null) {
+			sbf.append("? = ");
+		}
+
+		sbf.append("call ").append(this.procedureName).append('(');
+		if (this.inputData != null) {
+			this.parameterTypes = this.inputData.fetchValueTypes();
+			int n = this.inputData.length();
+			while (n > 0) {
+				sbf.append("?,"); // we will remove the last comma later
+				n--;
+			}
+			sbf.setLength(sbf.length() - 1);
+		}
+		sbf.append(")}");
+		this.sql = sbf.toString();
+
+		if (this.outputData != null) {
+			this.outputTypes = new ValueType[this.outputData.length][];
+			for (int i = 0; i < this.outputData.length; i++) {
+				Record rec = this.outputData[i];
+				if (rec != null) {
+					this.outputTypes[i] = rec.fetchValueTypes();
+				}
+
+			}
+		}
+	}
+}

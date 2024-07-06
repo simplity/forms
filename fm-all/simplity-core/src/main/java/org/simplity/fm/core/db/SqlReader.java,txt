@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2019 simplity.org
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package org.simplity.fm.core.db;
+
+import java.sql.SQLException;
+
+import org.simplity.fm.core.data.DataTable;
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.valueschema.ValueType;
+
+/**
+ * Base class for generating classes that read using SQL
+ *
+ * @author simplity.org
+ *
+ */
+public abstract class SqlReader extends Sql {
+
+	protected SqlReader(final String sqlText, final String[] parameterNames,
+			final ValueType[] parameterTypes, final ValueType[] outputTypes) {
+		super(sqlText, parameterNames, parameterTypes, outputTypes);
+	}
+
+	/**
+	 * to be called after populating all the parameters using the setter methods
+	 *
+	 * @param handle
+	 * @param outputRecord
+	 *            into which extracted data is extracted into
+	 * @return true if read was successful. false if nothing was read
+	 * @throws SQLException
+	 */
+	@Override
+	protected boolean read(final IReadonlyHandle handle, Record outputRecord)
+			throws SQLException {
+
+		this.checkValues();
+
+		return handle.readIntoRecord(this.sqlText, this.parameterValues,
+				this.parameterTypes, outputRecord);
+	}
+
+	/**
+	 * to be called only after assigning values for all the input parameters
+	 * using the setter methods.
+	 *
+	 * @param handle
+	 * @param dataTable
+	 *            to which the rows will be appended.
+	 * @throws SQLException
+	 */
+	@Override
+	protected void readMany(final IReadonlyHandle handle,
+			DataTable<Record> dataTable) throws SQLException {
+		this.checkValues();
+		handle.readIntoDataTable(this.sqlText, this.parameterValues,
+				this.parameterTypes, dataTable);
+	}
+
+	/**
+	 * to be called only after assigning values for all the input parameters
+	 * using the setter methods. to be used when at least one row is expected as
+	 * per our db design, and hence the caller need not handle the case with no
+	 * rows
+	 *
+	 * @param handle
+	 * @param outputRecord
+	 *            into which extracted data is extracted into
+	 * @throws SQLException
+	 *             thrown when any SQL exception, OR when no rows are found
+	 */
+	@Override
+	protected void readOrFail(final IReadonlyHandle handle, Record outputRecord)
+			throws SQLException {
+		if (!this.read(handle, outputRecord)) {
+			throw new SQLException(
+					"At least one row was expected, but non fould");
+		}
+	}
+}

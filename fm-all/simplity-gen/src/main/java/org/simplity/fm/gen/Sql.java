@@ -29,8 +29,8 @@ import java.util.Map;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.db.FilterSql;
 import org.simplity.fm.core.db.FilterWithRecordSql;
-import org.simplity.fm.core.db.SqlBasedReader;
-import org.simplity.fm.core.db.WriteSql;
+import org.simplity.fm.core.db.SqlReader;
+import org.simplity.fm.core.db.SqlWriterWithRecord;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,7 +159,7 @@ public class Sql {
 
 	void emitWriteSql(final StringBuilder sbf) {
 
-		Util.emitImport(sbf, WriteSql.class);
+		Util.emitImport(sbf, SqlWriterWithRecord.class);
 
 		/*
 		 * class
@@ -240,7 +240,7 @@ public class Sql {
 
 	void emitReadWithRecord(final StringBuilder sbf, final String rootPackage) {
 
-		Util.emitImport(sbf, SqlBasedReader.class);
+		Util.emitImport(sbf, SqlReader.class);
 		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
 		sbf.append("\nimport ").append(rootPackage).append(".rec.")
 				.append(recordCls).append(';');

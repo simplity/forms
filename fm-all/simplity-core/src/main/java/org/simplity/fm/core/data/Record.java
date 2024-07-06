@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.service.IInputArray;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
@@ -156,6 +157,28 @@ public class Record {
 			this.fieldValues[idx] = value;
 		} catch (final Exception e) {
 			this.logError(idx);
+		}
+	}
+
+	/**
+	 * UNSAFE API.
+	 *
+	 * @param values
+	 *            Must be handled with utmost care to ensure that the values are
+	 *            of right types. Each element must be one of the standard
+	 *            instances viz: String, Long, Double, Boolean, LocalData,
+	 *            Instant
+	 */
+	public void assignRawData(final Object[] values) {
+		int nbr = values == null ? 0 : values.length;
+		if (values == null || nbr != this.length()) {
+			throw new ApplicationError(
+					"Record has " + this.length() + " fields  while " + nbr
+							+ " values are being set using assignRawData()");
+		}
+
+		for (int i = 0; i < values.length; i++) {
+			this.fieldValues[i] = values[i];
 		}
 	}
 

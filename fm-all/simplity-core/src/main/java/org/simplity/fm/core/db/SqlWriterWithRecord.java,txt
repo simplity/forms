@@ -31,20 +31,11 @@ import org.simplity.fm.core.data.Record;
  * @author simplity.org
  *
  */
-public abstract class WriteSql extends Sql {
-	private DataTable<Record> batchData;
-	private Record[] emptyArray = new Record[0];
+public abstract class SqlWriterWithRecord {
+	protected final String sqlText;
 
-	/**
-	 * to be used by the extended class if it uses fields for input
-	 *
-	 * @param handle
-	 * @return number of affected rows. could be 0.
-	 * @throws SQLException
-	 */
-	protected int write(final IReadWriteHandle handle) throws SQLException {
-		this.checkBatch();
-		return handle.writeFromRecord(this.sqlText, this.inputRecord);
+	protected SqlWriterWithRecord(final String sqlText) {
+		this.sqlText = sqlText;
 	}
 
 	/**
@@ -56,29 +47,7 @@ public abstract class WriteSql extends Sql {
 	 */
 	protected int write(final IReadWriteHandle handle, Record record)
 			throws SQLException {
-		this.checkBatch();
 		return handle.writeFromRecord(this.sqlText, record);
-	}
-
-	private void checkBatch() throws SQLException {
-		if (this.batchData != null) {
-			throw new SQLException(
-					"Sql is prepared for batch, but write is issued.");
-		}
-
-	}
-	/**
-	 * caller expects at least one row to be affected, failing which we are to
-	 * raise an exception
-	 *
-	 * @param handle
-	 * @return non-zero number of affected rows.
-	 * @throws SQLException
-	 *             if number of affected rows 0, or on any sql exception
-	 */
-	protected int writeOrFail(final IReadWriteHandle handle)
-			throws SQLException {
-		return this.writeOrFail(handle, this.inputRecord);
 	}
 
 	/**
@@ -92,12 +61,10 @@ public abstract class WriteSql extends Sql {
 	 */
 	protected int writeOrFail(final IReadWriteHandle handle, Record record)
 			throws SQLException {
-		this.checkBatch();
 		final int n = handle.writeFromRecord(this.sqlText, record);
 		if (n > 0) {
 			return n;
 		}
-		logger.error(this.showDetails());
 		throw new SQLException(
 				"Sql is expected to affect at least one row, but no rows are affected.");
 	}
@@ -110,10 +77,6 @@ public abstract class WriteSql extends Sql {
 	 */
 	protected int writeMany(final IReadWriteHandle handle,
 			DataTable<Record> table) throws SQLException {
-		if (this.batchData == null) {
-			throw new SQLException(
-					"Sql is not prepared for batch, but writeBatch is issued.");
-		}
 		return handle.writeFromDataTable(this.sqlText, table);
 	}
 }

@@ -251,7 +251,7 @@ public interface IReadonlyHandle {
 	 * @return result
 	 * @throws SQLException
 	 */
-	public StoredProcedureResult readFromStoredProcedure(String callableSql,
+	public StoredProcedureResult readFromSp(String callableSql,
 			Object[] parameterValues, ValueType[] parameterTypes,
 			ValueType returnedValueType, ValueType[][] outputTypes)
 			throws SQLException;
