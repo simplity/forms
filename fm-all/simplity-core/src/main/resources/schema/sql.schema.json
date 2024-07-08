@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simplity.org/schemas/sql",
+  "title": "SQL Schema`",
+  "description": "Schema for a sql template. file type *.sql.json",
+  "required": ["name", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "description": "Unique name",
+      "$ref": "#/$defs/name"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sqlType": {
+      "description": "Type of sql",
+      "$ref": "#/$defs/sqlType"
+    },
+    "sql": {
+      "description": "A valid sql template",
+      "$ref": "#/$defs/name"
+    },
+    "useTimestampCheck": {
+      "description": "True if this table has a timestamp field, and it is to be used for managing concurrency",
+      "type": "boolean"
+    },
+    "operations": {
+      "description": "List of db operations that are valid for this table/view.",
+      "type": "array",
+      "items": {
+        "uniqueItems": true,
+        "enum": ["get", "create", "update", "filter", "delete"]
+      },
+      "isExposedToClient": {
+        "description": "Is this data structure part of output/output API for services. Used by the generator for generating client-side components.",
+        "type": "boolean"
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "pattern": "^[a-zA-Z_][a-zA-Z_0-9]*$",
+        "type": "object",
+        "required": ["valueSchema"],
+        "properties": {
+          "valueSchema": {
+            "description": "Value schema used to validate value for this field",
+            "$ref": "#/$defs/name"
+          },
+          "defaultValue": {
+            "description": "Used while inserting/new operations",
+            "type": "string"
+          },
+          "dbColumnName": {
+            "$ref": "#/$defs/name"
+          },
+          "fieldType": {
+            "enum": [
+              "generatedPrimaryKey",
+              "primaryKey",
+              "tenantKey",
+              "createdBy",
+              "createdAt",
+              "modifiedBy",
+              "modifiedAt",
+              "requiredData",
+              "optionalData"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "description": "like a telephone icon for telephone number. should be a reference url to the image file",
+            "type": "string"
+          },
+          "fieldPrefix": {
+            "description": "If provided, this is rendered in the form after the label, and before the field value. Like $, INR etc..",
+            "$ref": "#/$defs/name"
+          },
+          "fieldSuffix": {
+            "description": "If provided, this is rendered in the form after the field value. For example units of measure or the field- Kg etc..",
+            "$ref": "#/$defs/name"
+          },
+          "hint": {
+            "description": "used for form rendering",
+            "type": "string"
+          },
+          "placeHolder": {
+            "description": "used for form rendering",
+            "type": "string"
+          },
+          "listName": {
+            "description": "The list name that provides the list of valid values. Used for validation by the server, and to provide drop-down values by the client",
+            "$ref": "#/$defs/name"
+          },
+          "listKey": {
+            "description": "If the list is a keyedList",
+            "$ref": "#/$defs/name"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          },
+          "showInList": {
+            "description": "Only important fields are rendered as columns when data is rendered as rows in a list.",
+            "type": "boolean"
+          },
+          "showInSave": {
+            "description": "True if this field is meant for user input in edit/add mode.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "fromToPairs": {
+      "description": "used for validating ranges.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fromField", "toField"],
+        "properties": {
+          "field1": {
+            "$ref": "#/$defs/name"
+          },
+          "field2": {
+            "$ref": "#/$defs/name"
+          },
+          "equalOk": {
+            "type": "boolean"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "inclusivePairs": {
+      "description": "Pairs of fields that are specified together. Like billing address is required if credit card number is specified.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field1", "field2"],
+        "properties": {
+          "field1": {
+            "$ref": "#/$defs/name"
+          },
+          "field2": {
+            "$ref": "#/$defs/name"
+          },
+          "value1": {
+            "type": "string"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "exclusivePairs": {
+      "description": "Pairs of fields from which only one is expected",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field1", "field2"],
+        "properties": {
+          "field1": {
+            "$ref": "#/$defs/name"
+          },
+          "field2": {
+            "$ref": "#/$defs/name"
+          },
+          "isRequired": {
+            "description": "True if at least one field must have valid value",
+            "type": "boolean"
+          },
+          "errorId": {
+            "$ref": "#/$defs/name"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "name": { "pattern": "^[a-zA-Z_][a-zA-Z0-9_]$" },
+    "allValueSchemas": {
+      "$ref": "https://simplity.org/schemas/exampleValueSchemaList"
+    }
+  }
+}

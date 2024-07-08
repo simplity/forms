@@ -24,13 +24,11 @@ package org.simplity.fm.gen;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.db.FilterSql;
-import org.simplity.fm.core.db.FilterWithRecordSql;
-import org.simplity.fm.core.db.SqlReader;
-import org.simplity.fm.core.db.SqlWriterWithRecord;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,23 +40,28 @@ import org.slf4j.LoggerFactory;
 public class Sql {
 	private static final Logger logger = LoggerFactory.getLogger(Sql.class);
 	private static final String P = "\n\tprivate static final ";
-	private static final String SQL_TYPE_FILTER = "filter";
-	private static final String SQL_TYPE_READ = "read";
+	private static final String SQL_TYPE_READ_MANY = "readMany";
+	private static final String SQL_TYPE_READ_ONE = "readOne";
 	private static final String SQL_TYPE_WRITE = "write";
 
 	String name;
 	String sqlType;
+	String selectFrom;
 	String sql;
 	Field[] inputParameters;
 	String inputRecord;
 	Field[] outputFields;
 	String outputRecord;
+
 	private boolean hasDate = false;
 	private boolean hasTime = false;
 	private String className;
+	private String inRecClassName;
+	private String outRecClassName;
+	private Record inRec;
 
 	void init(Map<String, ValueSchema> schemas) {
-		this.className = Util.toClassName(this.name);
+		this.className = Util.toClassName(this.name) + "Sql";
 		/*
 		 * see if we have any date /time fields
 		 */
@@ -84,401 +87,483 @@ public class Sql {
 		}
 	}
 
-	void generateJava(String folderName, final String rootPackage) {
+	void generateJava(String folderName, final String rootPackage,
+			Map<String, Record> records) {
 
-		final StringBuilder sbf = new StringBuilder();
-		final boolean hasRecord = this.outputRecord != null
-				&& this.outputRecord.isEmpty() == false;
-		final boolean hasOutFields = this.outputFields != null
-				&& this.outputFields.length > 0;
-		final boolean hasParams = this.inputParameters != null
-				&& this.inputParameters.length > 0;
-		boolean isWrite = false;
-
-		String msg = null;
-		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
-			isWrite = true;
-			if (hasRecord || hasOutFields) {
-				msg = "Write sql should not specify record or output fields.";
-			}
-			if (!hasParams) {
-				msg = "Write sql MUST have sql parameters. Unconditional update to database is not allowed";
-			}
-		} else if (this.sqlType.equals(SQL_TYPE_READ)
-				|| this.sqlType.equals(SQL_TYPE_FILTER)) {
-			if (hasRecord == hasOutFields) {
-				msg = "read/filter sql should have either recordName or outputFields";
-			} else {
-				final String txt = this.sql.trim().toLowerCase();
-				if (hasRecord) {
-					if (txt.startsWith("where") == false) {
-						msg = "When record is specified, the sql should start with 'where' verb, and should be valid prase to append after a select ... part.";
-					}
-				} else {
-					if (txt.startsWith("select") == false) {
-						msg = "When output fields are specified, sql must start be a valid select sql starting with the verb 'select'";
-					}
-				}
-			}
-		} else {
-			msg = this.sqlType + " is invalid. it has to be read/write/filter";
-		}
-
-		if (msg != null) {
-			logger.error(msg);
-			sbf.append(msg);
+		if (!this.validate(records)) {
 			return;
 		}
 
+		final StringBuilder sbf = new StringBuilder();
+
 		emitImports(sbf, rootPackage);
+		sbf.append("\n\n/** generated class for ").append(this.className)
+				.append(" */");
+		sbf.append("\npublic class ").append(this.className)
+				.append(" extends Sql {");
+
+		this.emitStaticFields(sbf);
+		this.emitConstructor(sbf);
+
+		/**
+		 * emit setters, but only if input fields are used.
+		 */
+		if (this.inputParameters != null) {
+			Util.emitSettersValues(sbf, this.inputParameters,
+					"this.parameterValues");
+		}
+
+		if (this.outputFields != null) {
+			Util.emitGettersFromValues(sbf, this.outputFields,
+					"this.parameterValues");
+		}
+		if (this.sqlType == SQL_TYPE_READ_ONE) {
+			this.emitReadMethods(sbf);
+		} else if (this.sqlType == SQL_TYPE_WRITE) {
+			this.emitWriteMethods(sbf);
+		} else {
+			this.emitReadManyMethods(sbf);
+		}
+
+		sbf.append("\n}\n");
+	}
+
+	private void emitReadMethods(StringBuilder sbf) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void emitWriteMethods(final StringBuilder sbf) {
+		if (this.inputRecord != null) {
+			this.emitWriteWithRecord(sbf);
+			this.emitWriteFailWithRecord(sbf);
+			// record based SQL can be used for batch as well
+			this.emitWriteManyWithTable(sbf);
+			return;
+		}
+
+		this.emitWriteWithFields(sbf);
+		this.emitWriteFailWithFields(sbf);
+	}
+
+	private void emitReadManyMethods(StringBuilder sbf) {
+		if (this.inputRecord != null) {
+			if (this.outputRecord != null) {
+				this.emitReadWithRecords(sbf);
+				this.emitReadFailWithRecords(sbf);
+				return;
+			}
+			this.emitReadWithRecordAndFields(sbf);
+			this.emitReadFailWithRecordAndFields(sbf);
+			return;
+		}
+		if (this.outputRecord != null) {
+			this.emitReadWithRecords(sbf);
+			this.emitReadFailWithRecords(sbf);
+			return;
+		}
+		this.emitReadWithRecordAndFields(sbf);
+		this.emitReadFailWithRecordAndFields(sbf);
+		return;
+	}
+
+	private boolean validate(Map<String, Record> records) {
+		List<String> msgs = new ArrayList<>();
+
+		if (this.inputRecord != null) {
+			this.inRec = records.get(this.inputRecord);
+			if (this.inputRecord == null) {
+				msgs.add(this.inputRecord
+						+ " is specified as inputRecord, but it is not defined as a record");
+			} else {
+				this.inRecClassName = Util.toClassName(this.inputRecord)
+						+ "Record";
+			}
+		}
+
+		if (this.outputRecord != null) {
+			Record rec = records.get(this.outputRecord);
+			if (rec == null) {
+				msgs.add(this.outputRecord
+						+ " is specified as outputRecord, but it is not defined as a record");
+			} else {
+				this.outRecClassName = Util.toClassName(this.outputRecord)
+						+ "Record";
+			}
+		}
+
+		final boolean hasOutFields = this.outputFields != null
+				|| this.outputRecord != null;
+
+		final boolean hasParams = this.inputParameters != null
+				|| this.inputRecord != null;
+
+		if (this.inputParameters != null && this.inputRecord != null) {
+			msgs.add(
+					"Input parameters are to be specified either with inputParamaters or inputRecord, but not both");
+		}
+
+		if (this.outputFields != null && this.outputRecord != null) {
+			msgs.add(
+					"Output parameters are are to be specified either with outputFields or outputRecord, but not both");
+		}
+
+		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
+			if (hasOutFields) {
+				msgs.add(
+						"Write sql should not specify output fields or output record.");
+			}
+
+			if (!hasParams) {
+				msgs.add(
+						"Write sql MUST have sql parameters. Unconditional update to database is not allowed");
+			}
+		} else if (this.sqlType.equals(SQL_TYPE_READ_ONE)
+				|| this.sqlType.equals(SQL_TYPE_READ_MANY)) {
+			if (this.selectFrom == null) {
+
+			}
+			final String txt = this.sql.trim().toLowerCase();
+			if (txt.startsWith("where") == false) {
+				msgs.add(
+						"A Read-SQL should start with 'where' clause. SELECT clause is genrated and prefixed to this sql by the generator.");
+			}
+		} else {
+			msgs.add(this.sqlType
+					+ " is invalid. it has to be read/writeOne/writeMany");
+		}
+
+		if (msgs.size() != 0) {
+			for (String msg : msgs) {
+				logger.error(msg);
+			}
+			return false;
+		}
+		return true;
+
+	}
+
+	private void generateSelectSql(Field[] fields) {
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("SELECT ");
+		for (Field field : fields) {
+			sbf.append(field.name).append(',');
+		}
+		sbf.setLength(sbf.length() - 1);
+
+		sbf.append(" FROM ").append(this.selectFrom).append(' ')
+				.append(this.sql);
+		this.sql = sbf.toString() + sql;
+	}
+
+	private void emitImports(final StringBuilder sbf,
+			final String rootPackage) {
+		sbf.append("package ").append(rootPackage).append(".sql;\n");
+
 		if (this.hasDate) {
 			Util.emitImport(sbf, LocalDate.class);
 		}
 		if (this.hasTime) {
 			Util.emitImport(sbf, Instant.class);
 		}
-
-		// emit the right type of sql
-		if (isWrite) {
-			this.emitWriteSql(sbf);
-		} else if (this.sqlType.equals(SQL_TYPE_READ)) {
-			if (hasRecord) {
-				this.emitReadWithRecord(sbf, rootPackage);
-			} else {
-				this.emitRead(sbf);
-			}
-		} else if (hasRecord) {
-			this.emitFilterWithRecord(sbf, rootPackage);
-
-		} else {
-			this.emitFilter(sbf);
-		}
-
-		Util.writeOut(folderName + this.className + ".java", sbf.toString());
-	}
-
-	void emitWriteSql(final StringBuilder sbf) {
-
-		Util.emitImport(sbf, SqlWriterWithRecord.class);
-
-		/*
-		 * class
-		 */
-		sbf.append("\n\n/** generated class for ").append(this.className)
-				.append(" */");
-		sbf.append("\npublic class ").append(this.className)
-				.append(" extends WriteSql {");
-
-		/*
-		 * static declarations
-		 */
-		sbf.append(P).append("String SQL = ")
-				.append(Util.quotedString(this.sql)).append(';');
-		sbf.append(P).append("Field[] IN = ");
-		emitFields(sbf, this.inputParameters);
-		sbf.append(';');
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
-				.append(this.className).append("() {");
-		sbf.append("\n\t\tthis.sqlText = SQL;");
-		sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
-		sbf.append("\n\t}");
-
-		this.emitSetters(sbf);
-		sbf.append("\n}\n");
-	}
-
-	void emitFilterWithRecord(final StringBuilder sbf,
-			final String rootPackage) {
-
-		Util.emitImport(sbf, FilterWithRecordSql.class);
-		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
-		sbf.append("\nimport ").append(rootPackage).append(".rec.")
-				.append(recordCls).append(";");
-
-		/*
-		 * class
-		 */
-		sbf.append("\n\n/** generated class for ").append(this.className)
-				.append(" */");
-		sbf.append("\npublic class ").append(this.className)
-				.append(" extends FilterWithRecordSql<");
-		sbf.append(recordCls).append("> {");
-
-		/*
-		 * static declarations
-		 */
-		sbf.append(P).append("String SQL = ")
-				.append(Util.quotedString(this.sql)).append(';');
-		if (this.inputParameters != null) {
-			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.inputParameters);
-			sbf.append(';');
-		}
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
-				.append(this.className).append("() {");
-		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.inputParameters != null) {
-			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
-		}
-		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
-		sbf.append("\n\t}");
-
-		if (this.inputParameters != null) {
-			this.emitSetters(sbf);
-		}
-		sbf.append("\n}\n");
-
-	}
-
-	void emitReadWithRecord(final StringBuilder sbf, final String rootPackage) {
-
-		Util.emitImport(sbf, SqlReader.class);
-		final String recordCls = Util.toClassName(this.outputRecord) + "Record";
-		sbf.append("\nimport ").append(rootPackage).append(".rec.")
-				.append(recordCls).append(';');
-
-		/*
-		 * class
-		 */
-		sbf.append("\n\n/** generated class for ").append(this.className)
-				.append(" */");
-		sbf.append("\npublic class ").append(this.className)
-				.append(" extends ReadWithRecordSql<").append(recordCls)
-				.append("> {");
-
-		/*
-		 * static declarations
-		 */
-		sbf.append(P).append("String SQL = ")
-				.append(Util.quotedString(this.sql)).append(';');
-		if (this.inputParameters != null) {
-			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.inputParameters);
-			sbf.append(';');
-		}
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
-				.append(this.className).append("() {");
-		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.inputParameters != null) {
-			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
-		}
-		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
-		sbf.append("\n\t}");
-
-		if (this.inputParameters != null) {
-			this.emitSetters(sbf);
-		}
-		sbf.append("\n}\n");
-	}
-
-	void emitRead(final StringBuilder sbf) {
-		Util.emitImport(sbf, ReadRecordWithSql.class);
-		/*
-		 * class
-		 */
-		sbf.append("\n\n/** generated class for ").append(this.className)
-				.append(" */");
-		sbf.append("\npublic class ").append(this.className)
-				.append(" extends ReadSql<").append(this.className)
-				.append(".OutputRecord> {");
-
-		/*
-		 * static declarations
-		 */
-		sbf.append(P).append("String SQL = ")
-				.append(Util.quotedString(this.sql)).append(';');
-		if (this.inputParameters != null) {
-			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.inputParameters);
-			sbf.append(';');
-		}
-
-		sbf.append("\n\tprotected static final Field[] OUT = ");
-		emitFields(sbf, this.outputFields);
-		sbf.append(';');
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
-				.append(this.className).append("() {");
-		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.inputParameters != null) {
-			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
-		}
-		sbf.append("\n\t}");
-
-		if (this.inputParameters != null) {
-			this.emitSetters(sbf);
-		}
-		this.emitOutMethods(sbf);
-		sbf.append("\n}\n");
-	}
-
-	void emitFilter(final StringBuilder sbf) {
-
-		Util.emitImport(sbf, FilterSql.class);
-		/*
-		 * class
-		 */
-		sbf.append("\n\n/** generated class for ").append(this.className)
-				.append(" */");
-		sbf.append("\npublic class ").append(this.className)
-				.append(" extends FilterSql<").append(this.className)
-				.append(".OutputRecord> {");
-
-		/*
-		 * static declarations
-		 */
-		sbf.append(P).append("String SQL = ")
-				.append(Util.quotedString(this.sql)).append(';');
-		if (this.inputParameters != null) {
-			sbf.append(P).append("Field[] IN = ");
-			emitFields(sbf, this.inputParameters);
-			sbf.append(';');
-		}
-
-		sbf.append("\n\tprotected static final Field[] OUT = ");
-		emitFields(sbf, this.outputFields);
-		sbf.append(';');
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\n\t/** default constructor */\n\tpublic ")
-				.append(this.className).append("() {");
-		sbf.append("\n\t\tthis.sqlText = SQL;");
-		if (this.inputParameters != null) {
-			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
-		}
-		sbf.append("\n\t}");
-
-		if (this.inputParameters != null) {
-			this.emitSetters(sbf);
-		}
-		this.emitOutMethods(sbf);
-		sbf.append("\n}\n");
-	}
-
-	private static void emitImports(final StringBuilder sbf,
-			final String rootPackage) {
-		sbf.append("package ").append(rootPackage).append(".sql;\n");
-
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.DataTable.class);
+		Util.emitImport(sbf, org.simplity.fm.core.db.Sql.class);
 		sbf.append("\nimport ").append(rootPackage).append('.')
 				.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
 				.append(';');
 
+		if (this.inRecClassName != null) {
+			sbf.append("\nimport ").append(rootPackage).append(".rec.")
+					.append(this.inRecClassName).append(';');
+		}
+
+		if (this.outRecClassName != null) {
+			sbf.append("\nimport ").append(rootPackage).append(".rec.")
+					.append(this.outRecClassName).append(';');
+		}
+
 	}
 
-	private void emitOutMethods(final StringBuilder sbf) {
-		/*
-		 * abstract method to be implemented
-		 */
-		sbf.append("\n\n\t@Override\n\tprotected ");
-		sbf.append("OutputRecord newOutputData() {");
-		sbf.append("\n\t\treturn new OutputRecord(OUT);\n\t}");
-		/*
-		 * inner class for custom Vo
-		 */
+	private void emitStaticFields(final StringBuilder sbf) {
+		sbf.append(P).append("String SQL = ").append(this.sql);
+		sbf.append(P).append("String[] NAMES = ");
+		final StringBuilder typeBuf = new StringBuilder();
+		if (this.inputParameters != null) {
+			Util.emitNamesFromFields(this.inputParameters, sbf);
+			Util.emitTypesArray(this.inputParameters, typeBuf);
+		} else if (this.inRec != null) {
+			Util.emitNamesFromFields(this.inRec.fields, sbf);
+			typeBuf.append("null;");
+		} else {
+			sbf.append("null;");
+			typeBuf.append("null;");
+		}
+		sbf.append(P).append("ValueType[] IN_TYPES = ").append(typeBuf);
 
-		sbf.append("\n\n\t/** Record with output fields from this Sql */");
-		sbf.append("\n\tpublic static class OutputRecord extends Record {");
+		sbf.append(P).append("ValueType[] OUT_TYPES = ");
+		if (this.outputFields == null) {
+			sbf.append("null;");
+		} else {
+			Util.emitTypesArray(this.outputFields, typeBuf);
+		}
+	}
 
-		sbf.append("\n\n\t\t/**\n\t\t * @param fields\n\t\t */");
-		sbf.append("\n\t\tpublic OutputRecord(final Field[] fields) {");
-		sbf.append("\n\t\t\tsuper(fields, null);\n\t\t}");
-
-		this.emitGetters(sbf);
-
-		/*
-		 * over-ride new instance
-		 */
-		sbf.append(
-				"\n\n\t@Override\n\tpublic OutputRecord newInstance(Object[] arr) {");
-		sbf.append("\n\t\treturn new OutputRecord(OUT);\n\t}");
+	private void emitConstructor(final StringBuilder sbf) {
+		sbf.append("\n\n\t/** \n\t * default constructor\n\t */\n\tpublic ")
+				.append(this.className).append("() {");
+		sbf.append("\n\t\tsuper(SQL, NAMES, IN_TYPES, OUT_TYPES);");
 		sbf.append("\n\t}");
-
 	}
 
-	private void emitSetters(final StringBuilder sbf) {
-		for (final Field f : this.inputParameters) {
-			final ValueSchema vs = f.schemaInstance;
-			String typ = "unknownBecauseOfUnknownDataType";
-			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name,
-						f.valueSchema);
-			} else {
-				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
-			}
-			final String nam = f.name;
-			final String cls = Util.toClassName(nam);
+	private void emitReadWithFieldsAndRecord(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called only after setting values to all the input parameters using setter methods. Output/selected fields are xtracted into the ouput record");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(OUT_REC_PARAM);
+		sbf.append(BOOL_RETURN);
+		sbf.append(END_COMMENT);
 
-			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
-			sbf.append("\n\t * @param value to be assigned to ").append(nam);
-			sbf.append("\n\t */");
-			sbf.append("\n\tpublic void set").append(cls).append('(')
-					.append(typ).append(" value){");
-			sbf.append("\n\t\tthis.inputData.assignValue(").append(f.index)
-					.append(", value);");
-			sbf.append("\n\t}");
-		}
+		sbf.append(BEGIN_METHOD)
+				.append("boolean read(final IReadonlyHandle handle, final ")
+				.append(this.outRecClassName).append(" outputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("read(handle, outputRecord);");
+		sbf.append(END_METHOD);
 	}
 
-	/**
-	 * @param constr
-	 * @param schemas
-	 */
-	private void emitGetters(final StringBuilder sbf) {
-		for (final Field f : this.outputFields) {
-			final ValueSchema vs = f.schemaInstance;
-			String typ = "unknownBecauseOfUnknownDataType";
-			String get = typ;
-			if (vs == null) {
-				logger.error("Field {} has an invalid data type of {}", f.name,
-						f.valueSchema);
-			} else {
-				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
-				get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
-			}
-			final String nam = f.name;
-			final String cls = Util.toClassName(nam);
-
-			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)
-					.append("\n\t */");
-			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls)
-					.append("(){");
-			sbf.append("\n\t\t\treturn super.fetch").append(get)
-					.append("Value(").append(f.index).append(");");
-			sbf.append("\n\t\t}");
-		}
+	private void emitReadFailWithFieldsAndRecord(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called only after setting values to all the input parameters using setter methods. Output/selected fields are xtracted into the ouput record");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(OUT_REC_PARAM);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("void readOrFail(final IReadonlyHandle handle, final ")
+				.append(this.outRecClassName).append(" outputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID).append("readOrFail(handle, outputRecord);");
+		sbf.append(END_METHOD);
 	}
 
-	private static void emitFields(final StringBuilder sbf,
-			final Field[] fields) {
-		sbf.append('{');
-		int idx = -1;
-		for (final Field field : fields) {
-			idx++;
-			if (idx > 0) {
-				sbf.append(',');
-			}
-			field.index = idx;
-			field.emitJavaCode(sbf, false);
-		}
-		sbf.append('}');
+	private void emitReadManyWithFieldsAndRecord(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called only after setting values to all the input parameters using setter methods. Output rows are populated into the data table");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(OUT_TABLE_PARAM);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD).append(
+				"void readMany(final IReadonlyHandle handle, final DataTable<")
+				.append(this.outRecClassName).append("> dataTable")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID).append("readMany(handle, dataTable);");
+		sbf.append(END_METHOD);
 	}
+
+	private void emitReadWithRecords(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"values for parameters are taken from the input Record. On successful read operation, output record is populated with the output values");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(OUT_REC_PARAM);
+		sbf.append(BOOL_RETURN);
+		sbf.append(BEGIN_METHOD)
+				.append("boolean read(final IReadonlyHandle handle, final ")
+				.append(this.inRecClassName).append(" inputRecord, final ")
+				.append(this.outRecClassName).append(" outputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN)
+				.append("read(handle, inputRecord, outputRecord);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadFailWithRecords(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"values for parameters are taken from the input Record. On successful read operation, output record is populated with the output values");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(OUT_REC_PARAM);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("void readOrFail(final IReadonlyHandle handle, final ")
+				.append(this.inRecClassName).append(" inputRecord, ")
+				.append(this.outRecClassName).append(" outputputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID)
+				.append("readOrFail(handle, inputRecord, outputRecord);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadManyWithRecords(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"values for parameters are taken from the input Record. On successful read operation, output rows are appended into the datatable");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(OUT_TABLE_PARAM);
+		sbf.append(BEGIN_METHOD)
+				.append("void readMany(final IReadonlyHandle handle, final")
+				.append(this.inRecClassName)
+				.append(" inputRecord, final DataTable<")
+				.append(this.outRecClassName).append("> dataTable")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID).append("read(handle, inputRecord, dataTable);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadWithRecordAndFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"Parameters are taken from the input record. On successful read operation, utput fields can be fetched with the getter methods");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(BOOL_RETURN);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("boolean readIn(final IReadonlyHandle handle, final ")
+				.append(this.inRecClassName).append(" inputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("readIn(handle, inputRecord);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadFailWithRecordAndFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"Parameters are taken from the input record. On successful read operation, utput fields can be fetched with the getter methods");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("void readInOrFail(final IReadonlyHandle handle")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID).append("readInOrFail(handle);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadWithFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called after setting values to all the parameters using setter methods. Output fields may be extracted after this call using the getter methods");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(BOOL_RETURN);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("int readIn(final IReadonlyHandle handle")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("readIn(handle);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitReadFailWithFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called after setting values to all the parameters using setter methods. Output fields may be extracted after this call using the getter methods");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("void readInOrFail(final IReadonlyHandle handle")
+				.append(SQL_EX);
+		sbf.append(SUPER_VOID).append("readInOrFail(handle);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitWriteWithFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called after setting values to all the parameters using setter methods.");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(INT_RETURN);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("int write(final IReadWriteHandle handle")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("write(handle);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitWriteFailWithFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"To be called after setting values to all the parameters using setter methods.");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(INT_RETURN);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("int write(final IReadWriteHandle handle")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("write(handle);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitWriteWithRecord(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX)
+				.append("update the db with values taken from the record");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(INT_RETURN);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("int write(final IReadWriteHandle handle, ")
+				.append(this.inRecClassName).append(" inputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("write(handle, inputRecord);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitWriteFailWithRecord(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX)
+				.append("update the db with values taken from the record");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_REC_PARAM);
+		sbf.append(INT_RETURN);
+		sbf.append(END_FAIL_COMMENT);
+		sbf.append(BEGIN_METHOD)
+				.append("int writeOrFail(final IReadWriteHandle handle, ")
+				.append(this.inRecClassName).append(" inputRecord")
+				.append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("writeOrFail(handle, inputRecord);");
+		sbf.append(END_METHOD);
+	}
+
+	private void emitWriteManyWithTable(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_PREFIX).append(
+				"execute a batch-update with data rows from the the data table");
+		sbf.append(HANDLE_PARAM);
+		sbf.append(IN_TABLE_PARAM);
+		sbf.append(INT_RETURN);
+		sbf.append(END_COMMENT);
+		sbf.append(BEGIN_METHOD).append(
+				"int writeMany(final IReadWriteHandle handle, DataTable<")
+				.append(this.inRecClassName).append("> table").append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("writeMany(handle, table);");
+		sbf.append(END_METHOD);
+	}
+
+	private static final String SUPER_VOID = "\n\t\t\t super.";
+	private static final String SUPER_RETURN = "\n\t\t\t return super.";
+	private static final String SQL_EX = ") throws SQLException {";
+	private static final String BEGIN_METHOD = "\n\t@Override\n\tpublic ";
+	private static final String END_METHOD = "\n\t}";
+	private static final String BEGIN_COMMENT = "\n\t/**";
+	private static final String COMMENT_PREFIX = "\n\t * ";
+	private static final String HANDLE_PARAM = "\n\t *\n\t * @param handle";
+	private static final String IN_REC_PARAM = "\n\t * @param inputRecord from which parameter values are set to the sql";
+	private static final String OUT_REC_PARAM = "\n\t * @param outputRecord to which output fields are extracted to";
+	private static final String IN_TABLE_PARAM = "\n\t * @param dataTable that has the rows for preparing batch-update commands";
+	private static final String OUT_TABLE_PARAM = "\n\t * @param dataTable to which output rows are extracted to";
+	private static final String END_COMMENT = "\n\t * @throws SQLException\n\t */";
+	private static final String BOOL_RETURN = "\n\t * @return true read was successful. false otherwise.";
+	private static final String INT_RETURN = "\n\t * @return number of rowsread/affected";
+	private static final String NON_ZERO_RETURN = "\n\t * @return non-zero number of rows affected. ";
+	private static final String END_FAIL_COMMENT = "\n\t * @throws SQLException if no rows read/affected, or on any DB related error\n\t */";
 }

@@ -46,15 +46,15 @@ public abstract class Sql {
 	protected final String sqlText;
 	protected final String[] parameterNames;
 	protected final ValueType[] parameterTypes;
-	protected final Object[] parameterValues;
 	protected final ValueType[] outputTypes;
+
+	/**
+	 * array to hold input and output values, in case fields are specified, and
+	 * not records
+	 */
+	protected final Object[] parameterValues;
 	protected Object[] outputValues;
 
-	protected static void fail() throws SQLException {
-		throw new SQLException(
-				"Sql is expected to affect at least one row, but no rows are affected.");
-
-	}
 	/**
 	 *
 	 * @param sqlText
@@ -103,22 +103,6 @@ public abstract class Sql {
 
 	/**
 	 * to be called only after assigning values for all the input parameters
-	 * using the setter methods.
-	 *
-	 * @param handle
-	 * @param dataTable
-	 *            to which the rows will be appended.
-	 * @throws SQLException
-	 */
-	protected void readMany(final IReadonlyHandle handle,
-			DataTable<Record> dataTable) throws SQLException {
-		this.checkValues();
-		handle.readIntoDataTable(this.sqlText, this.parameterValues,
-				this.parameterTypes, dataTable);
-	}
-
-	/**
-	 * to be called only after assigning values for all the input parameters
 	 * using the setter methods. to be used when at least one row is expected as
 	 * per our db design, and hence the caller need not handle the case with no
 	 * rows
@@ -134,6 +118,22 @@ public abstract class Sql {
 		if (!this.read(handle, outputRecord)) {
 			fail();
 		}
+	}
+
+	/**
+	 * to be called only after assigning values for all the input parameters
+	 * using the setter methods.
+	 *
+	 * @param handle
+	 * @param dataTable
+	 *            to which the rows will be appended.
+	 * @throws SQLException
+	 */
+	protected void readMany(final IReadonlyHandle handle,
+			DataTable<Record> dataTable) throws SQLException {
+		this.checkValues();
+		handle.readIntoDataTable(this.sqlText, this.parameterValues,
+				this.parameterTypes, dataTable);
 	}
 
 	// read methods with input record and output record //
@@ -155,16 +155,6 @@ public abstract class Sql {
 	}
 
 	/**
-	 * concrete class uses this to readMany with params of specific concrete
-	 * class
-	 */
-	protected void readMany(final IReadonlyHandle handle, Record inputRecord,
-			DataTable<Record> dataTable) throws SQLException {
-
-		handle.readIntoDataTable(this.sqlText, inputRecord, dataTable);
-	}
-
-	/**
 	 * to be used when a row is expected as per our db design, and hence the
 	 * caller need not handle the case with no rows
 	 *
@@ -177,6 +167,16 @@ public abstract class Sql {
 		if (!this.read(handle, inputRecord, outputRecord)) {
 			fail();
 		}
+	}
+
+	/**
+	 * concrete class uses this to readMany with params of specific concrete
+	 * class
+	 */
+	protected void readMany(final IReadonlyHandle handle, Record inputRecord,
+			DataTable<Record> dataTable) throws SQLException {
+
+		handle.readIntoDataTable(this.sqlText, inputRecord, dataTable);
 	}
 
 	// read methods with input record and output fields //
@@ -297,13 +297,6 @@ public abstract class Sql {
 		return 0;
 	}
 
-	/**
-	 * to be used by the concrete class if it is based on record
-	 *
-	 * @param handle
-	 * @return number of affected rows. could be 0.
-	 * @throws SQLException
-	 */
 	protected int write(final IReadWriteHandle handle, Record record)
 			throws SQLException {
 		return handle.writeFromRecord(this.sqlText, record);
@@ -351,4 +344,11 @@ public abstract class Sql {
 			}
 		}
 	}
+
+	protected static void fail() throws SQLException {
+		throw new SQLException(
+				"Sql is expected to affect at least one row, but no rows are affected.");
+
+	}
+
 }

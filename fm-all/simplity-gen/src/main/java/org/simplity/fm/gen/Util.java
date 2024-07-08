@@ -328,6 +328,136 @@ public class Util {
 	}
 
 	/**
+	 * emit names of fields as sting array : like new String[]{"firstOne", ....}
+	 *
+	 * @param fields
+	 * @param sbf
+	 */
+	public static void emitNamesFromFields(final Field[] fields,
+			final StringBuilder sbf) {
+		sbf.append("new String[]{");
+		boolean firstOne = true;
+		for (final Field f : fields) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(',');
+			}
+			sbf.append(quotedString(f.name));
+		}
+		sbf.append("};");
+	}
+
+	/**
+	 * emit java code for an array of fields
+	 *
+	 * @param sbf
+	 * @param fields
+	 */
+	public static void emitFieldsArray(final StringBuilder sbf,
+			final Field[] fields) {
+		sbf.append("new Field[]{");
+		int idx = -1;
+		for (final Field field : fields) {
+			idx++;
+			if (idx > 0) {
+				sbf.append(',');
+			}
+			field.index = idx;
+			field.emitJavaCode(sbf, false);
+		}
+		sbf.append('}');
+	}
+
+	/**
+	 * emit valueTypes array of fields: like new ValueType{ValueType.Text, ....}
+	 *
+	 * @param fields
+	 * @param sbf
+	 */
+	public static void emitTypesArray(final Field[] fields,
+			final StringBuilder sbf) {
+		sbf.append("new ValueType[]{");
+		boolean firstOne = true;
+		for (final Field f : fields) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(',');
+			}
+			sbf.append("ValueSchema.")
+					.append(f.schemaInstance.valueTypeEnum.name());
+		}
+		sbf.append('}');
+	}
+
+	/**
+	 * emit getter functions with proper type from the underlying values
+	 * Object[]
+	 *
+	 * @param sbf
+	 * @param fields
+	 * @param valuesArrayName
+	 */
+	public static void emitGettersFromValues(final StringBuilder sbf,
+			Field[] fields, String valuesArrayName) {
+		for (final Field f : fields) {
+			final ValueSchema vs = f.schemaInstance;
+			String typ;
+			if (vs == null) {
+				typ = "unknownBecauseOfUnknownDataType";
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
+			} else {
+				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
+			}
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
+
+			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)
+					.append("\n\t */");
+			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls)
+					.append("(){");
+			sbf.append("\n\t\t\treturn (").append(typ).append(") ")
+					.append(valuesArrayName).append('[').append(f.index)
+					.append("];");
+			sbf.append("\n\t\t}");
+		}
+	}
+
+	/**
+	 * emit setter functions with proper type to the underlying values Object[]
+	 *
+	 * @param sbf
+	 * @param fields
+	 * @param valuesArrayName
+	 */
+	public static void emitSettersValues(final StringBuilder sbf,
+			Field[] fields, String valuesArrayName) {
+		for (final Field f : fields) {
+			final ValueSchema vs = f.schemaInstance;
+			String typ;
+			if (vs == null) {
+				typ = "unknownBecauseOfUnknownDataType";
+				logger.error("Field {} has an invalid data type of {}", f.name,
+						f.valueSchema);
+			} else {
+				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
+			}
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
+
+			sbf.append("\n\n\t\t/**\n\t * @param value value of ").append(nam)
+					.append("\n\t */");
+			sbf.append("\n\t\tpublic ").append(typ).append(" set").append(cls)
+					.append("( ").append(typ).append(" value){");
+			sbf.append("\n\t\t\t").append(valuesArrayName).append('[')
+					.append(f.index).append("] = value;");
+			sbf.append("\n\t\t}");
+		}
+	}
+
+	/**
 	 * initialize entries in a Map with name/idx
 	 *
 	 * @param map

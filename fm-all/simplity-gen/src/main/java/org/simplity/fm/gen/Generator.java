@@ -474,6 +474,7 @@ public class Generator {
 
 			fn = fn.substring(0,
 					fn.length() - Conventions.App.EXTENSION_SQL.length());
+
 			final Sql sql = Util.loadJson(file.getPath(), Sql.class);
 			if (sql == null) {
 				logger.error("Sql {} not generated", fn);
@@ -482,13 +483,14 @@ public class Generator {
 
 			if (!fn.equals(sql.name)) {
 				logger.error(
-						"Record name {} does not match with its file named {}",
+						"Sql name {} does not match with its file name: {}",
 						sql.name, fn);
 				return;
 			}
 
 			sql.init(this.app.valueSchemas);
 			sql.generateJava(javaFolder, this.packageName);
+
 		}
 	}
 
