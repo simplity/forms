@@ -48,5 +48,6 @@ public class StoredProcedureResult {
 		this.nbrRowsAffected = nbrRowsAffected;
 		this.outputData = outputData;
 		this.returnedValue = returnedValue;
+
 	}
 }

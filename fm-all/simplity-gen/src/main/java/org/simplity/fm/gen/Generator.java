@@ -489,7 +489,7 @@ public class Generator {
 			}
 
 			sql.init(this.app.valueSchemas);
-			sql.generateJava(javaFolder, this.packageName);
+			sql.generateJava(javaFolder, this.packageName, records);
 
 		}
 	}

@@ -263,40 +263,6 @@ public abstract class Sql {
 	}
 
 	// write methods with input record //
-
-	// write methods with input fields //
-	/**
-	 * Update/insert/delete operation. To be called after setting values for all
-	 * the fields using setters
-	 *
-	 * @param handle
-	 * @return number of rows affected
-	 * @throws SQLException
-	 */
-	protected int write(final IReadWriteHandle handle) throws SQLException {
-		this.checkValues();
-		return handle.write(this.sqlText, this.parameterValues,
-				this.parameterTypes);
-	}
-
-	/**
-	 * Update/insert/delete one row. To be called after setting values for all
-	 * the fields using setters
-	 *
-	 * @param handle
-	 * @throws SQLException
-	 *             if no rows are affected, or any sql error
-	 */
-	protected int writeOrFail(final IReadWriteHandle handle)
-			throws SQLException {
-		final int n = this.write(handle);
-		if (n > 0) {
-			return n;
-		}
-		fail();
-		return 0;
-	}
-
 	protected int write(final IReadWriteHandle handle, Record record)
 			throws SQLException {
 		return handle.writeFromRecord(this.sqlText, record);
@@ -330,6 +296,39 @@ public abstract class Sql {
 	protected int writeMany(final IReadWriteHandle handle,
 			DataTable<Record> table) throws SQLException {
 		return handle.writeFromDataTable(this.sqlText, table);
+	}
+
+	// write methods with input fields //
+	/**
+	 * Update/insert/delete operation. To be called after setting values for all
+	 * the fields using setters
+	 *
+	 * @param handle
+	 * @return number of rows affected
+	 * @throws SQLException
+	 */
+	protected int write(final IReadWriteHandle handle) throws SQLException {
+		this.checkValues();
+		return handle.write(this.sqlText, this.parameterValues,
+				this.parameterTypes);
+	}
+
+	/**
+	 * Update/insert/delete one row. To be called after setting values for all
+	 * the fields using setters
+	 *
+	 * @param handle
+	 * @throws SQLException
+	 *             if no rows are affected, or any sql error
+	 */
+	protected int writeOrFail(final IReadWriteHandle handle)
+			throws SQLException {
+		final int n = this.write(handle);
+		if (n > 0) {
+			return n;
+		}
+		fail();
+		return 0;
 	}
 
 	protected void checkValues() throws SQLException {

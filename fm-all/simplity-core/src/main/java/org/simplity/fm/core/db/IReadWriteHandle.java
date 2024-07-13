@@ -143,38 +143,4 @@ public interface IReadWriteHandle extends IReadonlyHandle {
 			final Object[][] rowsToInsert, ValueType[] parameterTypes,
 			String generatedColumnName, long[] generatedKeys)
 			throws SQLException;
-
-	/**
-	 * executes the stored-procedure. A stored procedure may return a simple
-	 * value as the returned-value. A stored procedure may execute more than one
-	 * sql, there by producing several output.
-	 *
-	 * Caller should use the right handler, ReadOnly or ReadWrite, to ensure
-	 * that transaction processing, if any is respected.
-	 *
-	 * @param callableSql
-	 *            sql of the form {?= call proecudureName(?,?,...)}
-	 * @param parameterValues
-	 *            array of right-typed values for all the parameters of the
-	 *            stored procedure. null if the procedure receives no parameters
-	 * @param parameterTypes
-	 *            value-types of the parameters. null if the procedure accepts
-	 *            no parameters
-	 * @param returnedValueType
-	 *            value types of the output. null if the procedure does not
-	 *            return any values, or the returned value is not be used
-	 * @param outputTypes
-	 *            an array with each element to take the result of a sql
-	 *            statement. (A stored procedure may execute several statement,
-	 *            there by producing many results) If the sql is a select
-	 *            statement, then the array-element is an array of value types
-	 *            representing a row of data. If the sql a non-select, then the
-	 *            array element must be null.
-	 * @return result
-	 * @throws SQLException
-	 */
-	public StoredProcedureResult writeUsingStoredProcedure(String callableSql,
-			Object[] parameterValues, ValueType[] parameterTypes,
-			ValueType returnedValueType, ValueType[][] outputTypes)
-			throws SQLException;
 }

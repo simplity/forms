@@ -34,7 +34,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * @author simplity.org
  *
  */
-public interface IReadonlyHandle {
+public interface IReadonlyHandle2 {
 
 	/**
 	 * read a row of data as an array of values
@@ -223,10 +223,9 @@ public interface IReadonlyHandle {
 			DataTable<T> outputTable) throws SQLException;
 
 	/**
-	 * A stored procedure may produce one or more outputs as well as return a
-	 * value. While the returned values, if any, is returned by this method, the
-	 * outputs are handled by the lambda function (call-back object) supplied b
-	 * the caller
+	 * executes the stored-procedure and returns the result. A stored procedure
+	 * may return a simple value as the returned-value. A stored procedure may
+	 * execute more than one sql, there by producing several output.
 	 *
 	 * Caller should use the right handler, ReadOnly or ReadWrite, to ensure
 	 * that transaction processing, if any is respected.
@@ -242,14 +241,18 @@ public interface IReadonlyHandle {
 	 * @param returnedValueType
 	 *            value types of the output. null if the procedure does not
 	 *            return any values, or the returned value is not be used
-	 * @param fn
-	 *            function that is called for each result in the output
-	 * @return returned value from the stored procedure. null if the procedure
-	 *         does not return value
+	 * @param outputTypes
+	 *            an array with each element to take the result of a sql
+	 *            statement. (A stored procedure may execute several statement,
+	 *            there by producing many results) If the sql is a select
+	 *            statement, then the array-element is an array of value types
+	 *            representing a row of data. If the sql a non-select, then the
+	 *            array element must be null.
+	 * @return result
 	 * @throws SQLException
 	 */
-	public Object callStoredProcedure(String callableSql,
+	public StoredProcedureResult readFromSp(String callableSql,
 			Object[] parameterValues, ValueType[] parameterTypes,
-			ValueType returnedValueType, IProcessSpOutput fn)
+			ValueType returnedValueType, ValueType[][] outputTypes)
 			throws SQLException;
 }

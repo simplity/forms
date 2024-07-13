@@ -84,10 +84,10 @@ class ChildForm {
 
 				}
 			}
-			Util.emitArray(this.parentLinkFields, sbf);
+			Util.emitStringArray(this.parentLinkFields, sbf);
 
 			sbf.append(C);
-			Util.emitArray(this.childLinkFields, sbf);
+			Util.emitStringArray(this.childLinkFields, sbf);
 		} else {
 			sbf.append(",null ,null");
 		}

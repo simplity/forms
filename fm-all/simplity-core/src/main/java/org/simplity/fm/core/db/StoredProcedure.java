@@ -1,5 +1,6 @@
 package org.simplity.fm.core.db;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.data.DataTable;
@@ -25,7 +26,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * @author org.simplity
  *
  */
-public abstract class StoredProcedure extends Sql {
+public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 
 	/**
 	 * additional fields required for SP
@@ -44,35 +45,68 @@ public abstract class StoredProcedure extends Sql {
 
 	/**
 	 * to be used only if there are more than one out puts. In this case,
-	 * outputRecord/outputTypes must be null null if the procedure does not
-	 * produce any result sets. element is null for an element if it corresponds
-	 * to an SQL that is meant for data manipulation
+	 * outputRecord/outputTypes must be null.
+	 *
+	 * Each array element must be designed to receive rows from the
+	 * corresponding output. An element is left as null if that output is a
+	 * non-select sql
 	 */
-	protected final ValueType[][] spOutputTypes;
+	protected final DataTable<?>[] outputTables;
+	protected final int[] uodateCounts;
+	protected int outputIdx;
 
 	protected StoredProcedure(String procedureName, ValueType returnedType,
-			ValueType[][] spOutputTypes, final String sqlText,
-			final String[] parameterNames, final ValueType[] parameterTypes,
-			final ValueType[] outputTypes) {
-		super(sqlText, parameterNames, parameterTypes, outputTypes);
+			Class<?>[] outputTableClasses, final String[] parameterNames,
+			final ValueType[] parameterTypes, final ValueType[] outputTypes)
+			throws SQLException {
+		super(makeSql(procedureName, returnedType, parameterNames),
+				parameterNames, parameterTypes, outputTypes);
 		this.procedureName = procedureName;
 		this.returnedType = returnedType;
-		this.spOutputTypes = spOutputTypes;
+		if (outputTableClasses == null) {
+			this.outputTables = null;
+			this.uodateCounts = null;
+		} else {
+			this.outputTables = getOutputTables(outputTableClasses);;
+			this.uodateCounts = new int[outputTableClasses.length];
+		}
 
 	}
 
+	private static DataTable<?>[] getOutputTables(Class<?>[] classes)
+			throws SQLException {
+		DataTable<?>[] tables = new DataTable<?>[classes.length];
+		for (int i = 0; i < tables.length; i++) {
+			Class<?> cls = classes[i];
+			if (cls == null) {
+				continue;
+			}
+
+			Record record = null;
+			try {
+				record = (Record) cls.getDeclaredConstructor().newInstance();
+			} catch (Exception e) { // will throw sqlException later}
+				if (record == null) {
+					throw new SQLException("Class " + cls.getName()
+							+ " failed to create an instance of a Record");
+				}
+			}
+		}
+		return tables;
+	}
 	/**
-	 * to be called
+	 * {?= proc_name(?,?....)}
 	 */
-	protected void init() {
+	private static String makeSql(String procName, ValueType retType,
+			String[] names) {
 		StringBuilder sbf = new StringBuilder("{ ");
-		if (this.returnedType != null) {
+		if (retType != null) {
 			sbf.append("? = ");
 		}
 
-		sbf.append("call ").append(this.procedureName).append('(');
-		if (this.parameterNames != null) {
-			int n = this.parameterNames.length;
+		sbf.append("call ").append(procName).append('(');
+		if (names != null) {
+			int n = names.length;
 			while (n > 0) {
 				sbf.append("?,"); // we will remove the last comma later
 				n--;
@@ -80,11 +114,14 @@ public abstract class StoredProcedure extends Sql {
 			sbf.setLength(sbf.length() - 1);
 		}
 		sbf.append(")}");
-		// this.sqlText = sbf.toString();
+		return sbf.toString();
 	}
 
-	// read/write methods when the SP is used as a simple SQL, (with no returned
-	// value and no multiple outputs //
+	/*
+	 * we provide methods that mimic the of a simple SQL if the procedure is
+	 * doing just that And the most complex one that exposes all the possible
+	 * features of a full-blown SP
+	 */
 
 	@Override
 	protected boolean read(final IReadonlyHandle handle, Record outRec)
@@ -92,20 +129,21 @@ public abstract class StoredProcedure extends Sql {
 
 		this.checkValues();
 
-		final ValueType[][] outTypes = {outRec.fetchValueTypes()};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				this.parameterValues, this.parameterTypes, null, outTypes);
-		return resultToRec(result, outRec);
-	}
+		final boolean[] ok = {false};
+		handle.callStoredProcedure(this.sqlText, this.parameterValues,
+				this.parameterTypes, null, new IProcessSpOutput() {
 
-	@Override
-	protected void readMany(final IReadonlyHandle handle,
-			DataTable<Record> dataTable) throws SQLException {
-		this.checkValues();
-		final ValueType[][] outTypes = {dataTable.fetchValueTypes()};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				this.parameterValues, this.parameterTypes, null, outTypes);
-		resultToDt(result, dataTable);
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							DbUtil.rsToRecord(rs, outRec);
+							ok[0] = true;
+						}
+						return false;
+					}
+				});
+		return ok[0];
 	}
 
 	@Override
@@ -117,25 +155,45 @@ public abstract class StoredProcedure extends Sql {
 		}
 	}
 
+	@Override
+	protected void readMany(final IReadonlyHandle handle,
+			DataTable<Record> dataTable) throws SQLException {
+		this.checkValues();
+		handle.callStoredProcedure(this.sqlText, parameterValues,
+				parameterTypes, null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							DbUtil.rsToDataTable(rs, dataTable);
+						}
+						return false;
+					}
+				});
+	}
+
 	// read methods with input record and output record //
 
 	@Override
 	protected boolean read(final IReadonlyHandle handle, Record inRec,
 			Record outRec) throws SQLException {
 
-		final ValueType[][] outTypes = {outRec.fetchValueTypes()};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				inRec.fetchRawData(), inRec.fetchValueTypes(), null, outTypes);
-		return resultToRec(result, outRec);
-	}
+		final boolean[] ok = {false};
+		handle.callStoredProcedure(this.sqlText, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), null, new IProcessSpOutput() {
 
-	@Override
-	protected void readMany(final IReadonlyHandle handle, Record inRec,
-			DataTable<Record> dataTable) throws SQLException {
-		final ValueType[][] outTypes = {dataTable.fetchValueTypes()};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				inRec.fetchRawData(), inRec.fetchValueTypes(), null, outTypes);
-		resultToDt(result, dataTable);
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							DbUtil.rsToRecord(rs, outRec);
+							ok[0] = true;
+						}
+						return false;
+					}
+				});
+		return ok[0];
 	}
 
 	@Override
@@ -148,13 +206,43 @@ public abstract class StoredProcedure extends Sql {
 	}
 
 	@Override
+	protected void readMany(final IReadonlyHandle handle, Record inRec,
+			DataTable<Record> dataTable) throws SQLException {
+
+		handle.callStoredProcedure(this.sqlText, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							DbUtil.rsToDataTable(rs, dataTable);
+						}
+						return false;
+					}
+				});
+	}
+
+	@Override
 	protected boolean readIn(final IReadonlyHandle handle, Record inRec)
 			throws SQLException {
 
-		final ValueType[][] outTypes = {this.outputTypes};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				inRec.fetchRawData(), inRec.fetchValueTypes(), null, outTypes);
-		return this.resultToRec(result, null);
+		final boolean[] ok = {false};
+		final Object[][] values = new Object[1][];
+		final ValueType[] vts = this.outputTypes;
+		handle.callStoredProcedure(this.sqlText, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							values[0] = DbUtil.getValuesFromRs(rs, vts);
+						}
+						return false;
+					}
+				});
+		return ok[0];
 	}
 
 	@Override
@@ -170,10 +258,27 @@ public abstract class StoredProcedure extends Sql {
 
 		this.checkValues();
 
-		final ValueType[][] outTypes = {this.outputTypes};
-		final StoredProcedureResult result = handle.readFromSp(this.sqlText,
-				this.parameterValues, this.parameterTypes, null, outTypes);
-		return this.resultToRec(result, null);
+		final ValueType[] outTypes = this.outputTypes;
+		final Object[][] outValues = new Object[1][];
+
+		handle.callStoredProcedure(this.sqlText, this.parameterValues,
+				this.parameterTypes, null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (rs != null) {
+							outValues[0] = DbUtil.getValuesFromRs(rs, outTypes);
+						}
+						return false;
+					}
+				});
+		Object[] result = outValues[0];
+		if (result == null) {
+			return false;
+		}
+		this.outputValues = result;
+		return true;
 	}
 
 	@Override
@@ -189,10 +294,20 @@ public abstract class StoredProcedure extends Sql {
 	protected int write(final IReadWriteHandle handle, Record inRec)
 			throws SQLException {
 
-		final StoredProcedureResult result = handle.writeUsingStoredProcedure(
-				this.sqlText, inRec.fetchRawData(), inRec.fetchValueTypes(),
-				null, null);
-		return result.nbrRowsAffected;
+		final int[] counts = {0};
+		handle.callStoredProcedure(this.sqlText, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (updateCount != -1) {
+							counts[0] = updateCount;
+						}
+						return false;
+					}
+				});
+		return counts[0];
 	}
 
 	@Override
@@ -208,10 +323,21 @@ public abstract class StoredProcedure extends Sql {
 	@Override
 	protected int write(final IReadWriteHandle handle) throws SQLException {
 		this.checkValues();
-		final StoredProcedureResult result = handle.writeUsingStoredProcedure(
-				this.sqlText, this.parameterValues, this.parameterTypes, null,
-				null);
-		return result.nbrRowsAffected;
+
+		final int[] counts = {0};
+		handle.callStoredProcedure(this.sqlText, this.parameterValues,
+				this.parameterTypes, null, new IProcessSpOutput() {
+
+					@Override
+					public boolean nextResult(ResultSet rs, int updateCount)
+							throws SQLException {
+						if (updateCount != -1) {
+							counts[0] = updateCount;
+						}
+						return false;
+					}
+				});
+		return counts[0];
 	}
 
 	@Override
@@ -225,93 +351,84 @@ public abstract class StoredProcedure extends Sql {
 	}
 
 	/**
-	 * call the stored procedure after setting all input fields
-	 *
-	 * @param handle
-	 * @return result of this call process
-	 * @throws SQLException
-	 */
-	protected StoredProcedureResult callSp(IReadonlyHandle handle)
-			throws SQLException {
-
-		this.checkValues();
-
-		return handle.readFromSp(this.sqlText, this.parameterValues,
-				this.parameterTypes, this.returnedType, this.spOutputTypes);
-	}
-
-	/**
 	 * call the stored procedure with the required record as input values
 	 *
 	 * @param handle
-	 * @return result of this call process
+	 * @param inRec
+	 * @param numbersOfRowsAffected
+	 *            array to receive for each output, if applicable
+	 * @return returned-value if the procedure defines one. Number of affected
+	 *         rows if the procedure is designed for it, or null if none of
+	 *         these
 	 * @throws SQLException
 	 */
-	protected StoredProcedureResult callSp(IReadonlyHandle handle, Record inRec)
+	protected Object callSp(IReadonlyHandle handle, Record inRec)
 			throws SQLException {
 
-		return handle.readFromSp(this.sqlText, inRec.fetchRawData(),
-				inRec.fetchValueTypes(), this.returnedType, this.spOutputTypes);
+		/**
+		 * we are suing "this" itself as the as the call-back. Control
+		 */
+		return handle.callStoredProcedure(this.sqlText, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), this.returnedType, this);
+
 	}
 
-	private boolean resultToRec(StoredProcedureResult result, Record record)
+	/**
+	 * call the stored procedure after setting all input fields
+	 *
+	 * @param handle
+	 * @param numbersOfRowsAffected
+	 *            array to receive for each output, if applicable
+	 * @return returned-value if the procedure defines one. Number of affected
+	 *         rows if the procedure is designed for it, or null if none of
+	 *         these
+	 *
+	 * @throws SQLException
+	 */
+	protected Object callSp(IReadonlyHandle handle) throws SQLException {
+
+		this.checkValues();
+
+		/**
+		 * we are suing "this" itself as the as the call-back. Control
+		 */
+		return handle.callStoredProcedure(this.sqlText, this.parameterValues,
+				this.parameterTypes, this.returnedType, this);
+	}
+
+	protected DataTable<?>[] getOutputTables() {
+		return this.outputTables;
+	}
+
+	protected int[] getNbrRowsAffected() {
+		return this.uodateCounts;
+	}
+
+	/**
+	 * lambda function to process a result from the called stored procedure
+	 */
+	@Override
+	public boolean nextResult(ResultSet rs, int updateCount)
 			throws SQLException {
-
-		if (result == null) {
-			return false;
-		}
-		final Object[][][] d = result.outputData;
-		if (d == null || d.length == 0 || d[0] == null || d[0].length == 0) {
-			return false;
-		}
-		// we expect one row of data as the first element
-		final Object[] row = d[0][0];
-		if (row == null) {
-			return false;
-		}
-
-		int expectedLength = record == null
-				? this.outputTypes.length
-				: record.length();
-		if (row.length != expectedLength) {
-			throw new SQLException("Output record has " + row.length
-					+ " fields while the Stored Procedure has " + expectedLength
-					+ " fields");
-		}
-
-		if (record == null) {
-			this.outputValues = row;
+		DataTable<?> dt = this.outputTables[this.outputIdx];
+		if (dt == null) {
+			if (rs == null) {
+				throw new SQLException(
+						"Stored procedure returned updated count at index "
+								+ this.outputIdx
+								+ " but it is expected to return a result set");
+			}
+			DbUtil.rsToDataTable(rs, dt);
 		} else {
-			record.assignRawData(row);
+			if (rs != null) {
+				throw new SQLException(
+						"Stored procedure returned a result set at index "
+								+ this.outputIdx
+								+ " but it is expected to return an updateCount");
+			}
+			this.uodateCounts[this.outputIdx] = updateCount;
 		}
 		return true;
-
 	}
 
-	private static void resultToDt(StoredProcedureResult result,
-			DataTable<Record> table) throws SQLException {
-		if (result == null) {
-			return;
-		}
-		final Object[][][] d = result.outputData;
-		if (d == null || d.length == 0 || d[0] == null || d[0].length == 0) {
-			return;
-		}
-		// we expect one row of data as the first element
-		final Object[][] rows = d[0];
-		final Object[] firstRow = rows[0];
-		if (firstRow == null) {
-			return;
-		}
-		if (firstRow.length != table.fetchValueTypes().length) {
-			throw new SQLException("Output record has " + firstRow.length
-					+ " fields while the Stored Procedure has "
-					+ table.fetchValueTypes().length + " fields");
-		}
-
-		for (Object[] row : rows) {
-			table.addRow(row);;
-		}
-
-	}
 }

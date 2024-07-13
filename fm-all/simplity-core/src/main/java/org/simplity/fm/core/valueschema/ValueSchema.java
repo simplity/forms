@@ -130,4 +130,43 @@ public abstract class ValueSchema {
 			this.valueList = valueList;
 		}
 	}
+
+	private static final ValueSchema BOOL_SCHEMA = new BooleanSchema(
+			"_defaultTextSchema", null);
+	private static final ValueSchema DATE_SCHEMA = new DateSchema(
+			"_defaultDateSchema", null, Integer.MAX_VALUE, Integer.MAX_VALUE);
+	private static final ValueSchema DECIMAL_SCHEMA = new DecimalSchema(
+			"_defaultDecimalSchema", null, Long.MIN_VALUE, Long.MAX_VALUE, 100);
+	private static final ValueSchema INTEGER_SCHEMA = new IntegerSchema(
+			"_defaultIntegerSchema", null, Long.MIN_VALUE, Long.MAX_VALUE);
+	private static final ValueSchema TEXT_SCHEMA = new TextSchema(
+			"_defaultTextSchema", null, 0, Integer.MAX_VALUE, null);
+	private static final ValueSchema STAMP_SCHEMA = new TimestampSchema(
+			"_defaultTimestampSchema", null);
+	/**
+	 * get a pain vanilla value schema that validates just the value type, and
+	 * nothing else. Useful for internal utility classes
+	 *
+	 * @param valueType
+	 * @return a schema that just validates the value type.
+	 */
+	public static ValueSchema defaultTextSchema(ValueType valueType) {
+		switch (valueType) {
+		case Boolean :
+			return BOOL_SCHEMA;
+
+		case Date :
+			return DATE_SCHEMA;
+		case Decimal :
+			return DECIMAL_SCHEMA;
+		case Integer :
+			return INTEGER_SCHEMA;
+		case Text :
+			return TEXT_SCHEMA;
+		case Timestamp :
+			return STAMP_SCHEMA;
+		default :
+			return TEXT_SCHEMA;
+		}
+	}
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -382,6 +383,27 @@ public class DbUtil {
 		ValueType[] valueTypes = record.fetchValueTypes();
 		for (int i = 0; i < valueTypes.length; i++) {
 			record.assignValue(i, getValueFromRs(rs, i + 1, valueTypes[i]));
+		}
+	}
+
+	/**
+	 *
+	 * @param rs
+	 *            non-null
+	 * @param dataTable
+	 *            to which data is to be extracted based on the value types of
+	 *            the fields non-null
+	 * @throws SQLException
+	 */
+	public static final void rsToDataTable(final ResultSet rs,
+			DataTable<?> dataTable) throws SQLException {
+		ValueType[] types = dataTable.fetchValueTypes();
+		while (rs.next()) {
+			Object[] row = new Object[types.length];
+			for (int i = 0; i < row.length; i++) {
+				row[i] = getValueFromRs(rs, i + 1, types[i]);
+				dataTable.addRow(row);
+			}
 		}
 	}
 

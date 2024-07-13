@@ -313,7 +313,8 @@ public class Util {
 	 * @param arr
 	 * @param sbf
 	 */
-	public static void emitArray(final String[] arr, final StringBuilder sbf) {
+	public static void emitStringArray(final String[] arr,
+			final StringBuilder sbf) {
 		sbf.append("new String[]{");
 		boolean firstOne = true;
 		for (final String s : arr) {
@@ -325,27 +326,6 @@ public class Util {
 			sbf.append(quotedString(s));
 		}
 		sbf.append('}');
-	}
-
-	/**
-	 * emit names of fields as sting array : like new String[]{"firstOne", ....}
-	 *
-	 * @param fields
-	 * @param sbf
-	 */
-	public static void emitNamesFromFields(final Field[] fields,
-			final StringBuilder sbf) {
-		sbf.append("new String[]{");
-		boolean firstOne = true;
-		for (final Field f : fields) {
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				sbf.append(',');
-			}
-			sbf.append(quotedString(f.name));
-		}
-		sbf.append("};");
 	}
 
 	/**

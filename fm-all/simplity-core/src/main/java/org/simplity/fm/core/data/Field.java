@@ -84,6 +84,21 @@ public class Field {
 	private IValueList valueList;
 
 	/**
+	 * Field with minimum attributes
+	 *
+	 * @param fieldName
+	 * @param index
+	 * @param dataType
+	 * @param isRequired
+	 */
+	public Field(final String fieldName, final int index,
+			final ValueSchema dataType, boolean isRequired) {
+		this.name = fieldName;
+		this.index = index;
+		this.isRequired = isRequired;
+		this.valueSchema = dataType;
+	}
+	/**
 	 * this is generally invoked by the generated code for a Data Structure
 	 *
 	 * @param fieldName
@@ -98,9 +113,9 @@ public class Field {
 	 *            it is a string with the underlying
 	 * @param defaultValue
 	 *            value to be used in case the client has not sent a value for
-	 *            this. This e is used ONLY if isRequired is false. That is,
-	 *            this is used if the field is optional, and the client skips
-	 *            it. This value is NOT used if isRequired is set to true
+	 *            this. This is used ONLY if isRequired is false. That is, this
+	 *            is used if the field is optional, and the client skips it.
+	 *            This value is NOT used if isRequired is set to true
 	 * @param messageId
 	 *            can be null in which case the id from dataType is used
 	 * @param valueListName

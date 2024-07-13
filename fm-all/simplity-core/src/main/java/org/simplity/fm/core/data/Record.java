@@ -88,14 +88,14 @@ public class Record {
 	 *
 	 * @param fields
 	 *            non-null non-empty
-	 * @param values
+	 * @param initialValues
 	 *            can be null
 	 */
-	public Record(final Field[] fields, final Object[] values) {
+	protected Record(final Field[] fields, final Object[] initialValues) {
 		this.metaData = new RecordMetaData(fields);
-		this.fieldValues = values == null
+		this.fieldValues = initialValues == null
 				? this.metaData.getDefaultValues()
-				: values;
+				: initialValues;
 	}
 
 	/**
