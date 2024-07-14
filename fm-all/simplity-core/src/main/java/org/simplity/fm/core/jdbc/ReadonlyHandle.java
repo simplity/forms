@@ -267,6 +267,14 @@ public class ReadonlyHandle implements IReadonlyHandle {
 
 	}
 
+	@Override
+	public Object callStoredProcedure(String callableSql, Record inRec,
+			ValueType returnedValueType, IProcessSpOutput fn)
+			throws SQLException {
+		return this.callStoredProcedure(callableSql, inRec.fetchRawData(),
+				inRec.fetchValueTypes(), returnedValueType, fn);
+
+	}
 	/**
 	 *
 	 * @return blob object

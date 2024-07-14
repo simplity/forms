@@ -68,6 +68,7 @@ public class Sql {
 	private static final String BEGIN_COMMENT = "\n\t/**";
 	private static final String COMMENT_PREFIX = "\n\t * ";
 
+	private static final String COMMENT_SP = "Call this stored procedure. Only the returned vakue, if any is returned. The results of the stored procedure, if any are to be extracted subsequently with calls to  ";
 	/*
 	 * descriptions for handling the input
 	 */
@@ -94,7 +95,37 @@ public class Sql {
 	private static final String BOOL_RETURN = "\n\t * @return true if read was successful. false otherwise.";
 	private static final String INT_RETURN = "\n\t * @return number of rows read/affected";
 	private static final String NON_ZERO_RETURN = "\n\t * @return non-zero number of rows affected.";
+	private static final String SP_RETURN = "\n\t * @return retruned value from the stored procedure. null if teh stored procedure has no return specification";
 
+	/*
+	 * copy=pasted from StoredProcedure class with added annotations for
+	 * override, and protected changed to public
+	 */
+	private static final String SP_FETCHES = "\r\n" + "	/**\r\n"
+			+ "	 * to be invoked only after a successful invocation of callSp(). This will\r\n"
+			+ "	 * return the update counts from the stored procedure\r\n"
+			+ "	 *\r\n"
+			+ "	 * @return array of dataTables that contain the output rows from each of the\r\n"
+			+ "	 *         results. An array element is null if the corresponding result did\r\n"
+			+ "	 *         not have a resultSte (but an updateCount instead) The array is\r\n"
+			+ "	 *         null if the stored procedure did not succeed. The array\r\n"
+			+ "	 *         DataTables correspond to the Records that re specified as output\r\n"
+			+ "	 *         parameters in the SQL specification.\r\n"
+			+ "	 */\r\n" + "	@Override"
+			+ "	public DataTable<?>[] fetchResultsTable() {\r\n"
+			+ "		return this.resultTables;\r\n" + "	}\r\n" + "\r\n"
+			+ "	/**\r\n"
+			+ "	 * to be invoked only after a successful invocation of callSp(). This will\r\n"
+			+ "	 * return the update counts from the stored procedure\r\n"
+			+ "	 *\r\n"
+			+ "	 * @return array of integers that represent the updateCounts of each result\r\n"
+			+ "	 *         of this stored procedure. -1 implies that this result did not\r\n"
+			+ "	 *         produce an updateCOunt (but a resultSet)\r\n"
+			+ "	 *\r\n"
+			+ "	 *         null if the stored procedure was not invoked or the stored\r\n"
+			+ "	 *         procedure has no results\r\n" + "	 */\r\n"
+			+ "	@Override" + "	public int[] fetchUpdateCounts() {\r\n"
+			+ "		return this.updateCounts;\r\n" + "	}\r\n" + "";
 	private static final String END_FAIL_COMMENT = "\n\t * @throws SQLException if no rows read/affected, or on any DB related error\n\t */";
 	private static final String END_COMMENT = "\n\t * @throws SQLException\n\t */";
 
@@ -327,6 +358,7 @@ public class Sql {
 		} else {
 			this.emitCallSpWithFields(sbf);
 		}
+		sbf.append(SP_FETCHES);
 	}
 
 	private void emitReadMethods(StringBuilder sbf) {
@@ -708,22 +740,33 @@ public class Sql {
 		sbf.append("\n\t}");
 	}
 
+	private void emitCallSpWithFields(final StringBuilder sbf) {
+		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_SP);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS);
+		sbf.append(HANDLE_PARAM);
+		sbf.append(SP_RETURN);
+
+		sbf.append(BEGIN_METHOD).append("Object callSp final ")
+				.append(this.isToWrite ? "IReadWrite" : "IReadonly")
+				.append("handle").append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("callSp(handle);");
+		sbf.append(END_METHOD);
+	}
+
 	private void emitCallSpWithRecord(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
+		sbf.append(COMMENT_SP);
 		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD);
-
-		// .append(DESCRIPTION_OUTPUT_RECORD);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
-		sbf.append(OUT_REC_PARAM);
-		sbf.append(BOOL_RETURN);
-		sbf.append(BEGIN_METHOD)
-				.append("boolean read(final IReadonlyHandle handle, final ")
-				.append(this.inRecClassName).append(" inputRecord, final ")
-				.append(this.outRecClassName).append(" outputRecord")
-				.append(SQL_EX);
-		sbf.append(SUPER_RETURN)
-				.append("read(handle, inputRecord, outputRecord);");
+		sbf.append(SP_RETURN);
+
+		sbf.append(BEGIN_METHOD).append("Object callSp final ")
+				.append(this.isToWrite ? "IReadWrite" : "IReadonly")
+				.append("handle, ").append(this.inRecClassName)
+				.append(" inputRecord").append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("callSp(handle, inputRecord);");
 		sbf.append(END_METHOD);
 	}
 

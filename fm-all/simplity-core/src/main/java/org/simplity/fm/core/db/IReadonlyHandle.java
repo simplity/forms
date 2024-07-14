@@ -252,4 +252,32 @@ public interface IReadonlyHandle {
 			Object[] parameterValues, ValueType[] parameterTypes,
 			ValueType returnedValueType, IProcessSpOutput fn)
 			throws SQLException;
+
+	/**
+	 * A stored procedure may produce one or more outputs as well as return a
+	 * value. While the returned values, if any, is returned by this method, the
+	 * outputs are handled by the lambda function (call-back object) supplied b
+	 * the caller
+	 *
+	 * Caller should use the right handler, ReadOnly or ReadWrite, to ensure
+	 * that transaction processing, if any is respected.
+	 *
+	 * @param callableSql
+	 *            sql of the form {?= call proecudureName(?,?,...)}
+	 * @param inputRecord
+	 *            that has the parameters to be set into the parameters of the
+	 *            stored procedure Note that this DOES NOT include the
+	 *            return-value.
+	 * @param returnedValueType
+	 *            value types of the output. null if the procedure does not
+	 *            return any values, or the returned value is not be used
+	 * @param fn
+	 *            function that is called for each result in the output
+	 * @return returned value from the stored procedure. null if the procedure
+	 *         does not return value
+	 * @throws SQLException
+	 */
+	public Object callStoredProcedure(String callableSql, Record inputRecord,
+			ValueType returnedValueType, IProcessSpOutput fn)
+			throws SQLException;
 }
