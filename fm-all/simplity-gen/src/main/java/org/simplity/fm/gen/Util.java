@@ -365,7 +365,7 @@ public class Util {
 			} else {
 				sbf.append(',');
 			}
-			sbf.append("ValueSchema.")
+			sbf.append("ValueType.")
 					.append(f.schemaInstance.valueTypeEnum.name());
 		}
 		sbf.append('}');
@@ -380,18 +380,11 @@ public class Util {
 	 * @param valuesArrayName
 	 */
 	public static void emitGettersFromValues(final StringBuilder sbf,
-			Field[] fields, String valuesArrayName) {
-		for (final Field f : fields) {
-			final ValueSchema vs = f.schemaInstance;
-			String typ;
-			if (vs == null) {
-				typ = "unknownBecauseOfUnknownDataType";
-				logger.error("Field {} has an invalid data type of {}", f.name,
-						f.valueSchema);
-			} else {
-				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
-			}
-			final String nam = f.name;
+			IField[] fields, String valuesArrayName) {
+		for (final IField f : fields) {
+			String typ = Util.JAVA_VALUE_TYPES[f.getValueType().ordinal()];
+
+			final String nam = f.getName();
 			final String cls = Util.toClassName(nam);
 
 			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)
@@ -399,7 +392,7 @@ public class Util {
 			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls)
 					.append("(){");
 			sbf.append("\n\t\t\treturn (").append(typ).append(") ")
-					.append(valuesArrayName).append('[').append(f.index)
+					.append(valuesArrayName).append('[').append(f.getIndex())
 					.append("];");
 			sbf.append("\n\t\t}");
 		}
@@ -413,26 +406,19 @@ public class Util {
 	 * @param valuesArrayName
 	 */
 	public static void emitSettersValues(final StringBuilder sbf,
-			Field[] fields, String valuesArrayName) {
-		for (final Field f : fields) {
-			final ValueSchema vs = f.schemaInstance;
-			String typ;
-			if (vs == null) {
-				typ = "unknownBecauseOfUnknownDataType";
-				logger.error("Field {} has an invalid data type of {}", f.name,
-						f.valueSchema);
-			} else {
-				typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
-			}
-			final String nam = f.name;
+			IField[] fields, String valuesArrayName) {
+		for (final IField f : fields) {
+			final String typ = Util.JAVA_VALUE_TYPES[f.getValueType()
+					.ordinal()];
+			final String nam = f.getName();
 			final String cls = Util.toClassName(nam);
 
-			sbf.append("\n\n\t\t/**\n\t * @param value value of ").append(nam)
+			sbf.append("\n\n\t/**\n\t * @param value value of ").append(nam)
 					.append("\n\t */");
-			sbf.append("\n\t\tpublic ").append(typ).append(" set").append(cls)
-					.append("( ").append(typ).append(" value){");
+			sbf.append("\n\t\tpublic void set").append(cls).append("( ")
+					.append(typ).append(" value){");
 			sbf.append("\n\t\t\t").append(valuesArrayName).append('[')
-					.append(f.index).append("] = value;");
+					.append(f.getIndex()).append("] = value;");
 			sbf.append("\n\t\t}");
 		}
 	}

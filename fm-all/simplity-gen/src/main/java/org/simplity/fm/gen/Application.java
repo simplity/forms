@@ -69,6 +69,8 @@ public class Application {
 
 	String appName;
 	int maxLengthForTextField = 199;
+	String tenantFieldName;
+	String tenantNameInDb;
 	Map<String, ValueSchema> valueSchemas;
 	Map<String, ValueList> valueLists;
 

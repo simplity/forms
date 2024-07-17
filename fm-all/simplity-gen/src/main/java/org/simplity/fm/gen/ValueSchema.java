@@ -20,15 +20,15 @@ public class ValueSchema implements Util.IInitializer {
 	private static final String P = "\n\tpublic static final ";
 	private static final String C = ",";
 
-	String valueType;
 	String name;
+	String valueType;
 	String errorId;
-	String dbType;
+	String validationFn;
 
 	// text specific
-	String pattern;
+	String regex;
 	int minLength;
-	int maxLength = 25; // just a safe value if designer has not specified
+	int maxLength = 1000; // just a safe value if designer has not specified
 
 	// date-specific
 	int maxPastDays;
@@ -37,7 +37,7 @@ public class ValueSchema implements Util.IInitializer {
 	// integer/decimal specific
 	long minValue;
 	long maxValue;
-	int nbrFractions;
+	int nbrDecimalPlaces;
 
 	// computed
 	ValueType valueTypeEnum = ValueType.Text;
@@ -57,8 +57,8 @@ public class ValueSchema implements Util.IInitializer {
 			final int n1 = ("" + this.minValue).length();
 			final int n2 = ("" + this.maxValue).length();
 			this.maxLength = (n1 > n2 ? n1 : n2);
-			if (this.nbrFractions > 0) {
-				this.maxLength += this.nbrFractions + 1;
+			if (this.nbrDecimalPlaces > 0) {
+				this.maxLength += this.nbrDecimalPlaces + 1;
 			}
 		} else if (this.valueType.equals("date")) {
 			this.minValue = this.maxPastDays;
@@ -92,7 +92,7 @@ public class ValueSchema implements Util.IInitializer {
 		case "text" :
 			sbf.append(C).append(this.minLength);
 			sbf.append(C).append(this.maxLength);
-			sbf.append(C).append(Util.quotedString(this.pattern));
+			sbf.append(C).append(Util.quotedString(this.regex));
 			break;
 
 		case "integer" :
@@ -103,7 +103,7 @@ public class ValueSchema implements Util.IInitializer {
 		case "decimal" :
 			sbf.append(C).append(this.minValue).append('L');
 			sbf.append(C).append(this.maxValue).append('L');
-			sbf.append(C).append(this.nbrFractions);
+			sbf.append(C).append(this.nbrDecimalPlaces);
 			break;
 
 		case "date" :
@@ -125,8 +125,8 @@ public class ValueSchema implements Util.IInitializer {
 		if (this.errorId != null && this.errorId.isBlank() == false) {
 			Util.addAttr(sbf, BEG, "errorId", this.errorId);
 		}
-		if (this.pattern != null && this.pattern.isBlank() == false) {
-			Util.addAttr(sbf, BEG, "regex", this.pattern);
+		if (this.regex != null && this.regex.isBlank() == false) {
+			Util.addAttr(sbf, BEG, "regex", this.regex);
 		}
 		if (this.maxLength != 0) {
 			sbf.append(BEG).append("\"maxLength\": ").append(this.maxLength)
@@ -144,9 +144,9 @@ public class ValueSchema implements Util.IInitializer {
 			sbf.append(BEG).append("\"minValue\": ").append(this.minValue)
 					.append(END);
 		}
-		if (this.nbrFractions != 0) {
+		if (this.nbrDecimalPlaces != 0) {
 			sbf.append(BEG).append("\"nbrFractions\": ")
-					.append(this.nbrFractions).append(END);
+					.append(this.nbrDecimalPlaces).append(END);
 		}
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t}");

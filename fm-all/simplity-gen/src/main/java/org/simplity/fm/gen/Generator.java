@@ -68,10 +68,10 @@ public class Generator {
 			+ "\n-- Values clause has one row of empty/0/false values."
 			+ "\n-- we intend to introduce some syntax to generate this fiel WITH data in the future";
 
-	private static final String INPUT_ROOT = "c:/gitHub/wip/lms/lms-meta/meta/";
-	private static final String JAVA_ROOT = "c:/gitHub/wip/lms/lms-meta/lms-server-gen/src/main/java";
-	private static final String PACKAGE_NAME = "in.cognitron.lms.gen";
-	private static final String TS_ROOT = "c:gitHub/wip/lms/lms-meta/lms-client-gen/src/";
+	private static final String INPUT_ROOT = "c:/gitHub/wip/trm/trm-meta/meta/json/";
+	private static final String JAVA_ROOT = "c:/gitHub/wip/trm/trm-meta/trm-server-gen/src/main/java/";
+	private static final String PACKAGE_NAME = "in.nsoft.trm.gen";
+	private static final String TS_ROOT = "c:/gitHub/wip/trm/trm-meta/trm-client-gen/src/";
 
 	// private static final String INPUT_ROOT =
 	// "c:/bitBucket/simeta/simeta-meta/meta/";
@@ -279,7 +279,7 @@ public class Generator {
 		}
 
 		if (this.toGenerateJava) {
-			this.generateSqls();
+			this.accumulate(this.generateSqls());
 		}
 		return this.allOk;
 	}
@@ -341,10 +341,10 @@ public class Generator {
 				return;
 			}
 
-			if (!fn.equals(form.formName)) {
+			if (!fn.equals(form.name)) {
 				logger.error(
 						"Form name {} does not match with its file named {}",
-						form.formName, fn);
+						form.name, fn);
 				return;
 			}
 
@@ -352,7 +352,7 @@ public class Generator {
 			if (record == null) {
 				logger.error(
 						"Form {} uses record {}, but that record is not defined",
-						form.formName, form.recordName);
+						form.name, form.recordName);
 				return;
 			}
 
@@ -407,16 +407,16 @@ public class Generator {
 				return;
 			}
 
-			if (!fn.equals(record.recordName)) {
+			if (!fn.equals(record.name)) {
 				logger.error(
 						"Record name {} does not match with its file named {}",
-						record.recordName, fn);
+						record.name, fn);
 				return;
 			}
 
 			record.init(fn, this.app.valueSchemas);
 
-			this.records.put(record.recordName, record);
+			this.records.put(record.name, record);
 			if (this.toGenerateJava) {
 				record.generateJava(javaFolder, packageName);
 				record.emitSql(createSqls, dataSqls);
@@ -450,13 +450,13 @@ public class Generator {
 				.append(formName).append(',');
 	}
 
-	private void generateSqls() {
+	private boolean generateSqls() {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_SQL;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
 			logger.error("Sqls folder {} not found. No Sqls are processed",
 					folderName);
-			return;
+			return false;
 		}
 
 		logger.info("Going to process SQLs under folder {}", folderName);
@@ -478,20 +478,21 @@ public class Generator {
 			final Sql sql = Util.loadJson(file.getPath(), Sql.class);
 			if (sql == null) {
 				logger.error("Sql {} not generated", fn);
-				return;
+				return false;
 			}
 
 			if (!fn.equals(sql.name)) {
 				logger.error(
 						"Sql name {} does not match with its file name: {}",
 						sql.name, fn);
-				return;
+				return false;
 			}
 
-			sql.init(this.app.valueSchemas);
-			sql.generateJava(javaFolder, this.packageName, records);
+			sql.init(this.app.valueSchemas, records);
+			sql.generateJava(javaFolder, this.packageName);
 
 		}
+		return true;
 	}
 
 	private static final String INDEX_TS = "export * from './lib/gen';";

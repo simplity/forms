@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.data.DataTable;
+import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -102,10 +103,10 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	private int nbrCount;
 
 	protected StoredProcedure(String procedureName, ValueType returnType,
-			Class<?>[] outputRecordClasses, final String[] parameterNames,
-			final ValueType[] parameterTypes, final ValueType[] outputTypes) {
-		super(makeSql(procedureName, returnType, parameterNames),
-				parameterNames, parameterTypes, outputTypes);
+			Class<?>[] outputRecordClasses, final Field[] inputFields,
+			final ValueType[] outputTypes) {
+		super(makeSql(procedureName, returnType, inputFields), inputFields,
+				outputTypes);
 		this.procedureName = procedureName;
 		this.returnType = returnType;
 		this.outputRecordClasses = outputRecordClasses;
@@ -115,15 +116,15 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	 * {?= proc_name(?,?....)}
 	 */
 	private static String makeSql(String procName, ValueType retType,
-			String[] names) {
+			Field[] fields) {
 		StringBuilder sbf = new StringBuilder("{ ");
 		if (retType != null) {
 			sbf.append("? = ");
 		}
 
 		sbf.append("call ").append(procName).append('(');
-		if (names != null) {
-			int n = names.length;
+		if (fields != null) {
+			int n = fields.length;
 			while (n > 0) {
 				sbf.append("?,"); // we will remove the last comma later
 				n--;
@@ -148,8 +149,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 
 		this.operation = READ_ONE;
 		this.receivedRecord = outRec;
-		handle.callStoredProcedure(this.sqlText, this.parameterValues,
-				this.parameterTypes, null, this);
+		handle.callStoredProcedure(this.sqlText, this.inputValues,
+				this.inputTypes, null, this);
 		return this.readSuccessful;
 	}
 
@@ -170,8 +171,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 
 		this.operation = READ_MANY;
 		this.receivedTable = dataTable;
-		handle.callStoredProcedure(this.sqlText, this.parameterValues,
-				this.parameterTypes, null, this);
+		handle.callStoredProcedure(this.sqlText, this.inputValues,
+				this.inputTypes, null, this);
 	}
 
 	// read methods with input record and output record //
@@ -228,8 +229,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 
 		this.operation = READ_ONE;
 
-		handle.callStoredProcedure(this.sqlText, this.parameterValues,
-				this.parameterTypes, null, this);
+		handle.callStoredProcedure(this.sqlText, this.inputValues,
+				this.inputTypes, null, this);
 		return this.readSuccessful;
 	}
 
@@ -266,8 +267,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 		this.checkValues();
 
 		this.operation = WRITE;
-		handle.callStoredProcedure(this.sqlText, this.parameterValues,
-				this.parameterTypes, null, this);
+		handle.callStoredProcedure(this.sqlText, this.inputValues,
+				this.inputTypes, null, this);
 		return this.nbrCount;
 	}
 
@@ -325,8 +326,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 		/**
 		 * we are suing "this" itself as the as the call-back. Control
 		 */
-		return handle.callStoredProcedure(this.sqlText, this.parameterValues,
-				this.parameterTypes, this.returnType, this);
+		return handle.callStoredProcedure(this.sqlText, this.inputValues,
+				this.inputTypes, this.returnType, this);
 	}
 
 	private static final String MSG1 = "Stored procedure is to return an update count, but a result set is received";

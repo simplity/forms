@@ -88,15 +88,23 @@ public class Field {
 	 *
 	 * @param fieldName
 	 * @param index
-	 * @param dataType
+	 * @param valueSchema
 	 * @param isRequired
+	 * @param defaultValue
+	 *            optional, can be null
 	 */
 	public Field(final String fieldName, final int index,
-			final ValueSchema dataType, boolean isRequired) {
+			final ValueSchema valueSchema, boolean isRequired,
+			String defaultValue) {
 		this.name = fieldName;
 		this.index = index;
 		this.isRequired = isRequired;
-		this.valueSchema = dataType;
+		this.valueSchema = valueSchema;
+		if (defaultValue == null) {
+			this.defaultValue = null;
+		} else {
+			this.defaultValue = valueSchema.parse(defaultValue);
+		}
 	}
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
@@ -105,7 +113,7 @@ public class Field {
 	 *            unique within its data structure
 	 * @param index
 	 *            0-based index of this field in the parent form
-	 * @param dataType
+	 * @param valueSchema
 	 *            pre-defined value schema. used for validating data coming from
 	 *            a client
 	 * @param isArray
@@ -128,19 +136,19 @@ public class Field {
 	 *            a client
 	 */
 	public Field(final String fieldName, final int index,
-			final ValueSchema dataType, final boolean isArray,
+			final ValueSchema valueSchema, final boolean isArray,
 			final String defaultValue, final String messageId,
 			final String valueListName, final boolean isRequired) {
 		this.name = fieldName;
 		this.index = index;
 		this.isRequired = isRequired;
 		this.messageId = messageId;
-		this.valueSchema = dataType;
+		this.valueSchema = valueSchema;
 		this.isArray = isArray;
 		if (defaultValue == null) {
 			this.defaultValue = null;
 		} else {
-			this.defaultValue = dataType.parse(defaultValue);
+			this.defaultValue = valueSchema.parse(defaultValue);
 		}
 		if (valueListName == null) {
 			this.valueList = null;

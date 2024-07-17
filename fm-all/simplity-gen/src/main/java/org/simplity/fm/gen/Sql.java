@@ -22,6 +22,7 @@
 
 package org.simplity.fm.gen;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import java.util.Map;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +68,7 @@ public class Sql {
 	/**
 	 * comments : Begin, params, return and end
 	 */
-	private static final String BEGIN_COMMENT = "\n\t/**";
+	private static final String BEGIN_COMMENT = "\n\n\t/**";
 	private static final String COMMENT_PREFIX = "\n\t * ";
 
 	private static final String COMMENT_SP = "Call this stored procedure. Only the returned vakue, if any is returned. The results of the stored procedure, if any are to be extracted subsequently with calls to  ";
@@ -111,7 +114,6 @@ public class Sql {
 			+ "	 *         null if the stored procedure did not succeed. The array\r\n"
 			+ "	 *         DataTables correspond to the Records that re specified as output\r\n"
 			+ "	 *         parameters in the SQL specification.\r\n"
-			+ "	 */\r\n" + "	@Override"
 			+ "	public DataTable<?>[] fetchResultsTable() {\r\n"
 			+ "		return this.resultTables;\r\n" + "	}\r\n" + "\r\n"
 			+ "	/**\r\n"
@@ -124,7 +126,7 @@ public class Sql {
 			+ "	 *\r\n"
 			+ "	 *         null if the stored procedure was not invoked or the stored\r\n"
 			+ "	 *         procedure has no results\r\n" + "	 */\r\n"
-			+ "	@Override" + "	public int[] fetchUpdateCounts() {\r\n"
+			+ "	public int[] fetchUpdateCounts() {\r\n"
 			+ "		return this.updateCounts;\r\n" + "	}\r\n" + "";
 	private static final String END_FAIL_COMMENT = "\n\t * @throws SQLException if no rows read/affected, or on any DB related error\n\t */";
 	private static final String END_COMMENT = "\n\t * @throws SQLException\n\t */";
@@ -132,7 +134,8 @@ public class Sql {
 	/**
 	 * methods
 	 */
-	private static final String BEGIN_METHOD = "\n\t@Override\n\tpublic ";
+	private static final String BEGIN_METHOD = "\n\tpublic ";
+	private static final String BEGIN_OVERRIDE_METHOD = "\n\t@Override\n\tpublic ";
 	private static final String SUPER_VOID = "\n\t\t\t super.";
 	private static final String SUPER_RETURN = "\n\t\t\t return super.";
 	private static final String SQL_EX = ") throws SQLException {";
@@ -144,18 +147,19 @@ public class Sql {
 	String name;
 	String description;
 	String sqlType;
-	String selectFrom;
+	String readFrom;
 	String sql;
-	Field[] inputParameters;
+
+	InputField[] inputFields;
 	String inputRecord;
-	Field[] outputFields;
+	OutputField[] outputFields;
 	String outputRecord;
 	/*
 	 * additional attributes for a Stored Procedure
 	 */
 	String procedureName;
-	String returnedType;
-	String[] procedureOutputRecords;
+	String returnType;
+	String[] resultRecords;
 	/**
 	 * calculated attributes
 	 */
@@ -163,13 +167,16 @@ public class Sql {
 	private boolean hasDate = false;
 	private boolean hasTime = false;
 	private String thisClassName; // of the generated class for this SQL
-	private String inRecClassName; // simple name, not fully qualified
-	private String outRecClassName; // simple, not fully qualified
-	private String[] parameterNames; // name of parameters as used in Java
-	private String[] dbNames; // input parameter names as used in the data base
-	private String preparedSql; // that is ready to be assigned to super.sqlText
 
-	private ValueType returnedValueType; // parsed from returnedType
+	private String inRecClassName; // simple name, not fully qualified
+	private Field[] inRecFields; // records from the specified inputRecord
+
+	private String outRecClassName; // simple, not fully qualified
+	private ValueType[] outputTypes;
+	private String[] dbNames; // input parameter names as used in the data base
+
+	private String preparedSql; // that is ready to be assigned to super.sqlText
+	private ValueType returnValueType; // parsed from returnType
 	private String spOutputClassNames[];
 
 	/*
@@ -216,23 +223,13 @@ public class Sql {
 	 */
 	private boolean isSp;
 
+	private List<String> msgs = new ArrayList<>();
 	/**
 	 * to be called by the generator before generating java/ts code
 	 *
 	 * @param schemas
 	 */
-	void init(Map<String, ValueSchema> schemas) {
-
-		/**
-		 * fields in te arrays need to be initialized
-		 */
-		if (this.inputParameters != null) {
-			this.initArr(this.inputParameters, schemas);
-		}
-
-		if (this.outputFields != null) {
-			this.initArr(this.outputFields, schemas);
-		}
+	void init(Map<String, ValueSchema> schemas, Map<String, Record> records) {
 
 		/*
 		 * what is the purpose of this sql?
@@ -243,30 +240,204 @@ public class Sql {
 		this.isToWrite = this.sqlType.equals(SQL_TYPE_WRITE);
 		this.isToCall = this.sqlType.equals(SQL_TYPE_CALL);
 
-		this.hasInput = this.inputParameters != null
-				|| this.inputRecord != null;
+		this.hasInput = this.inputFields != null || this.inputRecord != null;
 		this.hasOutput = this.outputFields != null || this.outputRecord != null;
 		this.isSp = this.procedureName != null;
 
 		this.thisClassName = Util.toClassName(this.name) + "Sql";
 
 		/**
+		 * validate attributes
+		 */
+		if (this.sql == null) {
+			if (this.isSp == false) {
+				this.msgs.add("No sql specified");
+				this.sql = "";
+			}
+		}
+
+		if (this.inputFields != null) {
+			this.initArr(this.inputFields, schemas);
+		}
+
+		if (this.inputRecord != null) {
+			Record inRec = records.get(this.inputRecord);
+			if (inRec == null) {
+				msgs.add(this.inputRecord
+						+ " is specified as inputRecord, but it is not defined as a record");
+			} else {
+				this.inRecClassName = Util.toClassName(this.inputRecord)
+						+ "Record";
+				this.inRecFields = inRec.fields;
+			}
+		}
+
+		if (this.outputFields != null) {
+			this.initArr(this.outputFields, schemas);
+			this.setDbNames(outputFields);
+		}
+
+		if (this.outputRecord != null) {
+			Record outRec = records.get(this.outputRecord);
+			if (outRec == null) {
+				msgs.add(this.outputRecord
+
+						+ " is specified as outputRecord, but it is not defined as a record");
+			} else {
+				this.outRecClassName = Util.toClassName(this.outputRecord)
+						+ "Record";
+				this.setDbNames(outRec.fields);
+			}
+		}
+
+		if (this.returnType != null) {
+			try {
+				this.returnValueType = ValueType
+						.valueOf(Util.toClassName(this.returnType));
+
+			} catch (Exception e) {
+				msgs.add(
+						"this.returnType is not a valid type. Use one of text, integer, decimal, boolean, date or timestamp");
+			}
+		}
+
+		if (this.resultRecords != null) {
+			this.spOutputClassNames = new String[this.resultRecords.length];
+			for (int i = 0; i < this.resultRecords.length; i++) {
+				String recName = this.resultRecords[i];
+				if (recName == null) {
+					continue;
+				}
+				this.spOutputClassNames[i] = Util.toClassName(recName)
+						+ "Record";
+
+				Record rec = records.get(recName);
+				if (rec == null) {
+					msgs.add(recName
+
+							+ " is specified as outputRecord, but it is not defined as a record");
+					continue;
+				}
+				this.spOutputClassNames[i] = Util.toClassName(recName);
+			}
+		}
+
+		if (this.inputFields != null && this.inputRecord != null) {
+			this.msgs.add(
+					"Input parameters are to be specified either with inputParamaters or inputRecord, but not both");
+		}
+
+		if (this.outputFields != null && this.outputRecord != null) {
+			this.msgs.add(
+					"Output from sql may be specified either with outputFields or outputRecord, but not both.");
+		}
+
+		/**
 		 * description in the java-doc
 		 */
 		this.descriptionToUse = this.description == null
 				? ("Code generated from " + this.name + ".sql.json")
-				: this.descriptionToUse;
+				: this.description;
+
+		if (isToWrite) {
+			this.preparedSql = this.sql;
+			if (hasInput == false) {
+				msgs.add(
+						"Write sql MUST have sql parameters. Unconditional update to database is not allowed");
+			}
+			if (hasOutput) {
+				msgs.add(
+						"write sql should not specify outputFields or outputRecord");
+			}
+
+			final String sqlOperarion = this.sql.substring(0, 6).toLowerCase();
+			if (sqlOperarion.equals(SQL_INSERT) == false
+					&& sqlOperarion.equals(SQL_UPDATE) == false) {
+				msgs.add("write sql must start with either " + SQL_INSERT
+						+ " or " + SQL_UPDATE);
+			}
+
+		} else if (this.isToRead) {
+			this.preparedSql = this.prepareReadSql();
+
+			if (this.hasOutput == false) {
+				msgs.add(
+						"read sql must specify either output fields or output record.");
+			}
+
+			if (this.readFrom == null) {
+				msgs.add(
+						"read sql must specify readFrom. This is required to synthesise the SELECT-FROM clause of the SQL");
+			}
+
+			final String sqlOperarion = this.sql.substring(0, 5).toLowerCase();
+			if (sqlOperarion.equals(SQL_WHERE) == false) {
+				msgs.add(
+						"read sql must start with WHERE clause. SELECT statment will be prefixed to this by the generator.");
+			}
+
+			if (this.isToReadMany && this.outputRecord == null) {
+				msgs.add(
+						"Output from a read-many sql can be received only into a dataTable. Hence outputRecord must be specified.");
+			}
+
+		} else if (this.isSp) {
+
+			if (this.procedureName == null) {
+				msgs.add(
+						"procedureName, as in the DB, must be specified for a stored procedure");
+			}
+
+			if (this.sql != null) {
+				msgs.add(
+						"Sql should not be specified for a stored procedure. Generated code will manage to ");
+			}
+
+			if (this.hasOutput && this.resultRecords != null) {
+				msgs.add(
+						"Stored procedure can return more than one outputs. If this procedure is producing one output, or if you want only the first output, use outputRecord or outputFields. If you intend ro receive more than one outputs, use storedProcedureOutput");
+			}
+
+		} else {
+			msgs.add(this.sqlType
+					+ " is invalid. it has to be readOne/readMany/write/storedProcedure");
+		}
+
+		if (!this.isSp) {
+			if (this.returnType != null) {
+				msgs.add(
+						"returnType can be specified only for a stored procedure");
+			}
+			if (this.resultRecords != null) {
+				msgs.add(
+						"procedureOutputRecords can be specified only for a stored procedure");
+			}
+		}
 
 	}
 
-	private void initArr(Field[] fields, Map<String, ValueSchema> schemas) {
+	private void setDbNames(Field[] fields) {
+		this.dbNames = new String[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			this.dbNames[i] = fields[i].nameInDb;
+		}
+	}
+
+	private void setDbNames(OutputField[] fields) {
+		this.dbNames = new String[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			this.dbNames[i] = fields[i].nameInDb;
+		}
+	}
+
+	private void initArr(IField[] fields, Map<String, ValueSchema> schemas) {
 		for (int idx = 0; idx < fields.length; idx++) {
-			Field f = fields[idx];
-			f.init(idx, schemas);
+			IField f = fields[idx];
+			f.init(schemas, idx);
 			/*
 			 * see if we have any date /time fields
 			 */
-			ValueType vt = f.schemaInstance.valueTypeEnum;
+			ValueType vt = f.getValueType();
 			if (vt == ValueType.Date) {
 				this.hasDate = true;
 			} else if (vt == ValueType.Timestamp) {
@@ -282,14 +453,12 @@ public class Sql {
 	 * @param rootPackage
 	 * @param records
 	 */
-	void generateJava(String folderName, final String rootPackage,
-			Map<String, Record> records) {
-
-		/**
-		 * ensure that the component is fit to generate code
-		 */
-		if (!this.setCalculatedAttributes(records)) {
-			return;
+	boolean generateJava(String folderName, final String rootPackage) {
+		if (this.msgs.size() > 0) {
+			for (String msg : msgs) {
+				logger.error(msg);
+			}
+			return false;
 		}
 
 		final StringBuilder sbf = new StringBuilder();
@@ -302,7 +471,7 @@ public class Sql {
 		 * this helps reducing load on the repositories
 		 */
 		sbf.append("\n\n/**").append("\n * ").append(this.descriptionToUse)
-				.append(" */");
+				.append("\n */");
 		sbf.append("\npublic class ").append(this.thisClassName)
 				.append(" extends ");
 		if (this.isSp) {
@@ -319,9 +488,8 @@ public class Sql {
 		 * used, the values are set to the record, and not to this object
 		 * instance
 		 */
-		if (this.inputParameters != null) {
-			Util.emitSettersValues(sbf, this.inputParameters,
-					"this.parameterValues");
+		if (this.inputFields != null) {
+			Util.emitSettersValues(sbf, this.inputFields, "this.inputValues");
 		}
 
 		/**
@@ -349,7 +517,7 @@ public class Sql {
 
 		Util.writeOut(folderName + this.thisClassName + ".java",
 				sbf.toString());
-
+		return true;
 	}
 
 	private void emitSpCalls(StringBuilder sbf) {
@@ -402,208 +570,9 @@ public class Sql {
 		this.emitReadManyWithRecords(sbf);
 	}
 
-	private boolean setCalculatedAttributes(Map<String, Record> records) {
-		List<String> msgs = new ArrayList<>();
-
-		/**
-		 * several validations assume sql exists. Let's simplify null check for
-		 * them
-		 */
-		if (this.sql == null) {
-			if (this.isSp == false) {
-				msgs.add("No sql specified");
-				this.sql = "";
-			}
-		}
-
-		if (this.inputParameters != null && this.inputRecord != null) {
-			msgs.add(
-					"Input parameters are to be specified either with inputParamaters or inputRecord, but not both");
-		}
-
-		if (this.outputFields != null && this.outputRecord != null) {
-			msgs.add(
-					"Output from sql may be specified either with outputFields or outputRecord, but not both.");
-		}
-
-		if (isToWrite) {
-			if (hasInput == false) {
-				msgs.add(
-						"Write sql MUST have sql parameters. Unconditional update to database is not allowed");
-			}
-			if (hasOutput) {
-				msgs.add(
-						"write sql should not specify outputFields or outputRecord");
-			}
-
-			final String sqlOperarion = this.sql.substring(0, 6).toLowerCase();
-			if (sqlOperarion.equals(SQL_INSERT) == false
-					&& sqlOperarion.equals(SQL_UPDATE) == false) {
-				msgs.add("write sql must start with either " + SQL_INSERT
-						+ " or " + SQL_UPDATE);
-			}
-
-		} else if (this.isToRead) {
-
-			if (this.hasOutput == false) {
-				msgs.add(
-						"read sql must specify either output fields or output record.");
-			}
-
-			if (this.selectFrom == null) {
-				msgs.add(
-						"read sql must specify selectForm attribute. The SELECT clause of the sql will be synthesised by the generator");
-
-			}
-
-			final String sqlOperarion = this.sql.substring(0, 6).toLowerCase();
-			if (sqlOperarion.equals(SQL_WHERE) == false) {
-				msgs.add(
-						"read sql must start with WHERE clause. SELECT statment will be prefixed to this by the generator.");
-			}
-
-			if (this.isToReadMany && this.outputRecord == null) {
-				msgs.add(
-						"Output from a read-many sql can be received only into a dataTable. Hence outputRecord must be specified.");
-			}
-
-		} else if (this.isSp) {
-			if (this.returnedType != null) {
-				try {
-					this.returnedValueType = ValueType
-							.valueOf(Util.toClassName(this.returnedType));
-
-				} catch (Exception e) {
-					msgs.add(
-							"this.returnedType is not a valid type. Use one of text, integer, decimal, boolean, date or timestamp");
-				}
-			}
-
-			if (this.procedureName == null) {
-				msgs.add(
-						"procedureName, as in the DB, must be specified for a stored procedure");
-			}
-
-			if (this.sql != null) {
-				msgs.add(
-						"Sql should not be specified for a stored procedure. Generated code will manage to ");
-			}
-
-			if (this.hasOutput && this.procedureOutputRecords != null) {
-				msgs.add(
-						"Stored procedure can return more than one outputs. If this procedure is producing one output, or if you want only the first output, use outputRecord or outputFields. If you intend ro receive more than one outputs, use storedProcedureOutput");
-			}
-
-		} else {
-			msgs.add(this.sqlType
-					+ " is invalid. it has to be readOne/readMany/write/storedProcedure");
-		}
-
-		if (!this.isSp) {
-			if (this.returnedType != null) {
-				msgs.add(
-						"returnedType can be specified only for a stored procedure");
-			}
-			if (this.procedureOutputRecords != null) {
-				msgs.add(
-						"procedureOutputRecords can be specified only for a stored procedure");
-			}
-		}
-
-		Record inRec = null;
-		if (this.inputRecord != null) {
-			inRec = records.get(this.inputRecord);
-			if (inRec == null) {
-				msgs.add(this.inputRecord
-						+ " is specified as inputRecord, but it is not defined as a record");
-			} else {
-				this.inRecClassName = Util.toClassName(this.inputRecord)
-						+ "Record";
-			}
-		}
-
-		Record outRec = null;
-		if (this.outputRecord != null) {
-			outRec = records.get(this.outputRecord);
-			if (outRec == null) {
-				msgs.add(this.outputRecord
-
-						+ " is specified as outputRecord, but it is not defined as a record");
-			} else {
-				this.outRecClassName = Util.toClassName(this.outputRecord)
-						+ "Record";
-			}
-		}
-
-		if (this.procedureOutputRecords != null) {
-			this.spOutputClassNames = new String[this.procedureOutputRecords.length];
-			for (int i = 0; i < this.procedureOutputRecords.length; i++) {
-				String recName = this.procedureOutputRecords[i];
-				if (recName == null) {
-					continue;
-				}
-				this.spOutputClassNames[i] = Util.toClassName(recName)
-						+ "Record";
-
-				Record rec = records.get(recName);
-				if (rec == null) {
-					msgs.add(recName
-
-							+ " is specified as outputRecord, but it is not defined as a record");
-					continue;
-				}
-				this.spOutputClassNames[i] = Util.toClassName(recName);
-			}
-		}
-
-		if (msgs.size() != 0) {
-			for (String msg : msgs) {
-				logger.error(msg);
-			}
-			return false;
-		}
-
-		// set parameterNames
-		if (inRec != null) {
-			this.setParamNames(inRec.fields);
-		} else if (this.inputParameters != null) {
-			this.setParamNames(this.inputParameters);
-		} else {
-			// this has no input parameters. names will remain null.
-		}
-
-		if (this.isToRead) {
-			String s = this.prepareReadSql();
-			if (s == null) {
-				return false;
-			}
-			this.preparedSql = s;
-			return true;
-		}
-
-		// for read-sql, this.sql is already prepared, while for sp it is
-		// anyways null
-		this.preparedSql = this.sql;
-		return true;
-
-	}
-
-	private void setParamNames(final Field[] fields) {
-		final String[] names = new String[fields.length];
-		final String[] colNames = new String[fields.length];
-		for (int i = 0; i < fields.length; i++) {
-			Field f = fields[i];
-			names[i] = f.name;
-			colNames[i] = f.nameInDb == null ? f.name : f.nameInDb;
-		}
-		this.parameterNames = names;
-		this.dbNames = colNames;
-
-	}
-
 	/**
 	 * this.sql starts with WHERE. We have to prefix that with SELECT a,b,c....
-	 * FROM selectFrom
+	 * FROM readFrom
 	 *
 	 * @return
 	 */
@@ -616,8 +585,7 @@ public class Sql {
 		}
 		sbf.setLength(sbf.length() - 1);
 
-		sbf.append(" FROM ").append(this.selectFrom).append(' ')
-				.append(this.sql);
+		sbf.append(" FROM ").append(this.readFrom).append(' ').append(this.sql);
 
 		return sbf.toString() + sql;
 	}
@@ -632,35 +600,35 @@ public class Sql {
 		if (this.hasTime) {
 			Util.emitImport(sbf, Instant.class);
 		}
+		Util.emitImport(sbf, SQLException.class);
 
-		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
-
-		/*
-		 * is Record used?
-		 */
-		if (this.inputRecord != null || this.outputRecord != null
-				|| this.procedureOutputRecords != null) {
-			Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
+		Util.emitImport(sbf, ValueType.class);
+		if (this.inputFields != null) {
+			Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
+			sbf.append("\nimport ").append(rootPackage).append('.')
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
+					.append(';');
 		}
 
+		if (this.isToRead) {
+			Util.emitImport(sbf, IReadonlyHandle.class);
+		} else {
+			Util.emitImport(sbf, IReadWriteHandle.class);
+		}
 		/**
 		 * table is required for batch-write and readMany
 		 */
-		if ((this.procedureOutputRecords != null)
+		if ((this.resultRecords != null)
 				|| (this.inputRecord != null && this.isToWrite)
 				|| (this.outputRecord != null && this.isToReadMany)) {
 			Util.emitImport(sbf, org.simplity.fm.core.data.DataTable.class);
 		}
 
 		if (this.isSp) {
-			Util.emitImport(sbf, org.simplity.fm.core.db.Sql.class);
-		} else {
 			Util.emitImport(sbf, org.simplity.fm.core.db.StoredProcedure.class);
+		} else {
+			Util.emitImport(sbf, org.simplity.fm.core.db.Sql.class);
 		}
-
-		sbf.append("\nimport ").append(rootPackage).append('.')
-				.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
-				.append(';');
 
 		/**
 		 * Records used in the SQL
@@ -691,34 +659,88 @@ public class Sql {
 			sbf.append(P).append("String PROC_NAME = ")
 					.append(this.procedureName).append(';');
 			sbf.append(P).append("ValueType RET_TYPE = ")
-					.append(this.returnedValueType).append(';');
+					.append(this.returnValueType).append(';');
 			sbf.append(P).append("Class<?> SP_OUT_CLASSES = ");
 			emitClassArray(sbf, this.spOutputClassNames);
 		}
 
-		sbf.append(P).append("String SQL = ").append(this.preparedSql);
+		sbf.append(P).append("String SQL = \"").append(this.preparedSql)
+				.append("\";");
 
-		sbf.append(P).append("String[] NAMES = ");
-		Util.emitStringArray(this.parameterNames, sbf);
-		sbf.append(";");
+		sbf.append(P).append("Field[] IN_FIELDS = ");
 
-		sbf.append(P).append("ValueType[] IN_TYPES = ");
-
-		if (this.inputParameters == null) {
-			sbf.append("null");
+		if (this.inputFields != null) {
+			emitFieldArray(this.inputFields, sbf);
+		} else if (this.inputRecord != null) {
+			emitFieldArray(this.inRecFields, sbf);
 		} else {
-			Util.emitTypesArray(this.inputParameters, sbf);
+			sbf.append("null;");
 		}
-		sbf.append(";");
 
 		sbf.append(P).append("ValueType[] OUT_TYPES = ");
 		if (this.outputFields == null) {
 			sbf.append("null");
 		} else {
-			Util.emitTypesArray(this.outputFields, sbf);
+			emitTypesArray(this.outputTypes, sbf);
 		}
 		sbf.append(";");
 
+	}
+
+	private static void emitFieldArray(Field[] fields, StringBuilder sbf) {
+		sbf.append("new Field[]{");
+		boolean isFirst = true;
+		for (Field field : fields) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(", ");
+			}
+			sbf.append("new Field(\"").append(field.name).append("\", ")
+					.append(field.index).append(", ")
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
+					.append('.').append(field.valueSchema).append(", ")
+					.append(field.isRequired).append(", ")
+					.append(Util.quotedString(field.defaultValue)).append(")");
+		}
+
+		sbf.append("};");
+
+	}
+
+	private static void emitFieldArray(InputField[] fields, StringBuilder sbf) {
+		sbf.append("new Field[]{");
+		boolean isFirst = true;
+		for (InputField field : fields) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(", ");
+			}
+			sbf.append("new Field(\"").append(field.name).append("\", ")
+					.append(field.index).append(", ")
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
+					.append('.').append(field.valueSchema).append(", ")
+					.append(field.isRequired).append(", ")
+					.append(Util.quotedString(field.defaultValue)).append(")");
+		}
+
+		sbf.append("};");
+	}
+
+	private static void emitTypesArray(final ValueType[] types,
+			final StringBuilder sbf) {
+		sbf.append("new ValueType[]{");
+		boolean firstOne = true;
+		for (final ValueType type : types) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(", ");
+			}
+			sbf.append("ValueType.").append(type.name());
+		}
+		sbf.append('}');
 	}
 
 	private static void emitClassArray(StringBuilder sbf, String[] names) {
@@ -736,7 +758,7 @@ public class Sql {
 	private void emitConstructor(final StringBuilder sbf) {
 		sbf.append("\n\n\t/** \n\t * default constructor\n\t */\n\tpublic ")
 				.append(this.thisClassName).append("() {");
-		sbf.append("\n\t\tsuper(SQL, NAMES, IN_TYPES, OUT_TYPES);");
+		sbf.append("\n\t\tsuper(SQL, IN_FIELDS, OUT_TYPES);");
 		sbf.append("\n\t}");
 	}
 
@@ -747,7 +769,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(SP_RETURN);
 
-		sbf.append(BEGIN_METHOD).append("Object callSp final ")
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("Object callSp final ")
 				.append(this.isToWrite ? "IReadWrite" : "IReadonly")
 				.append("handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("callSp(handle);");
@@ -910,7 +932,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(BOOL_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD)
+		sbf.append(BEGIN_OVERRIDE_METHOD)
 				.append("int readIn(final IReadonlyHandle handle")
 				.append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("readIn(handle);");
@@ -923,7 +945,7 @@ public class Sql {
 				.append(DESCRIPTION_GETTERS);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
+		sbf.append(BEGIN_OVERRIDE_METHOD)
 				.append("void readInOrFail(final IReadonlyHandle handle")
 				.append(SQL_EX);
 		sbf.append(SUPER_VOID).append("readInOrFail(handle);");
@@ -936,7 +958,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(INT_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD)
+		sbf.append(BEGIN_OVERRIDE_METHOD)
 				.append("int write(final IReadWriteHandle handle")
 				.append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle);");
@@ -949,7 +971,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(NON_ZERO_RETURN);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
+		sbf.append(BEGIN_OVERRIDE_METHOD)
 				.append("int write(final IReadWriteHandle handle")
 				.append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle);");

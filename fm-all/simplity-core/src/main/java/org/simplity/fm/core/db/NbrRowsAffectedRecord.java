@@ -12,9 +12,9 @@ import org.simplity.fm.core.valueschema.ValueType;
  */
 public class NbrRowsAffectedRecord extends Record {
 
-	private static final Field[] FIELDS = new Field[]{
-			new Field("nbrAffectedRows", 0,
-					ValueSchema.defaultTextSchema(ValueType.Integer), false)};
+	private static final Field[] FIELDS = new Field[]{new Field(
+			"nbrAffectedRows", 0,
+			ValueSchema.defaultTextSchema(ValueType.Integer), false, null)};
 	/**
 	 * default constructor
 	 */

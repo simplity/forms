@@ -48,12 +48,12 @@ public class Form {
 	 */
 	static Form fromRecord(Record rec) {
 		Form form = new Form();
-		form.formName = rec.recordName;
+		form.name = rec.name;
 		form.initialize(rec);
 		return form;
 	}
 
-	String formName;
+	String name;
 	String recordName;
 	/*
 	 * used only for the client as of now. We are worried that careless
@@ -72,7 +72,7 @@ public class Form {
 
 	void initialize(final Record rec) {
 		this.record = rec;
-		this.recordName = rec.recordName;
+		this.recordName = rec.name;
 
 		if (this.operations == null) {
 			this.operations = rec.operations;
@@ -105,7 +105,7 @@ public class Form {
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = packageName + ".form";
-		final String qual = Util.getClassQualifier(this.formName);
+		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
@@ -118,11 +118,11 @@ public class Form {
 		sbf.append("\nimport ").append(packageName).append(".rec.")
 				.append(recordClass).append(';');
 
-		final String cls = Util.toClassName(this.formName) + "Form";
+		final String cls = Util.toClassName(this.name) + "Form";
 		/*
 		 * class declaration
 		 */
-		sbf.append("\n/** class for form ").append(this.formName)
+		sbf.append("\n/** class for form ").append(this.name)
 				.append("  */\npublic class ");
 		sbf.append(cls).append(" extends Form<").append(recordClass)
 				.append("> {");
@@ -132,7 +132,7 @@ public class Form {
 		/*
 		 * protected static final Field[] FIELDS = {.....};
 		 */
-		sbf.append(p).append("String NAME = \"").append(this.formName)
+		sbf.append(p).append("String NAME = \"").append(this.name)
 				.append("\";");
 		/*
 		 * protected static final String RECORD = "....";
@@ -231,7 +231,7 @@ public class Form {
 	private static final char Q = '"';
 	boolean generateTs(String folderName) {
 		logger.info("TS for form {} being generated into folder {}",
-				this.formName, folderName);
+				this.name, folderName);
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append('{');
 		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
@@ -291,7 +291,7 @@ public class Form {
 
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.formName + ".form.json",
+		Util.writeOut(folderName + this.name + ".form.json",
 				sbf.toString());
 
 		return true;

@@ -289,7 +289,7 @@ class Field {
 			value = "0";
 			sbf.append(" DECIMAL(");
 			sbf.append(this.schemaInstance.maxLength - 1);
-			sbf.append(',').append(this.schemaInstance.nbrFractions)
+			sbf.append(',').append(this.schemaInstance.nbrDecimalPlaces)
 					.append(") NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
 				sbf.append(this.defaultValue);

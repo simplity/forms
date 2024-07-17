@@ -25,6 +25,7 @@ package org.simplity.fm.core.db;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.data.DataTable;
+import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -44,34 +45,41 @@ import org.simplity.fm.core.valueschema.ValueType;
  */
 public abstract class Sql {
 	protected final String sqlText;
-	protected final String[] parameterNames;
-	protected final ValueType[] parameterTypes;
+	protected final Field[] inputFields;
 	protected final ValueType[] outputTypes;
 
 	/**
-	 * array to hold input and output values, in case fields are specified, and
-	 * not records
+	 * derived from fields for ready-use
 	 */
-	protected final Object[] parameterValues;
+	protected ValueType[] inputTypes;
+	protected Object[] inputValues;
 	protected Object[] outputValues;
 
 	/**
 	 *
 	 * @param sqlText
-	 * @param parameterNames
-	 * @param parameterTypes
+	 * @param inputNames
+	 * @param inputTypes
 	 */
-	protected Sql(final String sqlText, final String[] parameterNames,
-			final ValueType[] parameterTypes, final ValueType[] outputTypes) {
+	protected Sql(final String sqlText, Field[] inputFields,
+			final ValueType[] outputTypes) {
 		this.sqlText = sqlText;
-		this.parameterNames = parameterNames;
-		this.parameterTypes = parameterTypes;
+		this.inputFields = inputFields;
 		this.outputTypes = outputTypes;
+		this.setDerivedFields();
 
-		if (parameterNames == null) {
-			this.parameterValues = null;
-		} else {
-			this.parameterValues = new Object[parameterTypes.length];
+	}
+
+	private void setDerivedFields() {
+		if (this.inputFields != null) {
+			int n = this.inputFields.length;
+			this.inputValues = new Object[n];
+			this.inputTypes = new ValueType[n];
+			for (int i = 0; i < n; i++) {
+				final Field field = this.inputFields[i];
+				this.inputTypes[i] = field.getValueType();
+				this.inputValues[i] = field.getDefaultValue();
+			}
 		}
 
 		if (outputTypes == null) {
@@ -97,8 +105,8 @@ public abstract class Sql {
 
 		this.checkValues();
 
-		return handle.readIntoRecord(this.sqlText, this.parameterValues,
-				this.parameterTypes, outputRecord);
+		return handle.readIntoRecord(this.sqlText, this.inputValues,
+				this.inputTypes, outputRecord);
 	}
 
 	/**
@@ -132,8 +140,8 @@ public abstract class Sql {
 	protected void readMany(final IReadonlyHandle handle,
 			DataTable<Record> dataTable) throws SQLException {
 		this.checkValues();
-		handle.readIntoDataTable(this.sqlText, this.parameterValues,
-				this.parameterTypes, dataTable);
+		handle.readIntoDataTable(this.sqlText, this.inputValues,
+				this.inputTypes, dataTable);
 	}
 
 	// read methods with input record and output record //
@@ -234,8 +242,8 @@ public abstract class Sql {
 
 		this.checkValues();
 
-		Object[] row = handle.read(this.sqlText, this.parameterValues,
-				this.parameterTypes, this.outputTypes);
+		Object[] row = handle.read(this.sqlText, this.inputValues,
+				this.inputTypes, this.outputTypes);
 		if (row == null) {
 			return false;
 		}
@@ -309,8 +317,7 @@ public abstract class Sql {
 	 */
 	protected int write(final IReadWriteHandle handle) throws SQLException {
 		this.checkValues();
-		return handle.write(this.sqlText, this.parameterValues,
-				this.parameterTypes);
+		return handle.write(this.sqlText, this.inputValues, this.inputTypes);
 	}
 
 	/**
@@ -332,15 +339,29 @@ public abstract class Sql {
 	}
 
 	protected void checkValues() throws SQLException {
-		if (this.parameterValues == null) {
+		if (this.inputFields == null) {
 			return;
 		}
 
-		for (int i = 0; i < this.parameterValues.length; i++) {
-			if (this.parameterValues[i] == null) {
-				throw new SQLException(" No value provided for parameter "
-						+ this.parameterNames[i] + ". Sql not executed");
+		for (int i = 0; i < this.inputFields.length; i++) {
+			final Field field = this.inputFields[i];
+			final Object value = this.inputValues[i];
+			if (value == null) {
+				if (field.isRequired()) {
+					throw new SQLException(" No value provided for parameter "
+							+ field.getName() + ". Sql not executed");
+				}
+				continue;
 			}
+			Object v = field.getValueSchema().parse(value);
+			if (v == null) {
+				throw new SQLException(
+						"A value of " + value + " is not valid for the field "
+								+ field.getName() + " as per value schema "
+								+ field.getValueSchema().getName()
+								+ ". Sql not executed");
+			}
+			this.inputValues[i] = v;
 		}
 	}
 

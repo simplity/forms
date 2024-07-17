@@ -68,7 +68,7 @@ class Record {
 	/*
 	 * fields that are read directly from json
 	 */
-	String recordName;
+	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
 	boolean isVisibleToClient;
@@ -102,12 +102,12 @@ class Record {
 	boolean isUpdatable;
 
 	public void init(String nam, Map<String, ValueSchema> schemas) {
-		if (this.recordName.equals(nam) == false) {
+		if (this.name.equals(nam) == false) {
 			logger.error(
 					"File named {}.rec has a record named {}, violating the convention of having the same name. File name ignored",
-					nam, this.recordName);
+					nam, this.name);
 		}
-		this.className = Util.toClassName(this.recordName)
+		this.className = Util.toClassName(this.name)
 				+ Conventions.App.RECORD_CLASS_SUFIX;
 		/*
 		 * we want to check for duplicate definition of standard fields
@@ -131,7 +131,7 @@ class Record {
 			if (existing != null) {
 				logger.error(
 						"Field {} is a duplicate in record {}. Generated Code will have compilation errors",
-						field.name, this.recordName);
+						field.name, this.name);
 			}
 
 			if (field.listName != null) {
@@ -267,7 +267,7 @@ class Record {
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = javaPackage + ".rec";
-		final String qual = Util.getClassQualifier(this.recordName);
+		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
@@ -319,7 +319,7 @@ class Record {
 		 */
 
 		sbf.append("\n\n/**\n * class that represents structure of ")
-				.append(this.recordName);
+				.append(this.name);
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(this.className)
 				.append(" extends ");
@@ -334,7 +334,7 @@ class Record {
 
 		sbf.append(
 				"\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
-		sbf.append(this.recordName).append("\", FIELDS, VALIDS);");
+		sbf.append(this.name).append("\", FIELDS, VALIDS);");
 
 		if (isDb) {
 			this.emitDbSpecific(sbf);
@@ -700,11 +700,11 @@ class Record {
 		 *
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
-		final String c = Util.toClassName(this.recordName);
+		final String c = Util.toClassName(this.name);
 		final String recCls = c + "Record";
 		final String cls = c + "Table";
 		String pck = generatedPackage + ".rec";
-		final String qual = Util.getClassQualifier(this.recordName);
+		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
 			pck += '.' + qual;
 		}
@@ -720,7 +720,7 @@ class Record {
 		 */
 
 		sbf.append("\n\n/**\n * class that represents an array of records of ")
-				.append(this.recordName);
+				.append(this.name);
 		sbf.append("\n */");
 		sbf.append("\npublic class ").append(cls).append(" extends DbTable<")
 				.append(recCls).append("> {");
