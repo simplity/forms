@@ -49,11 +49,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 class HttpAgent {
-	private static final Logger logger = LoggerFactory
-			.getLogger(HttpAgent.class);
+	private static final Logger logger = LoggerFactory.getLogger(HttpAgent.class);
 
 	private final IRestAdapter restAdapter;
 	private final IApp app;
+
 	/**
 	 * set the parser to process REST requests
 	 *
@@ -64,6 +64,7 @@ class HttpAgent {
 		this.restAdapter = restAdapter;
 		this.app = app;
 	}
+
 	/**
 	 * response for a pre-flight request
 	 *
@@ -73,36 +74,34 @@ class HttpAgent {
 	 */
 	@SuppressWarnings("static-method") // we may have instance specific code
 										// later..
-	public void setOptions(final HttpServletRequest req,
-			final HttpServletResponse resp) {
+	public void setOptions(final HttpServletRequest req, final HttpServletResponse resp) {
 		for (int i = 0; i < Conventions.Http.HDR_NAMES.length; i++) {
-			resp.setHeader(Conventions.Http.HDR_NAMES[i],
-					Conventions.Http.HDR_TEXTS[i]);
+			resp.setHeader(Conventions.Http.HDR_NAMES[i], Conventions.Http.HDR_TEXTS[i]);
 		}
+
 		/*
-		 * we have no issue with CORS. We are ready to respond to any client so
-		 * long as the auth is taken care of
+		 * we have no issue with CORS. We are ready to respond to any client so long as
+		 * the auth is taken care of
 		 */
 		resp.setHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
 	}
 
 	/**
-	 * serve an in-bound request.
+	 * serve an in-bound request. client request pay-load is of the form {service:
+	 * string, session; string, data; Vo}
 	 *
 	 * @param req
 	 * @param resp
-	 * @throws IOException
-	 *             IO exception
+	 * @throws IOException IO exception
 	 *
 	 */
-	public void serve(final HttpServletRequest req,
-			final HttpServletResponse resp) throws IOException {
+	public void serve(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 
 		IInputData inputData = null;
 		try (Reader reader = req.getReader()) {
 			inputData = JsonUtil.newInputData(reader);
 		} catch (final Exception e) {
-			logger.error("Invalid data recd from client {}", e.getMessage());
+			logger.error("Invalid data received from the client {}", e.getMessage());
 			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}
@@ -110,12 +109,12 @@ class HttpAgent {
 			inputData = JsonUtil.newInputData();
 		}
 
+		extractIp(inputData, req);
 		readQueryString(req.getQueryString(), inputData);
 
-		if (restAdapter != null) {
+		if (this.restAdapter != null) {
 			String path = req.getPathInfo();
-			String urlServiceName = restAdapter.parsePath(path, req.getMethod(),
-					inputData);
+			String urlServiceName = this.restAdapter.parsePath(path, req.getMethod(), inputData);
 			if (urlServiceName == null) {
 				logger.info("path {} is not mapped to any service", path);
 			} else {
@@ -161,24 +160,36 @@ class HttpAgent {
 
 	private static int toHttpStatus(RequestStatus status) {
 		switch (status) {
-		case CompletedWithErrors :
+		case CompletedWithErrors:
 			return Conventions.Http.STATUS_SERVICE_FAILED;
-		case ServiceNameRequired :
+		case ServiceNameRequired:
 			return Conventions.Http.STATUS_INVALID_DATA;
-		case InvalidDataFormat :
+		case InvalidDataFormat:
 			return Conventions.Http.STATUS_INVALID_DATA;
-		case NoSuchService :
+		case NoSuchService:
 			return Conventions.Http.STATUS_INVALID_SERVICE;
-		case SessionRequired :
-		case NoSuchSession :
+		case SessionRequired:
+		case NoSuchSession:
 			return Conventions.Http.STATUS_AUTH_REQUIRED;
-		case ServerError :
+		case ServerError:
 			return Conventions.Http.STATUS_INTERNAL_ERROR;
-		case Completed :
+		case Completed:
 			return Conventions.Http.STATUS_ALL_OK;
-		default :
+		default:
 			return Conventions.Http.STATUS_INTERNAL_ERROR;
 		}
 
+	}
+
+	private static void extractIp(IInputData inputData, HttpServletRequest req) {
+		String ip = "Unknown";
+		for (String hdr : Conventions.Http.HDR_NAMES_FOR_IP) {
+			String s = req.getHeader(hdr);
+			if (s != null) {
+				ip = s;
+				break;
+			}
+		}
+		inputData.addValue(Conventions.Http.CLIENT_IP_FIELD_NAME, ip);
 	}
 }

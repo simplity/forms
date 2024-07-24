@@ -34,8 +34,8 @@ public class DefaultRequestLogger implements IRequestLogger {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultRequestLogger.class);
 
 	@Override
-	public void log(final String loginId, final String serviceName, final String input) {
-		logger.info("{} requested for {} with data\n{}", loginId, serviceName, input);
+	public void log(final String loginId, final String serviceName, final String ip, final String input) {
+		logger.info("user {} from IP: {} requested for service:{} with data\n{}", loginId, ip, serviceName, input);
 
 	}
 }

@@ -46,14 +46,12 @@ public class ValueSchema implements Util.IInitializer {
 	public void initialize(final String nam, final int idx) {
 		this.name = nam;
 		try {
-			this.valueTypeEnum = ValueType
-					.valueOf(Util.toClassName(this.valueType));
+			this.valueTypeEnum = ValueType.valueOf(Util.toClassName(this.valueType));
 		} catch (IllegalArgumentException | NullPointerException e) {
 			// defaults to text
 		}
 
-		if (this.valueType.equals("integer")
-				|| this.valueType.equals("decimal")) {
+		if (this.valueType.equals("integer") || this.valueType.equals("decimal")) {
 			final int n1 = ("" + this.minValue).length();
 			final int n2 = ("" + this.maxValue).length();
 			this.maxLength = (n1 > n2 ? n1 : n2);
@@ -78,37 +76,37 @@ public class ValueSchema implements Util.IInitializer {
 		 *
 		 */
 		final String cls = Util.toClassName(this.valueType) + "Schema";
-		sbf.append(P).append(cls).append(' ').append(this.name)
-				.append(" = new ").append(cls).append("(");
+		sbf.append(P).append(cls).append(' ').append(this.name).append(" = new ").append(cls).append("(");
 
 		// common parameters for the constructor
 		sbf.append(Util.quotedString(this.name)).append(C);
 		sbf.append(Util.quotedString(this.errorId));
 		/**
-		 * additional parameters to the constructor are to be added based on the
-		 * type
+		 * additional parameters to the constructor are to be added based on the type
 		 */
 		switch (this.valueType) {
-		case "text" :
+		case "text":
 			sbf.append(C).append(this.minLength);
 			sbf.append(C).append(this.maxLength);
 			sbf.append(C).append(Util.quotedString(this.regex));
 			break;
 
-		case "integer" :
+		case "integer":
 			sbf.append(C).append(this.minValue).append('L');
 			sbf.append(C).append(this.maxValue).append('L');
 			break;
 
-		case "decimal" :
+		case "decimal":
 			sbf.append(C).append(this.minValue).append('L');
 			sbf.append(C).append(this.maxValue).append('L');
 			sbf.append(C).append(this.nbrDecimalPlaces);
 			break;
 
-		case "date" :
+		case "date":
 			sbf.append(C).append(this.maxPastDays);
 			sbf.append(C).append(this.maxFutureDays);
+			break;
+		default:
 			break;
 		}
 
@@ -117,36 +115,32 @@ public class ValueSchema implements Util.IInitializer {
 
 	private static final String BEG = "\n\t\t";
 	private static final char END = ',';
+
 	void emitTs(StringBuilder sbf) {
 		sbf.append("\n\t\"").append(this.name).append("\": {");
 
 		Util.addAttr(sbf, BEG, "name", this.name);
 		Util.addAttr(sbf, BEG, "valueType", this.valueType);
-		if (this.errorId != null && this.errorId.isBlank() == false) {
+		if (this.errorId != null && this.errorId.isEmpty() == false) {
 			Util.addAttr(sbf, BEG, "errorId", this.errorId);
 		}
-		if (this.regex != null && this.regex.isBlank() == false) {
+		if (this.regex != null && this.regex.isEmpty() == false) {
 			Util.addAttr(sbf, BEG, "regex", this.regex);
 		}
 		if (this.maxLength != 0) {
-			sbf.append(BEG).append("\"maxLength\": ").append(this.maxLength)
-					.append(END);
+			sbf.append(BEG).append("\"maxLength\": ").append(this.maxLength).append(END);
 		}
 		if (this.minLength != 0) {
-			sbf.append(BEG).append("\"minLength\": ").append(this.minLength)
-					.append(END);
+			sbf.append(BEG).append("\"minLength\": ").append(this.minLength).append(END);
 		}
 		if (this.maxValue != 0) {
-			sbf.append(BEG).append("\"maxValue\": ").append(this.maxValue)
-					.append(END);
+			sbf.append(BEG).append("\"maxValue\": ").append(this.maxValue).append(END);
 		}
 		if (this.minValue != 0) {
-			sbf.append(BEG).append("\"minValue\": ").append(this.minValue)
-					.append(END);
+			sbf.append(BEG).append("\"minValue\": ").append(this.minValue).append(END);
 		}
 		if (this.nbrDecimalPlaces != 0) {
-			sbf.append(BEG).append("\"nbrFractions\": ")
-					.append(this.nbrDecimalPlaces).append(END);
+			sbf.append(BEG).append("\"nbrFractions\": ").append(this.nbrDecimalPlaces).append(END);
 		}
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t}");
@@ -195,18 +189,18 @@ public class ValueSchema implements Util.IInitializer {
 	 */
 	public String getDefaultConstant() {
 		switch (this.valueTypeEnum) {
-		case Boolean :
+		case Boolean:
 			return "false";
-		case Decimal :
-		case Integer :
+		case Decimal:
+		case Integer:
 			return "0";
-		case Date :
+		case Date:
 			return " DATE '" + LocalDate.now().toString() + "'";
-		case Text :
+		case Text:
 			return "''";
-		case Timestamp :
+		case Timestamp:
 			return " TIMESTAMP '" + Instant.now().toString() + "'";
-		default :
+		default:
 			return "''";
 
 		}

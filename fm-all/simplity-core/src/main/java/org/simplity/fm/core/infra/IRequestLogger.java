@@ -34,10 +34,9 @@ public interface IRequestLogger {
 	 *
 	 * @param loginId
 	 * @param serviceName
-	 * @param input
-	 *            payload as received
-	 * @param output
-	 *            response
+	 * @param ip          IP address of the requester
+	 * @param input       pay-load as received
+	 * @param output      response
 	 */
-	void log(String loginId, String serviceName, String input);
+	void log(String loginId, String serviceName, String ip, String input);
 }

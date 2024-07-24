@@ -18,14 +18,14 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class PathsTest {
-	private static final Logger logger = LoggerFactory
-			.getLogger(PathsTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(PathsTest.class);
 	private static final String RES_NAME = "paths.json";
 	private IInputData invalidPaths;
 	private IInputData validPathsWithErrors;
 	private IInputData pathsWithPrefixes;
 	private IInputData testPaths;
 	private IInputData testData;
+
 	PathsTest() {
 		try (Reader reader = IoUtil.getReader(RES_NAME)) {
 			IInputData data = JsonUtil.newInputData(reader);
@@ -35,6 +35,7 @@ public class PathsTest {
 			this.testPaths = data.getData("testPaths");
 			this.testData = data.getData("testData");
 		} catch (IOException e) {
+			//
 		}
 	}
 
@@ -45,6 +46,7 @@ public class PathsTest {
 		// this.shouldApplyPrefixes();
 		// this.shouldExtractFieldsAndMapService();
 	}
+
 	private void shouldNotParseInvalidJsons() {
 		this.invalidPaths.getMemberNames().forEach(key -> {
 			logger.info("checking invalid paths: {}", key);
@@ -62,12 +64,10 @@ public class PathsTest {
 	@SuppressWarnings("unused")
 	private void shouldApplyPrefixes() {
 		RestAdapter paths = RestAdapter.fromInputData(this.pathsWithPrefixes);
-		String serviceName = paths.parsePath("app/module/p1/p2", "get",
-				JsonUtil.newInputData());
+		String serviceName = paths.parsePath("app/module/p1/p2", "get", JsonUtil.newInputData());
 		assertEquals("a.b.s", serviceName);
 
-		serviceName = paths.parsePath("p1/p2", "get",
-				JsonUtil.newInputData());
+		serviceName = paths.parsePath("p1/p2", "get", JsonUtil.newInputData());
 		assertNull(serviceName);
 	}
 

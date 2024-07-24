@@ -101,32 +101,27 @@ public class Sql {
 	private static final String SP_RETURN = "\n\t * @return retruned value from the stored procedure. null if teh stored procedure has no return specification";
 
 	/*
-	 * copy=pasted from StoredProcedure class with added annotations for
-	 * override, and protected changed to public
+	 * copy=pasted from StoredProcedure class with added annotations for override,
+	 * and protected changed to public
 	 */
 	private static final String SP_FETCHES = "\r\n" + "	/**\r\n"
 			+ "	 * to be invoked only after a successful invocation of callSp(). This will\r\n"
-			+ "	 * return the update counts from the stored procedure\r\n"
-			+ "	 *\r\n"
+			+ "	 * return the update counts from the stored procedure\r\n" + "	 *\r\n"
 			+ "	 * @return array of dataTables that contain the output rows from each of the\r\n"
 			+ "	 *         results. An array element is null if the corresponding result did\r\n"
 			+ "	 *         not have a resultSte (but an updateCount instead) The array is\r\n"
 			+ "	 *         null if the stored procedure did not succeed. The array\r\n"
 			+ "	 *         DataTables correspond to the Records that re specified as output\r\n"
 			+ "	 *         parameters in the SQL specification.\r\n"
-			+ "	public DataTable<?>[] fetchResultsTable() {\r\n"
-			+ "		return this.resultTables;\r\n" + "	}\r\n" + "\r\n"
-			+ "	/**\r\n"
+			+ "	public DataTable<?>[] fetchResultsTable() {\r\n" + "		return this.resultTables;\r\n" + "	}\r\n"
+			+ "\r\n" + "	/**\r\n"
 			+ "	 * to be invoked only after a successful invocation of callSp(). This will\r\n"
-			+ "	 * return the update counts from the stored procedure\r\n"
-			+ "	 *\r\n"
+			+ "	 * return the update counts from the stored procedure\r\n" + "	 *\r\n"
 			+ "	 * @return array of integers that represent the updateCounts of each result\r\n"
 			+ "	 *         of this stored procedure. -1 implies that this result did not\r\n"
-			+ "	 *         produce an updateCOunt (but a resultSet)\r\n"
-			+ "	 *\r\n"
+			+ "	 *         produce an updateCOunt (but a resultSet)\r\n" + "	 *\r\n"
 			+ "	 *         null if the stored procedure was not invoked or the stored\r\n"
-			+ "	 *         procedure has no results\r\n" + "	 */\r\n"
-			+ "	public int[] fetchUpdateCounts() {\r\n"
+			+ "	 *         procedure has no results\r\n" + "	 */\r\n" + "	public int[] fetchUpdateCounts() {\r\n"
 			+ "		return this.updateCounts;\r\n" + "	}\r\n" + "";
 	private static final String END_FAIL_COMMENT = "\n\t * @throws SQLException if no rows read/affected, or on any DB related error\n\t */";
 	private static final String END_COMMENT = "\n\t * @throws SQLException\n\t */";
@@ -224,6 +219,7 @@ public class Sql {
 	private boolean isSp;
 
 	private List<String> msgs = new ArrayList<>();
+
 	/**
 	 * to be called by the generator before generating java/ts code
 	 *
@@ -236,7 +232,7 @@ public class Sql {
 		 */
 		this.isToReadOne = this.sqlType.equals(SQL_TYPE_READ_ONE);
 		this.isToReadMany = this.sqlType.equals(SQL_TYPE_READ_MANY);
-		this.isToRead = isToReadOne || isToReadMany;
+		this.isToRead = this.isToReadOne || this.isToReadMany;
 		this.isToWrite = this.sqlType.equals(SQL_TYPE_WRITE);
 		this.isToCall = this.sqlType.equals(SQL_TYPE_CALL);
 
@@ -263,40 +259,36 @@ public class Sql {
 		if (this.inputRecord != null) {
 			Record inRec = records.get(this.inputRecord);
 			if (inRec == null) {
-				msgs.add(this.inputRecord
-						+ " is specified as inputRecord, but it is not defined as a record");
+				this.msgs.add(this.inputRecord + " is specified as inputRecord, but it is not defined as a record");
 			} else {
-				this.inRecClassName = Util.toClassName(this.inputRecord)
-						+ "Record";
+				this.inRecClassName = Util.toClassName(this.inputRecord) + "Record";
 				this.inRecFields = inRec.fields;
 			}
 		}
 
 		if (this.outputFields != null) {
 			this.initArr(this.outputFields, schemas);
-			this.setDbNames(outputFields);
+			this.setDbNames(this.outputFields);
 		}
 
 		if (this.outputRecord != null) {
 			Record outRec = records.get(this.outputRecord);
 			if (outRec == null) {
-				msgs.add(this.outputRecord
+				this.msgs.add(this.outputRecord
 
 						+ " is specified as outputRecord, but it is not defined as a record");
 			} else {
-				this.outRecClassName = Util.toClassName(this.outputRecord)
-						+ "Record";
+				this.outRecClassName = Util.toClassName(this.outputRecord) + "Record";
 				this.setDbNames(outRec.fields);
 			}
 		}
 
 		if (this.returnType != null) {
 			try {
-				this.returnValueType = ValueType
-						.valueOf(Util.toClassName(this.returnType));
+				this.returnValueType = ValueType.valueOf(Util.toClassName(this.returnType));
 
 			} catch (Exception e) {
-				msgs.add(
+				this.msgs.add(
 						"this.returnType is not a valid type. Use one of text, integer, decimal, boolean, date or timestamp");
 			}
 		}
@@ -308,12 +300,11 @@ public class Sql {
 				if (recName == null) {
 					continue;
 				}
-				this.spOutputClassNames[i] = Util.toClassName(recName)
-						+ "Record";
+				this.spOutputClassNames[i] = Util.toClassName(recName) + "Record";
 
 				Record rec = records.get(recName);
 				if (rec == null) {
-					msgs.add(recName
+					this.msgs.add(recName
 
 							+ " is specified as outputRecord, but it is not defined as a record");
 					continue;
@@ -328,89 +319,77 @@ public class Sql {
 		}
 
 		if (this.outputFields != null && this.outputRecord != null) {
-			this.msgs.add(
-					"Output from sql may be specified either with outputFields or outputRecord, but not both.");
+			this.msgs.add("Output from sql may be specified either with outputFields or outputRecord, but not both.");
 		}
 
 		/**
 		 * description in the java-doc
 		 */
-		this.descriptionToUse = this.description == null
-				? ("Code generated from " + this.name + ".sql.json")
+		this.descriptionToUse = this.description == null ? ("Code generated from " + this.name + ".sql.json")
 				: this.description;
 
-		if (isToWrite) {
+		if (this.isToWrite) {
 			this.preparedSql = this.sql;
-			if (hasInput == false) {
-				msgs.add(
-						"Write sql MUST have sql parameters. Unconditional update to database is not allowed");
+			if (this.hasInput == false) {
+				this.msgs.add("Write sql MUST have sql parameters. Unconditional update to database is not allowed");
 			}
-			if (hasOutput) {
-				msgs.add(
-						"write sql should not specify outputFields or outputRecord");
+			if (this.hasOutput) {
+				this.msgs.add("write sql should not specify outputFields or outputRecord");
 			}
 
 			final String sqlOperarion = this.sql.substring(0, 6).toLowerCase();
-			if (sqlOperarion.equals(SQL_INSERT) == false
-					&& sqlOperarion.equals(SQL_UPDATE) == false) {
-				msgs.add("write sql must start with either " + SQL_INSERT
-						+ " or " + SQL_UPDATE);
+			if (sqlOperarion.equals(SQL_INSERT) == false && sqlOperarion.equals(SQL_UPDATE) == false) {
+				this.msgs.add("write sql must start with either " + SQL_INSERT + " or " + SQL_UPDATE);
 			}
 
 		} else if (this.isToRead) {
 			this.preparedSql = this.prepareReadSql();
 
 			if (this.hasOutput == false) {
-				msgs.add(
-						"read sql must specify either output fields or output record.");
+				this.msgs.add("read sql must specify either output fields or output record.");
 			}
 
 			if (this.readFrom == null) {
-				msgs.add(
+				this.msgs.add(
 						"read sql must specify readFrom. This is required to synthesise the SELECT-FROM clause of the SQL");
 			}
 
 			final String sqlOperarion = this.sql.substring(0, 5).toLowerCase();
 			if (sqlOperarion.equals(SQL_WHERE) == false) {
-				msgs.add(
+				this.msgs.add(
 						"read sql must start with WHERE clause. SELECT statment will be prefixed to this by the generator.");
 			}
 
 			if (this.isToReadMany && this.outputRecord == null) {
-				msgs.add(
+				this.msgs.add(
 						"Output from a read-many sql can be received only into a dataTable. Hence outputRecord must be specified.");
 			}
 
 		} else if (this.isSp) {
 
 			if (this.procedureName == null) {
-				msgs.add(
-						"procedureName, as in the DB, must be specified for a stored procedure");
+				this.msgs.add("procedureName, as in the DB, must be specified for a stored procedure");
 			}
 
 			if (this.sql != null) {
-				msgs.add(
-						"Sql should not be specified for a stored procedure. Generated code will manage to ");
+				this.msgs.add("Sql should not be specified for a stored procedure. Generated code will manage to ");
 			}
 
 			if (this.hasOutput && this.resultRecords != null) {
-				msgs.add(
+				this.msgs.add(
 						"Stored procedure can return more than one outputs. If this procedure is producing one output, or if you want only the first output, use outputRecord or outputFields. If you intend ro receive more than one outputs, use storedProcedureOutput");
 			}
 
 		} else {
-			msgs.add(this.sqlType
-					+ " is invalid. it has to be readOne/readMany/write/storedProcedure");
+			this.msgs.add(this.sqlType + " is invalid. it has to be readOne/readMany/write/storedProcedure");
 		}
 
 		if (!this.isSp) {
 			if (this.returnType != null) {
-				msgs.add(
-						"returnType can be specified only for a stored procedure");
+				this.msgs.add("returnType can be specified only for a stored procedure");
 			}
 			if (this.resultRecords != null) {
-				msgs.add(
-						"procedureOutputRecords can be specified only for a stored procedure");
+				this.msgs.add("procedureOutputRecords can be specified only for a stored procedure");
 			}
 		}
 
@@ -455,7 +434,7 @@ public class Sql {
 	 */
 	boolean generateJava(String folderName, final String rootPackage) {
 		if (this.msgs.size() > 0) {
-			for (String msg : msgs) {
+			for (String msg : this.msgs) {
 				logger.error(msg);
 			}
 			return false;
@@ -466,14 +445,12 @@ public class Sql {
 		emitImports(sbf, rootPackage);
 
 		/**
-		 * class level comment. We are not putting generated date to ensure that
-		 * the generated code is not changed unless the meta data is changed.
-		 * this helps reducing load on the repositories
+		 * class level comment. We are not putting generated date to ensure that the
+		 * generated code is not changed unless the meta data is changed. this helps
+		 * reducing load on the repositories
 		 */
-		sbf.append("\n\n/**").append("\n * ").append(this.descriptionToUse)
-				.append("\n */");
-		sbf.append("\npublic class ").append(this.thisClassName)
-				.append(" extends ");
+		sbf.append("\n\n/**").append("\n * ").append(this.descriptionToUse).append("\n */");
+		sbf.append("\npublic class ").append(this.thisClassName).append(" extends ");
 		if (this.isSp) {
 			sbf.append("StoredProcedure {");
 		} else {
@@ -484,9 +461,8 @@ public class Sql {
 		this.emitConstructor(sbf);
 
 		/*
-		 * emit setters, but only if input fields are used. If input record is
-		 * used, the values are set to the record, and not to this object
-		 * instance
+		 * emit setters, but only if input fields are used. If input record is used, the
+		 * values are set to the record, and not to this object instance
 		 */
 		if (this.inputFields != null) {
 			Util.emitSettersValues(sbf, this.inputFields, "this.inputValues");
@@ -496,8 +472,7 @@ public class Sql {
 		 * similarly, getters, but only if fields are used
 		 */
 		if (this.outputFields != null) {
-			Util.emitGettersFromValues(sbf, this.outputFields,
-					"this.parameterValues");
+			Util.emitGettersFromValues(sbf, this.outputFields, "this.parameterValues");
 		}
 
 		if (this.isToCall) {
@@ -509,14 +484,12 @@ public class Sql {
 		} else if (this.isToWrite) {
 			this.emitWriteMethods(sbf);
 		} else {
-			throw new ApplicationError(
-					"Sql generator has an internal error in handling the purpose of the sql");
+			throw new ApplicationError("Sql generator has an internal error in handling the purpose of the sql");
 		}
 
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.thisClassName + ".java",
-				sbf.toString());
+		Util.writeOut(folderName + this.thisClassName + ".java", sbf.toString());
 		return true;
 	}
 
@@ -571,8 +544,8 @@ public class Sql {
 	}
 
 	/**
-	 * this.sql starts with WHERE. We have to prefix that with SELECT a,b,c....
-	 * FROM readFrom
+	 * this.sql starts with WHERE. We have to prefix that with SELECT a,b,c.... FROM
+	 * readFrom
 	 *
 	 * @return
 	 */
@@ -587,11 +560,10 @@ public class Sql {
 
 		sbf.append(" FROM ").append(this.readFrom).append(' ').append(this.sql);
 
-		return sbf.toString() + sql;
+		return sbf.toString() + this.sql;
 	}
 
-	private void emitImports(final StringBuilder sbf,
-			final String rootPackage) {
+	private void emitImports(final StringBuilder sbf, final String rootPackage) {
 		sbf.append("package ").append(rootPackage).append(".sql;\n");
 
 		if (this.hasDate) {
@@ -606,8 +578,7 @@ public class Sql {
 		if (this.inputFields != null) {
 			Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 			sbf.append("\nimport ").append(rootPackage).append('.')
-					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
-					.append(';');
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append(';');
 		}
 
 		if (this.isToRead) {
@@ -618,8 +589,7 @@ public class Sql {
 		/**
 		 * table is required for batch-write and readMany
 		 */
-		if ((this.resultRecords != null)
-				|| (this.inputRecord != null && this.isToWrite)
+		if ((this.resultRecords != null) || (this.inputRecord != null && this.isToWrite)
 				|| (this.outputRecord != null && this.isToReadMany)) {
 			Util.emitImport(sbf, org.simplity.fm.core.data.DataTable.class);
 		}
@@ -645,27 +615,22 @@ public class Sql {
 		}
 	}
 
-	private static void importRec(StringBuilder sbf, String rootPackage,
-			String className) {
+	private static void importRec(StringBuilder sbf, String rootPackage, String className) {
 		if (className == null) {
 			return;
 		}
-		sbf.append("\nimport ").append(rootPackage).append(".rec.")
-				.append(className).append(';');
+		sbf.append("\nimport ").append(rootPackage).append(".rec.").append(className).append(';');
 	}
 
 	private void emitStaticFields(final StringBuilder sbf) {
 		if (this.isSp) {
-			sbf.append(P).append("String PROC_NAME = ")
-					.append(this.procedureName).append(';');
-			sbf.append(P).append("ValueType RET_TYPE = ")
-					.append(this.returnValueType).append(';');
+			sbf.append(P).append("String PROC_NAME = ").append(this.procedureName).append(';');
+			sbf.append(P).append("ValueType RET_TYPE = ").append(this.returnValueType).append(';');
 			sbf.append(P).append("Class<?> SP_OUT_CLASSES = ");
 			emitClassArray(sbf, this.spOutputClassNames);
 		}
 
-		sbf.append(P).append("String SQL = \"").append(this.preparedSql)
-				.append("\";");
+		sbf.append(P).append("String SQL = \"").append(this.preparedSql).append("\";");
 
 		sbf.append(P).append("Field[] IN_FIELDS = ");
 
@@ -696,12 +661,10 @@ public class Sql {
 			} else {
 				sbf.append(", ");
 			}
-			sbf.append("new Field(\"").append(field.name).append("\", ")
-					.append(field.index).append(", ")
-					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
-					.append('.').append(field.valueSchema).append(", ")
-					.append(field.isRequired).append(", ")
-					.append(Util.quotedString(field.defaultValue)).append(")");
+			sbf.append("new Field(\"").append(field.name).append("\", ").append(field.index).append(", ")
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(field.valueSchema)
+					.append(", ").append(field.isRequired).append(", ").append(Util.quotedString(field.defaultValue))
+					.append(")");
 		}
 
 		sbf.append("};");
@@ -717,19 +680,16 @@ public class Sql {
 			} else {
 				sbf.append(", ");
 			}
-			sbf.append("new Field(\"").append(field.name).append("\", ")
-					.append(field.index).append(", ")
-					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
-					.append('.').append(field.valueSchema).append(", ")
-					.append(field.isRequired).append(", ")
-					.append(Util.quotedString(field.defaultValue)).append(")");
+			sbf.append("new Field(\"").append(field.name).append("\", ").append(field.index).append(", ")
+					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(field.valueSchema)
+					.append(", ").append(field.isRequired).append(", ").append(Util.quotedString(field.defaultValue))
+					.append(")");
 		}
 
 		sbf.append("};");
 	}
 
-	private static void emitTypesArray(final ValueType[] types,
-			final StringBuilder sbf) {
+	private static void emitTypesArray(final ValueType[] types, final StringBuilder sbf) {
 		sbf.append("new ValueType[]{");
 		boolean firstOne = true;
 		for (final ValueType type : types) {
@@ -756,8 +716,7 @@ public class Sql {
 	}
 
 	private void emitConstructor(final StringBuilder sbf) {
-		sbf.append("\n\n\t/** \n\t * default constructor\n\t */\n\tpublic ")
-				.append(this.thisClassName).append("() {");
+		sbf.append("\n\n\t/** \n\t * default constructor\n\t */\n\tpublic ").append(this.thisClassName).append("() {");
 		sbf.append("\n\t\tsuper(SQL, IN_FIELDS, OUT_TYPES);");
 		sbf.append("\n\t}");
 	}
@@ -770,8 +729,7 @@ public class Sql {
 		sbf.append(SP_RETURN);
 
 		sbf.append(BEGIN_OVERRIDE_METHOD).append("Object callSp final ")
-				.append(this.isToWrite ? "IReadWrite" : "IReadonly")
-				.append("handle").append(SQL_EX);
+				.append(this.isToWrite ? "IReadWrite" : "IReadonly").append("handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("callSp(handle);");
 		sbf.append(END_METHOD);
 	}
@@ -784,10 +742,8 @@ public class Sql {
 		sbf.append(IN_REC_PARAM);
 		sbf.append(SP_RETURN);
 
-		sbf.append(BEGIN_METHOD).append("Object callSp final ")
-				.append(this.isToWrite ? "IReadWrite" : "IReadonly")
-				.append("handle, ").append(this.inRecClassName)
-				.append(" inputRecord").append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("Object callSp final ").append(this.isToWrite ? "IReadWrite" : "IReadonly")
+				.append("handle, ").append(this.inRecClassName).append(" inputRecord").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("callSp(handle, inputRecord);");
 		sbf.append(END_METHOD);
 	}
@@ -795,100 +751,78 @@ public class Sql {
 	private void emitReadWithFieldsAndRecord(final StringBuilder sbf) {
 
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS)
-				.append(DESCRIPTION_OUTPUT_RECORD);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS).append(DESCRIPTION_OUTPUT_RECORD);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(OUT_REC_PARAM);
 		sbf.append(BOOL_RETURN);
 		sbf.append(END_COMMENT);
 
-		sbf.append(BEGIN_METHOD)
-				.append("boolean read(final IReadonlyHandle handle, final ")
-				.append(this.outRecClassName).append(" outputRecord")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("boolean read(final IReadonlyHandle handle, final ")
+				.append(this.outRecClassName).append(" outputRecord").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("read(handle, outputRecord);");
 		sbf.append(END_METHOD);
 	}
 
 	private void emitReadFailWithFieldsAndRecord(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS)
-				.append(DESCRIPTION_OUTPUT_RECORD);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS).append(DESCRIPTION_OUTPUT_RECORD);
 
 		sbf.append(HANDLE_PARAM);
 		sbf.append(OUT_REC_PARAM);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("void readOrFail(final IReadonlyHandle handle, final ")
-				.append(this.outRecClassName).append(" outputRecord")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("void readOrFail(final IReadonlyHandle handle, final ")
+				.append(this.outRecClassName).append(" outputRecord").append(SQL_EX);
 		sbf.append(SUPER_VOID).append("readOrFail(handle, outputRecord);");
 		sbf.append(END_METHOD);
 	}
 
 	private void emitReadManyWithFieldsAndRecord(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS)
-				.append(DESCRIPTION_OUTPUT_TABLE);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS).append(DESCRIPTION_OUTPUT_TABLE);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(OUT_TABLE_PARAM);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD).append(
-				"void readMany(final IReadonlyHandle handle, final DataTable<")
-				.append(this.outRecClassName).append("> dataTable")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("void readMany(final IReadonlyHandle handle, final DataTable<")
+				.append(this.outRecClassName).append("> dataTable").append(SQL_EX);
 		sbf.append(SUPER_VOID).append("readMany(handle, dataTable);");
 		sbf.append(END_METHOD);
 	}
 
 	private void emitReadWithRecords(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD)
-				.append(DESCRIPTION_OUTPUT_RECORD);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD).append(DESCRIPTION_OUTPUT_RECORD);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
 		sbf.append(OUT_REC_PARAM);
 		sbf.append(BOOL_RETURN);
-		sbf.append(BEGIN_METHOD)
-				.append("boolean read(final IReadonlyHandle handle, final ")
-				.append(this.inRecClassName).append(" inputRecord, final ")
-				.append(this.outRecClassName).append(" outputRecord")
-				.append(SQL_EX);
-		sbf.append(SUPER_RETURN)
-				.append("read(handle, inputRecord, outputRecord);");
+		sbf.append(BEGIN_METHOD).append("boolean read(final IReadonlyHandle handle, final ").append(this.inRecClassName)
+				.append(" inputRecord, final ").append(this.outRecClassName).append(" outputRecord").append(SQL_EX);
+		sbf.append(SUPER_RETURN).append("read(handle, inputRecord, outputRecord);");
 		sbf.append(END_METHOD);
 	}
 
 	private void emitReadFailWithRecords(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD)
-				.append(DESCRIPTION_OUTPUT_RECORD);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD).append(DESCRIPTION_OUTPUT_RECORD);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
 		sbf.append(OUT_REC_PARAM);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("void readOrFail(final IReadonlyHandle handle, final ")
-				.append(this.inRecClassName).append(" inputRecord, ")
-				.append(this.outRecClassName).append(" outputputRecord")
-				.append(SQL_EX);
-		sbf.append(SUPER_VOID)
-				.append("readOrFail(handle, inputRecord, outputRecord);");
+		sbf.append(BEGIN_METHOD).append("void readOrFail(final IReadonlyHandle handle, final ")
+				.append(this.inRecClassName).append(" inputRecord, ").append(this.outRecClassName)
+				.append(" outputputRecord").append(SQL_EX);
+		sbf.append(SUPER_VOID).append("readOrFail(handle, inputRecord, outputRecord);");
 		sbf.append(END_METHOD);
 	}
 
 	private void emitReadManyWithRecords(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD)
-				.append(DESCRIPTION_OUTPUT_TABLE);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD).append(DESCRIPTION_OUTPUT_TABLE);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
 		sbf.append(OUT_TABLE_PARAM);
-		sbf.append(BEGIN_METHOD)
-				.append("void readMany(final IReadonlyHandle handle, final")
-				.append(this.inRecClassName)
-				.append(" inputRecord, final DataTable<")
-				.append(this.outRecClassName).append("> dataTable")
+		sbf.append(BEGIN_METHOD).append("void readMany(final IReadonlyHandle handle, final").append(this.inRecClassName)
+				.append(" inputRecord, final DataTable<").append(this.outRecClassName).append("> dataTable")
 				.append(SQL_EX);
 		sbf.append(SUPER_VOID).append("read(handle, inputRecord, dataTable);");
 		sbf.append(END_METHOD);
@@ -896,58 +830,45 @@ public class Sql {
 
 	private void emitReadWithRecordAndFields(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD)
-				.append(DESCRIPTION_GETTERS);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD).append(DESCRIPTION_GETTERS);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
 		sbf.append(BOOL_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("boolean readIn(final IReadonlyHandle handle, final ")
-				.append(this.inRecClassName).append(" inputRecord")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("boolean readIn(final IReadonlyHandle handle, final ")
+				.append(this.inRecClassName).append(" inputRecord").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("readIn(handle, inputRecord);");
 		sbf.append(END_METHOD);
 	}
 
-	private static void emitReadFailWithRecordAndFields(
-			final StringBuilder sbf) {
+	private static void emitReadFailWithRecordAndFields(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD)
-				.append(DESCRIPTION_GETTERS);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_INPUT_RECORD).append(DESCRIPTION_GETTERS);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(IN_REC_PARAM);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("void readInOrFail(final IReadonlyHandle handle")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("void readInOrFail(final IReadonlyHandle handle").append(SQL_EX);
 		sbf.append(SUPER_VOID).append("readInOrFail(handle);");
 		sbf.append(END_METHOD);
 	}
 
 	private static void emitReadWithFields(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS)
-				.append(DESCRIPTION_GETTERS);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS).append(DESCRIPTION_GETTERS);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(BOOL_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_OVERRIDE_METHOD)
-				.append("int readIn(final IReadonlyHandle handle")
-				.append(SQL_EX);
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("int readIn(final IReadonlyHandle handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("readIn(handle);");
 		sbf.append(END_METHOD);
 	}
 
 	private static void emitReadFailWithFields(final StringBuilder sbf) {
 		sbf.append(BEGIN_COMMENT);
-		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS)
-				.append(DESCRIPTION_GETTERS);
+		sbf.append(COMMENT_PREFIX).append(DESCRIPTION_SETTERS).append(DESCRIPTION_GETTERS);
 		sbf.append(HANDLE_PARAM);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_OVERRIDE_METHOD)
-				.append("void readInOrFail(final IReadonlyHandle handle")
-				.append(SQL_EX);
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("void readInOrFail(final IReadonlyHandle handle").append(SQL_EX);
 		sbf.append(SUPER_VOID).append("readInOrFail(handle);");
 		sbf.append(END_METHOD);
 	}
@@ -958,9 +879,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(INT_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_OVERRIDE_METHOD)
-				.append("int write(final IReadWriteHandle handle")
-				.append(SQL_EX);
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("int write(final IReadWriteHandle handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle);");
 		sbf.append(END_METHOD);
 	}
@@ -971,9 +890,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(NON_ZERO_RETURN);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_OVERRIDE_METHOD)
-				.append("int write(final IReadWriteHandle handle")
-				.append(SQL_EX);
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("int write(final IReadWriteHandle handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle);");
 		sbf.append(END_METHOD);
 	}
@@ -985,10 +902,8 @@ public class Sql {
 		sbf.append(IN_REC_PARAM);
 		sbf.append(INT_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("int write(final IReadWriteHandle handle, ")
-				.append(this.inRecClassName).append(" inputRecord")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("int write(final IReadWriteHandle handle, ").append(this.inRecClassName)
+				.append(" inputRecord").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle, inputRecord);");
 		sbf.append(END_METHOD);
 	}
@@ -1000,10 +915,8 @@ public class Sql {
 		sbf.append(IN_REC_PARAM);
 		sbf.append(NON_ZERO_RETURN);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_METHOD)
-				.append("int writeOrFail(final IReadWriteHandle handle, ")
-				.append(this.inRecClassName).append(" inputRecord")
-				.append(SQL_EX);
+		sbf.append(BEGIN_METHOD).append("int writeOrFail(final IReadWriteHandle handle, ").append(this.inRecClassName)
+				.append(" inputRecord").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("writeOrFail(handle, inputRecord);");
 		sbf.append(END_METHOD);
 	}
@@ -1015,8 +928,7 @@ public class Sql {
 		sbf.append(IN_TABLE_PARAM);
 		sbf.append(INT_RETURN);
 		sbf.append(END_COMMENT);
-		sbf.append(BEGIN_METHOD).append(
-				"int writeMany(final IReadWriteHandle handle, DataTable<")
+		sbf.append(BEGIN_METHOD).append("int writeMany(final IReadWriteHandle handle, DataTable<")
 				.append(this.inRecClassName).append("> table").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("writeMany(handle, table);");
 		sbf.append(END_METHOD);

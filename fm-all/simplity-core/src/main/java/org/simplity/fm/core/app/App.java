@@ -27,6 +27,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.UUID;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.conf.defalt.DefaultAccessController;
@@ -112,15 +113,12 @@ class App implements IApp, IAppInfra {
 		} else {
 			this.compProvider = CompProvider.getPrivider(text);
 			if (this.compProvider == null) {
-				throw new Exception(
-						"Error while initializing comp provider using root package "
-								+ text);
+				throw new Exception("Error while initializing comp provider using root package " + text);
 			}
 		}
 
 		if (config.accessController == null) {
-			logger.warn(
-					"No access controller configured. All services granted for all users");
+			logger.warn("No access controller configured. All services granted for all users");
 			this.guard = new DefaultAccessController();
 		} else {
 			this.guard = config.accessController;
@@ -142,16 +140,14 @@ class App implements IApp, IAppInfra {
 		}
 
 		if (config.sessionCache == null) {
-			logger.warn(
-					"No Session Cacher controller configured. local caching arranged instead..");
+			logger.warn("No Session Cacher controller configured. local caching arranged instead..");
 			this.cache = new DefaultSessionCacher();
 		} else {
 			this.cache = config.sessionCache;
 		}
 
 		if (config.requestLogger == null) {
-			logger.warn(
-					"No Request logger configured. requests will be merged with general logging..");
+			logger.warn("No Request logger configured. requests will be merged with general logging..");
 			this.reqLogger = new DefaultRequestLogger();
 		} else {
 			this.reqLogger = config.requestLogger;
@@ -166,16 +162,14 @@ class App implements IApp, IAppInfra {
 		}
 
 		if (config.contextFactory == null) {
-			logger.warn(
-					"No custom factory is defined to create service context. A default one is used");
+			logger.warn("No custom factory is defined to create service context. A default one is used");
 			this.contextFactory = new DefaultContextFactory();
 		} else {
 			this.contextFactory = config.contextFactory;
 		}
 
 		if (config.emailer == null) {
-			logger.warn(
-					"No custom factory is defined to create service context. A default one is used");
+			logger.warn("No custom factory is defined to create service context. A default one is used");
 			this.emailer = new DefaultEmailer();
 		} else {
 			this.emailer = config.emailer;
@@ -223,16 +217,13 @@ class App implements IApp, IAppInfra {
 	}
 
 	@Override
-	public RequestStatus serve(IInputData inData, Writer writer)
-			throws IOException {
+	public RequestStatus serve(IInputData inData, Writer writer) throws IOException {
 		IServiceContext ctx = null;
 		try {
 			String serviceName = inData.getString(TAG_SERVICE);
 			if (serviceName == null || serviceName.isEmpty()) {
-				logger.error("Attribute named {} is required for service name",
-						TAG_SERVICE);
-				return writeErrorResponse(RequestStatus.ServiceNameRequired,
-						writer);
+				logger.error("Attribute named {} is required for service name", TAG_SERVICE);
+				return writeErrorResponse(RequestStatus.ServiceNameRequired, writer);
 			}
 
 			UserContext utx = null;
@@ -250,9 +241,7 @@ class App implements IApp, IAppInfra {
 			if (sessionId != null) {
 				utx = this.cache.get(sessionId);
 				if (utx == null) {
-					logger.info(
-							"SessionId {} not found in cache. May be time-out",
-							sessionId);
+					logger.info("SessionId {} not found in cache. May be time-out", sessionId);
 					sessionId = null;
 				}
 			}
@@ -271,8 +260,7 @@ class App implements IApp, IAppInfra {
 			}
 
 			if (service.serveGuests() == false && userId == null) {
-				return writeErrorResponse(RequestStatus.SessionRequired,
-						writer);
+				return writeErrorResponse(RequestStatus.SessionRequired, writer);
 			}
 
 			if (this.guard.okToServe(service, ctx) == false) {
@@ -284,15 +272,19 @@ class App implements IApp, IAppInfra {
 				data = JsonUtil.newInputData();
 			}
 
-			this.reqLogger.log(userId, serviceName, inData.toString());
+			/**
+			 * make the IP available to the service as well
+			 */
+			String ip = inData.getString(Conventions.Http.CLIENT_IP_FIELD_NAME);
+			data.addValue(Conventions.Http.CLIENT_IP_FIELD_NAME, ip);
+
+			this.reqLogger.log(userId, serviceName, ip, inData.toString());
 
 			outData.addName(TAG_DATA).beginObject();
 			service.serve(ctx, data);
 			outData.endObject();
 
-			RequestStatus status = ctx.allOk()
-					? RequestStatus.Completed
-					: RequestStatus.CompletedWithErrors;
+			RequestStatus status = ctx.allOk() ? RequestStatus.Completed : RequestStatus.CompletedWithErrors;
 			outData.addName(TAG_STATUS).addValue(status.getMessageId());
 
 			if (sessionId != null && ctx.toResetUserContext()) {
@@ -335,8 +327,7 @@ class App implements IApp, IAppInfra {
 		outData.endArray();
 	}
 
-	private static RequestStatus writeErrorResponse(RequestStatus status,
-			Writer outWriter) throws IOException {
+	private static RequestStatus writeErrorResponse(RequestStatus status, Writer outWriter) throws IOException {
 
 		StringWriter stringWriter = new StringWriter();
 		IOutputData outData = JsonUtil.newOutputData(stringWriter);
@@ -345,7 +336,7 @@ class App implements IApp, IAppInfra {
 		String messageId = status.getMessageId();
 		outData.addName(TAG_STATUS).addValue(messageId);
 		outData.addName(TAG_STATUS_DESC).addValue(status.getDescription());
-		Message[] messages = {Message.newError(messageId)};
+		Message[] messages = { Message.newError(messageId) };
 		writeMessages(messages, outData);
 
 		outData.endObject();

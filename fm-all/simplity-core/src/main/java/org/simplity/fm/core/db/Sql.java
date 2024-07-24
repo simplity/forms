@@ -61,8 +61,7 @@ public abstract class Sql {
 	 * @param inputNames
 	 * @param inputTypes
 	 */
-	protected Sql(final String sqlText, Field[] inputFields,
-			final ValueType[] outputTypes) {
+	protected Sql(final String sqlText, Field[] inputFields, final ValueType[] outputTypes) {
 		this.sqlText = sqlText;
 		this.inputFields = inputFields;
 		this.outputTypes = outputTypes;
@@ -82,10 +81,10 @@ public abstract class Sql {
 			}
 		}
 
-		if (outputTypes == null) {
+		if (this.outputTypes == null) {
 			this.outputValues = null;
 		} else {
-			this.outputValues = new Object[outputTypes.length];
+			this.outputValues = new Object[this.outputTypes.length];
 		}
 	}
 
@@ -95,59 +94,49 @@ public abstract class Sql {
 	 * to be called after setting parameter values using setters
 	 *
 	 * @param handle
-	 * @param outputRecord
-	 *            into which extracted data is extracted into
+	 * @param outputRecord into which extracted data is extracted into
 	 * @return true if read was successful. false if nothing was read
 	 * @throws SQLException
 	 */
-	protected boolean read(final IReadonlyHandle handle, Record outputRecord)
-			throws SQLException {
+	protected boolean read(final IReadonlyHandle handle, Record outputRecord) throws SQLException {
 
 		this.checkValues();
 
-		return handle.readIntoRecord(this.sqlText, this.inputValues,
-				this.inputTypes, outputRecord);
+		return handle.readIntoRecord(this.sqlText, this.inputValues, this.inputTypes, outputRecord);
 	}
 
 	/**
-	 * to be called only after assigning values for all the input parameters
-	 * using the setter methods. to be used when at least one row is expected as
-	 * per our db design, and hence the caller need not handle the case with no
-	 * rows
+	 * to be called only after assigning values for all the input parameters using
+	 * the setter methods. to be used when at least one row is expected as per our
+	 * db design, and hence the caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @param outputRecord
-	 *            into which extracted data is extracted into
-	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are found
+	 * @param outputRecord into which extracted data is extracted into
+	 * @throws SQLException thrown when any SQL exception, OR when no rows are found
 	 */
-	protected void readOrFail(final IReadonlyHandle handle, Record outputRecord)
-			throws SQLException {
+	protected void readOrFail(final IReadonlyHandle handle, Record outputRecord) throws SQLException {
 		if (!this.read(handle, outputRecord)) {
 			fail();
 		}
 	}
 
 	/**
-	 * to be called only after assigning values for all the input parameters
-	 * using the setter methods.
+	 * to be called only after assigning values for all the input parameters using
+	 * the setter methods.
 	 *
 	 * @param handle
-	 * @param dataTable
-	 *            to which the rows will be appended.
+	 * @param dataTable to which the rows will be appended.
 	 * @throws SQLException
 	 */
-	protected void readMany(final IReadonlyHandle handle,
-			DataTable<Record> dataTable) throws SQLException {
+	protected void readMany(final IReadonlyHandle handle, DataTable<Record> dataTable) throws SQLException {
 		this.checkValues();
-		handle.readIntoDataTable(this.sqlText, this.inputValues,
-				this.inputTypes, dataTable);
+		handle.readIntoDataTable(this.sqlText, this.inputValues, this.inputTypes, dataTable);
 	}
 
 	// read methods with input record and output record //
 	/**
-	 * concrete class uses a signature with extended record-instances for input
-	 * and output records for example
+	 * concrete class uses a signature with extended record-instances for input and
+	 * output records for example
 	 *
 	 * <code>
 	 * public boolean read(final IReadonlyHandle handle, CustomerSelectionRecord inputParams,
@@ -156,33 +145,31 @@ public abstract class Sql {
 	 * }
 	 * </code>
 	 */
-	protected boolean read(final IReadonlyHandle handle, Record inputRecord,
-			Record outputRecord) throws SQLException {
+	protected boolean read(final IReadonlyHandle handle, Record inputRecord, Record outputRecord) throws SQLException {
 
 		return handle.readIntoRecord(this.sqlText, inputRecord, outputRecord);
 	}
 
 	/**
-	 * to be used when a row is expected as per our db design, and hence the
-	 * caller need not handle the case with no rows
+	 * to be used when a row is expected as per our db design, and hence the caller
+	 * need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are filtered
+	 * @throws SQLException thrown when any SQL exception, OR when no rows are
+	 *                      filtered
 	 */
-	protected void readOrFail(final IReadonlyHandle handle, Record inputRecord,
-			Record outputRecord) throws SQLException {
+	protected void readOrFail(final IReadonlyHandle handle, Record inputRecord, Record outputRecord)
+			throws SQLException {
 		if (!this.read(handle, inputRecord, outputRecord)) {
 			fail();
 		}
 	}
 
 	/**
-	 * concrete class uses this to readMany with params of specific concrete
-	 * class
+	 * concrete class uses this to readMany with params of specific concrete class
 	 */
-	protected void readMany(final IReadonlyHandle handle, Record inputRecord,
-			DataTable<Record> dataTable) throws SQLException {
+	protected void readMany(final IReadonlyHandle handle, Record inputRecord, DataTable<Record> dataTable)
+			throws SQLException {
 
 		handle.readIntoDataTable(this.sqlText, inputRecord, dataTable);
 	}
@@ -190,8 +177,8 @@ public abstract class Sql {
 	// read methods with input record and output fields //
 
 	/**
-	 * concrete class uses a signature with extended record-instances for input
-	 * and output records for example
+	 * concrete class uses a signature with extended record-instances for input and
+	 * output records for example
 	 *
 	 * <code>
 	 * public boolean read(final IReadonlyHandle handle, CustomerSelectionRecord inputParams,
@@ -200,11 +187,10 @@ public abstract class Sql {
 	 * }
 	 * </code>
 	 */
-	protected boolean readIn(final IReadonlyHandle handle, Record inputRecord)
-			throws SQLException {
+	protected boolean readIn(final IReadonlyHandle handle, Record inputRecord) throws SQLException {
 
-		Object[] row = handle.read(this.sqlText, inputRecord.fetchRawData(),
-				inputRecord.fetchValueTypes(), this.outputTypes);
+		Object[] row = handle.read(this.sqlText, inputRecord.fetchRawData(), inputRecord.fetchValueTypes(),
+				this.outputTypes);
 		if (row == null) {
 			return false;
 		}
@@ -213,15 +199,14 @@ public abstract class Sql {
 	}
 
 	/**
-	 * to be used when a row is expected as per our db design, and hence the
-	 * caller need not handle the case with no rows
+	 * to be used when a row is expected as per our db design, and hence the caller
+	 * need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are filtered
+	 * @throws SQLException thrown when any SQL exception, OR when no rows are
+	 *                      filtered
 	 */
-	protected void readInOrFail(final IReadonlyHandle handle,
-			Record inputRecord) throws SQLException {
+	protected void readInOrFail(final IReadonlyHandle handle, Record inputRecord) throws SQLException {
 		if (!this.readIn(handle, inputRecord)) {
 			fail();
 		}
@@ -229,12 +214,11 @@ public abstract class Sql {
 
 	// read methods with input fields and output fields //
 	/**
-	 * to be called after setting parameter values using setters output fields
-	 * can be extracted using getters aftr reading
+	 * to be called after setting parameter values using setters output fields can
+	 * be extracted using getters aftr reading
 	 *
 	 * @param handle
-	 * @param outputRecord
-	 *            into which extracted data is extracted into
+	 * @param outputRecord into which extracted data is extracted into
 	 * @return true if read was successful. false if nothing was read
 	 * @throws SQLException
 	 */
@@ -242,8 +226,7 @@ public abstract class Sql {
 
 		this.checkValues();
 
-		Object[] row = handle.read(this.sqlText, this.inputValues,
-				this.inputTypes, this.outputTypes);
+		Object[] row = handle.read(this.sqlText, this.inputValues, this.inputTypes, this.outputTypes);
 		if (row == null) {
 			return false;
 		}
@@ -252,41 +235,34 @@ public abstract class Sql {
 	}
 
 	/**
-	 * to be called only after assigning values for all the input parameters
-	 * using the setter methods. to be used when at least one row is expected as
-	 * per our db design, and hence the caller need not handle the case with no
-	 * rows
+	 * to be called only after assigning values for all the input parameters using
+	 * the setter methods. to be used when at least one row is expected as per our
+	 * db design, and hence the caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @param outputRecord
-	 *            into which extracted data is extracted into
-	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are found
+	 * @param outputRecord into which extracted data is extracted into
+	 * @throws SQLException thrown when any SQL exception, OR when no rows are found
 	 */
-	protected void readInOrFail(final IReadonlyHandle handle)
-			throws SQLException {
+	protected void readInOrFail(final IReadonlyHandle handle) throws SQLException {
 		if (!this.readIn(handle)) {
 			fail();
 		}
 	}
 
 	// write methods with input record //
-	protected int write(final IReadWriteHandle handle, Record record)
-			throws SQLException {
+	protected int write(final IReadWriteHandle handle, Record record) throws SQLException {
 		return handle.writeFromRecord(this.sqlText, record);
 	}
 
 	/**
-	 * caller expects at least one row to be affected, failing which we are to
-	 * raise an exception
+	 * caller expects at least one row to be affected, failing which we are to raise
+	 * an exception
 	 *
 	 * @param handle
 	 * @return non-zero number of affected rows.
-	 * @throws SQLException
-	 *             if number of affected rows 0, or on any sql exception
+	 * @throws SQLException if number of affected rows 0, or on any sql exception
 	 */
-	protected int writeOrFail(final IReadWriteHandle handle, Record record)
-			throws SQLException {
+	protected int writeOrFail(final IReadWriteHandle handle, Record record) throws SQLException {
 		final int n = handle.writeFromRecord(this.sqlText, record);
 		if (n > 0) {
 			return n;
@@ -301,15 +277,14 @@ public abstract class Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	protected int writeMany(final IReadWriteHandle handle,
-			DataTable<Record> table) throws SQLException {
+	protected int writeMany(final IReadWriteHandle handle, DataTable<Record> table) throws SQLException {
 		return handle.writeFromDataTable(this.sqlText, table);
 	}
 
 	// write methods with input fields //
 	/**
-	 * Update/insert/delete operation. To be called after setting values for all
-	 * the fields using setters
+	 * Update/insert/delete operation. To be called after setting values for all the
+	 * fields using setters
 	 *
 	 * @param handle
 	 * @return number of rows affected
@@ -321,15 +296,13 @@ public abstract class Sql {
 	}
 
 	/**
-	 * Update/insert/delete one row. To be called after setting values for all
-	 * the fields using setters
+	 * Update/insert/delete one row. To be called after setting values for all the
+	 * fields using setters
 	 *
 	 * @param handle
-	 * @throws SQLException
-	 *             if no rows are affected, or any sql error
+	 * @throws SQLException if no rows are affected, or any sql error
 	 */
-	protected int writeOrFail(final IReadWriteHandle handle)
-			throws SQLException {
+	protected int writeOrFail(final IReadWriteHandle handle) throws SQLException {
 		final int n = this.write(handle);
 		if (n > 0) {
 			return n;
@@ -348,26 +321,22 @@ public abstract class Sql {
 			final Object value = this.inputValues[i];
 			if (value == null) {
 				if (field.isRequired()) {
-					throw new SQLException(" No value provided for parameter "
-							+ field.getName() + ". Sql not executed");
+					throw new SQLException(
+							" No value provided for parameter " + field.getName() + ". Sql not executed");
 				}
 				continue;
 			}
 			Object v = field.getValueSchema().parse(value);
 			if (v == null) {
-				throw new SQLException(
-						"A value of " + value + " is not valid for the field "
-								+ field.getName() + " as per value schema "
-								+ field.getValueSchema().getName()
-								+ ". Sql not executed");
+				throw new SQLException("A value of " + value + " is not valid for the field " + field.getName()
+						+ " as per value schema " + field.getValueSchema().getName() + ". Sql not executed");
 			}
 			this.inputValues[i] = v;
 		}
 	}
 
 	protected static void fail() throws SQLException {
-		throw new SQLException(
-				"Sql is expected to affect at least one row, but no rows are affected.");
+		throw new SQLException("Sql is expected to affect at least one row, but no rows are affected.");
 
 	}
 

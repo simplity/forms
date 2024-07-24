@@ -73,9 +73,7 @@ class Field {
 		this.schemaInstance = schemas.get(this.valueSchema);
 		if (this.schemaInstance == null) {
 			if (this.valueSchema == null) {
-				logger.error(
-						"Field {} has not defined a value-schema. A Default is assumed.",
-						this.name);
+				logger.error("Field {} has not defined a value-schema. A Default is assumed.", this.name);
 			} else {
 				logger.error(
 						"Field {} has specified {} as value-schema, but it is not defined. A default text-schema is used instead",
@@ -86,15 +84,13 @@ class Field {
 		}
 
 		this.fieldTypeEnum = fieldTypes.get(this.fieldType.toLowerCase());
-		if (fieldTypeEnum == null) {
-			logger.error(
-					"{} is an invalid fieldType for field {}. optional data is  assumed",
-					this.fieldType, this.name);
+		if (this.fieldTypeEnum == null) {
+			logger.error("{} is an invalid fieldType for field {}. optional data is  assumed", this.fieldType,
+					this.name);
 			this.fieldType = "optionalData";
 			this.fieldTypeEnum = FieldType.OptionalData;
 		}
-		this.isRequired = this.fieldTypeEnum == FieldType.RequiredData
-				|| this.fieldTypeEnum == FieldType.PrimaryKey;
+		this.isRequired = this.fieldTypeEnum == FieldType.RequiredData || this.fieldTypeEnum == FieldType.PrimaryKey;
 	}
 
 	void emitJavaCode(final StringBuilder sbf, final boolean isDb) {
@@ -108,8 +104,7 @@ class Field {
 		sbf.append(C).append(this.index);
 		// 3. schema name. All Schema names are statically defined in the main
 		// class. e.g. DataTypes.schemaName
-		sbf.append(C).append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME)
-				.append('.').append(this.valueSchema);
+		sbf.append(C).append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(this.valueSchema);
 		// 4. isList as boolean
 		sbf.append(C).append(this.isList);
 		// 5. default value as string
@@ -131,8 +126,7 @@ class Field {
 			// 7. column Name
 			sbf.append(C).append(Util.quotedString(this.nameInDb));
 			// 8. columnType as Enum
-			sbf.append(C).append("FieldType.")
-					.append(this.fieldTypeEnum.name());
+			sbf.append(C).append("FieldType.").append(this.fieldTypeEnum.name());
 		} else {
 			// 7. isRequired for non-db field
 			sbf.append(C).append(this.isRequired);
@@ -147,8 +141,7 @@ class Field {
 		}
 
 		if (this.listName != null) {
-			def.append(indent).append("\"listName\": ")
-					.append(Util.quotedString(this.listName)).append(COMA);
+			def.append(indent).append("\"listName\": ").append(Util.quotedString(this.listName)).append(COMA);
 		}
 
 	}
@@ -174,12 +167,9 @@ class Field {
 	public void emitFormTs(final StringBuilder sbf) {
 		sbf.append("\n\t\t\"").append(this.name).append("\": {");
 		sbf.append(BEGIN).append("\"name\": \"").append(this.name).append(END);
-		sbf.append(BEGIN).append("\"valueSchema\": \"").append(this.valueSchema)
-				.append(END);
-		sbf.append(BEGIN).append("\"valueType\": \"")
-				.append(this.schemaInstance.getValueType()).append(END);
-		sbf.append(BEGIN).append("\"isRequired\": ").append(this.isRequired)
-				.append(COMA);
+		sbf.append(BEGIN).append("\"valueSchema\": \"").append(this.valueSchema).append(END);
+		sbf.append(BEGIN).append("\"valueType\": \"").append(this.schemaInstance.getValueType()).append(END);
+		sbf.append(BEGIN).append("\"isRequired\": ").append(this.isRequired).append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
 			lbl = Util.toLabel(this.name);
@@ -200,8 +190,7 @@ class Field {
 		if (this.visibleInSave) {
 			sbf.append(BEGIN).append("\"visibleInSave\" : true,");
 		}
-		if (this.fieldTypeEnum == FieldType.PrimaryKey
-				|| this.fieldTypeEnum == FieldType.OptionalData
+		if (this.fieldTypeEnum == FieldType.PrimaryKey || this.fieldTypeEnum == FieldType.OptionalData
 				|| this.fieldTypeEnum == FieldType.RequiredData) {
 			String renderingType;
 			if (this.listName != null) {
@@ -216,15 +205,13 @@ class Field {
 	}
 
 	/**
-	 * not all fields are used for data-sql. caller may use the returned value
-	 * to check this
+	 * not all fields are used for data-sql. caller may use the returned value to
+	 * check this
 	 *
-	 * @param string
-	 *            builder to which SQL is emitted
+	 * @param string builder to which SQL is emitted
 	 * @return true if sql for insert added, false otherwise.
 	 */
-	boolean emitSql(StringBuilder sbf, StringBuilder dataSbf,
-			StringBuilder valSbf) {
+	boolean emitSql(StringBuilder sbf, StringBuilder dataSbf, StringBuilder valSbf) {
 		sbf.append(this.nameInDb);
 		// generated primary key should not be included in the data sql
 		if (this.fieldTypeEnum == FieldType.GeneratedPrimaryKey) {
@@ -235,37 +222,36 @@ class Field {
 		dataSbf.append(this.nameInDb);
 
 		switch (this.fieldTypeEnum) {
-		case CreatedAt :
-		case ModifiedAt :
+		case CreatedAt:
+		case ModifiedAt:
 			sbf.append(" TIMESTAMP NOT NULL");
 			valSbf.append("CURRENT_TIMESTAMP");
 			return true;
 
-		case CreatedBy :
-		case ModifiedBy :
-		case TenantKey :
+		case CreatedBy:
+		case ModifiedBy:
+		case TenantKey:
 			sbf.append(" INTEGER NOT NULL");
 			valSbf.append("1");
 			return true;
 
-		case OptionalData :
-		case PrimaryKey :
-		case RequiredData :
+		case OptionalData:
+		case PrimaryKey:
+		case RequiredData:
 			break;
 
-		default :
-			throw new ApplicationError("FieldType " + this.fieldTypeEnum
-					+ " not handled by field sql generator");
+		default:
+			throw new ApplicationError("FieldType " + this.fieldTypeEnum + " not handled by field sql generator");
 		}
 
 		String value = "";
 		switch (this.schemaInstance.valueTypeEnum) {
-		case Boolean :
+		case Boolean:
 			sbf.append(" BOOLEAN NOT NULL DEFAULT FALSE");
 			valSbf.append("false");
 			return true;
 
-		case Date :
+		case Date:
 			sbf.append(" DATE ");
 			if (this.isRequired) {
 				sbf.append("NOT NULL ");
@@ -284,13 +270,12 @@ class Field {
 			valSbf.append(value);
 			return true;
 
-		case Decimal :
+		case Decimal:
 			// DECIMAL(max-digits,nbr-decimals)
 			value = "0";
 			sbf.append(" DECIMAL(");
 			sbf.append(this.schemaInstance.maxLength - 1);
-			sbf.append(',').append(this.schemaInstance.nbrDecimalPlaces)
-					.append(") NOT NULL DEFAULT ");
+			sbf.append(',').append(this.schemaInstance.nbrDecimalPlaces).append(") NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
 				sbf.append(this.defaultValue);
 				value = this.defaultValue;
@@ -300,7 +285,7 @@ class Field {
 			valSbf.append(value);
 			return true;
 
-		case Integer :
+		case Integer:
 			value = "0";
 			sbf.append(" INTEGER NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
@@ -310,7 +295,7 @@ class Field {
 			valSbf.append(value);
 			return true;
 
-		case Text :
+		case Text:
 			value = "''";
 			sbf.append(" CHARACTER VARYING NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
@@ -321,7 +306,7 @@ class Field {
 			valSbf.append(value);
 			return true;
 
-		case Timestamp :
+		case Timestamp:
 			sbf.append(" TIMESTAMP ");
 			if (this.isRequired) {
 				sbf.append("NOT NULL ");
@@ -337,10 +322,9 @@ class Field {
 			valSbf.append(value);
 			return true;
 
-		default :
+		default:
 			throw new ApplicationError(
-					"ValueType " + this.schemaInstance.valueTypeEnum
-							+ " not handled by field sql generator");
+					"ValueType " + this.schemaInstance.valueTypeEnum + " not handled by field sql generator");
 		}
 	}
 

@@ -55,12 +55,6 @@ public class Form {
 
 	String name;
 	String recordName;
-	/*
-	 * used only for the client as of now. We are worried that careless
-	 * programmers may expose services by mistake. Hence we insist that any
-	 * service that can be served to guests MUST be hand-coded
-	 *
-	 */
 	boolean serveGuests;
 	String[] operations;
 	ChildForm[] childForms;
@@ -70,8 +64,11 @@ public class Form {
 
 	final Set<String> keyFieldNames = new HashSet<>();
 
+	boolean allOk;
+
 	void initialize(final Record rec) {
 		this.record = rec;
+		this.allOk = rec.allOk;
 		this.recordName = rec.name;
 
 		if (this.operations == null) {
@@ -81,8 +78,7 @@ public class Form {
 		if (rec.keyFields != null) {
 			for (final Field f : rec.keyFields) {
 				final FieldType ct = f.fieldTypeEnum;
-				if (ct == FieldType.PrimaryKey
-						|| ct == FieldType.GeneratedPrimaryKey) {
+				if (ct == FieldType.PrimaryKey || ct == FieldType.GeneratedPrimaryKey) {
 					this.keyFieldNames.add(f.name);
 				}
 			}
@@ -97,7 +93,11 @@ public class Form {
 		}
 	}
 
-	void generateJava(final String folderName, final String packageName) {
+	boolean generateJava(final String folderName, final String packageName) {
+		if (!this.allOk) {
+			logger.error("Record {} is in error. Java Code for Form {} NOT generated", this.recordName, this.name);
+			return false;
+		}
 		final StringBuilder sbf = new StringBuilder();
 		/*
 		 * our package name is rootPackage + any prefix/qualifier in our name
@@ -115,32 +115,26 @@ public class Form {
 		Util.emitImport(sbf, org.simplity.fm.core.data.ChildForm.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.ChildMetaData.class);
 		final String recordClass = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.")
-				.append(recordClass).append(';');
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordClass).append(';');
 
 		final String cls = Util.toClassName(this.name) + "Form";
 		/*
 		 * class declaration
 		 */
-		sbf.append("\n/** class for form ").append(this.name)
-				.append("  */\npublic class ");
-		sbf.append(cls).append(" extends Form<").append(recordClass)
-				.append("> {");
+		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ");
+		sbf.append(cls).append(" extends Form<").append(recordClass).append("> {");
 
 		final String p = "\n\tprotected static final ";
 
 		/*
 		 * protected static final Field[] FIELDS = {.....};
 		 */
-		sbf.append(p).append("String NAME = \"").append(this.name)
-				.append("\";");
+		sbf.append(p).append("String NAME = \"").append(this.name).append("\";");
 		/*
 		 * protected static final String RECORD = "....";
 		 */
-		sbf.append(p).append(recordClass).append(" RECORD = (")
-				.append(recordClass);
-		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"")
-				.append(this.recordName).append("\");");
+		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
+		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.recordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};
@@ -166,8 +160,7 @@ public class Form {
 					bf.append(',');
 				}
 
-				bf.append("new ChildForm<>(L").append(i).append(", F").append(i)
-						.append(')');
+				bf.append("new ChildForm<>(L").append(i).append(", F").append(i).append(')');
 			}
 			sbf.append(lf).append('{').append(bf).append("};");
 		}
@@ -185,6 +178,7 @@ public class Form {
 		sbf.append("\n\t}\n}\n");
 
 		Util.writeOut(folderName + cls + ".java", sbf.toString());
+		return true;
 	}
 
 	private static final Map<String, Integer> OP_INDEXES = getOpIndexes();
@@ -197,8 +191,7 @@ public class Form {
 			for (final String op : dbOps) {
 				final Integer idx = OP_INDEXES.get(op.toLowerCase());
 				if (idx == null) {
-					logger.error(
-							"{} is not a valid db operation (IoType). Ignored.");
+					logger.error("{} is not a valid db operation (IoType). Ignored.");
 				} else {
 					ops[idx] = true;
 				}
@@ -229,22 +222,26 @@ public class Form {
 	}
 
 	private static final char Q = '"';
+
 	boolean generateTs(String folderName) {
-		logger.info("TS for form {} being generated into folder {}",
-				this.name, folderName);
+		if (!this.allOk) {
+			logger.error("Record {} is in error. TS code for form {} not generated");
+			return false;
+		}
+
+		logger.info("TS for form {} being generated into folder {}", this.name, folderName);
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append('{');
 		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
 		sbf.append("\n\t\"operations\": {");
 		if (this.operations == null || this.operations.length == 0) {
 			logger.warn(
-					"No operatins are allowed for record {}. Client app will not be able to use auto-service for this record",
+					"No operations are allowed for record {}. Client app will not be able to use auto-service for this record",
 					this.recordName);
 		} else {
 			for (final String oper : this.operations) {
 				if (oper == null) {
-					logger.error("{} is not a valid form operation. skipped",
-							oper);
+					logger.error("{} is not a valid form operation. skipped", oper);
 				} else {
 					sbf.append("\n\t\t\"").append(oper).append("\": true,");
 				}
@@ -264,14 +261,12 @@ public class Form {
 		names.setLength((names.length() - 1));
 		sbf.append("\n\t},");
 
-		sbf.append("\n\t\"fieldNames\": [").append(names.toString())
-				.append("]");
+		sbf.append("\n\t\"fieldNames\": [").append(names.toString()).append("]");
 
 		Field[] keys = this.record.keyFields;
 		if (keys != null && (keys.length > 0)) {
 			// we generally have only one key field
-			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].name)
-					.append(Q);
+			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].name).append(Q);
 			for (int i = 1; i < keys.length; i++) {
 				sbf.append(",\"").append(keys[i].name).append(Q);
 			}
@@ -291,8 +286,7 @@ public class Form {
 
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.name + ".form.json",
-				sbf.toString());
+		Util.writeOut(folderName + this.name + ".form.json", sbf.toString());
 
 		return true;
 

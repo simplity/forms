@@ -49,10 +49,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ReadonlyHandle implements IReadonlyHandle {
-	private static final Logger logger = LoggerFactory
-			.getLogger(ReadonlyHandle.class);
+	private static final Logger logger = LoggerFactory.getLogger(ReadonlyHandle.class);
 
 	private static final Object[][] EMPTY_ARRAY = new Object[0][];
+
+	@SuppressWarnings("resource")
 	protected final Connection con;
 
 	/**
@@ -66,9 +67,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public Object[] read(final String sql, final Object[] parameterValues,
-			ValueType[] parameterTypes, final ValueType[] outputTypes)
-			throws SQLException {
+	public Object[] read(final String sql, final Object[] parameterValues, ValueType[] parameterTypes,
+			final ValueType[] outputTypes) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
@@ -82,8 +82,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public boolean readIntoRecord(final String sql, final Record inputRecord,
-			final Record outputRecord) throws SQLException {
+	public boolean readIntoRecord(final String sql, final Record inputRecord, final Record outputRecord)
+			throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputRecord != null) {
@@ -100,8 +100,7 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public boolean readIntoRecord(String sql, Object[] parameterValues,
-			ValueType[] parameterTypes, Record outputRecord)
+	public boolean readIntoRecord(String sql, Object[] parameterValues, ValueType[] parameterTypes, Record outputRecord)
 			throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
@@ -119,41 +118,38 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public Object[][] readMany(final String sql, final Object[] parameterValues,
-			final ValueType[] parameterTypes, final ValueType[] outputTypes)
-			throws SQLException {
-
-		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (parameterValues != null) {
-				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
-			}
-
-			try (ResultSet rs = ps.executeQuery()) {
-				return DbUtil.getRowsFromRs(rs, outputTypes)
-						.toArray(EMPTY_ARRAY);
-			}
-		}
-	}
-
-	@Override
-	public Object[][] readMany(final String sql, final Record inputRecord,
+	public Object[][] readMany(final String sql, final Object[] parameterValues, final ValueType[] parameterTypes,
 			final ValueType[] outputTypes) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (inputRecord != null) {
-				DbUtil.setPsParamValues(ps, inputRecord);
+			if (parameterValues != null) {
+				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
 			}
 
 			try (ResultSet rs = ps.executeQuery()) {
-				return DbUtil.getRowsFromRs(rs, outputTypes)
-						.toArray(EMPTY_ARRAY);
+				return DbUtil.getRowsFromRs(rs, outputTypes).toArray(EMPTY_ARRAY);
 			}
 		}
 	}
 
 	@Override
-	public <T extends Record> void readIntoDataTable(String sql,
-			Record inputRecord, DataTable<T> outputTable) throws SQLException {
+	public Object[][] readMany(final String sql, final Record inputRecord, final ValueType[] outputTypes)
+			throws SQLException {
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (inputRecord != null) {
+				DbUtil.setPsParamValues(ps, inputRecord);
+			}
+
+			try (ResultSet rs = ps.executeQuery()) {
+				return DbUtil.getRowsFromRs(rs, outputTypes).toArray(EMPTY_ARRAY);
+			}
+		}
+	}
+
+	@Override
+	public <T extends Record> void readIntoDataTable(String sql, Record inputRecord, DataTable<T> outputTable)
+			throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputRecord != null) {
 				DbUtil.setPsParamValues(ps, inputRecord);
@@ -170,9 +166,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public <T extends Record> void readIntoDataTable(String sql,
-			final Object[] parameterValues, final ValueType[] parameterTypes,
-			DataTable<T> outputTable) throws SQLException {
+	public <T extends Record> void readIntoDataTable(String sql, final Object[] parameterValues,
+			final ValueType[] parameterTypes, DataTable<T> outputTable) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (parameterValues != null) {
@@ -190,10 +185,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public int readWithRowProcessor(final String sql,
-			final Object[] parameterValues, final ValueType[] parameterTypes,
-			final ValueType[] outputTypes, IRowProcessor rowProcessor)
-			throws SQLException {
+	public int readWithRowProcessor(final String sql, final Object[] parameterValues, final ValueType[] parameterTypes,
+			final ValueType[] outputTypes, IRowProcessor rowProcessor) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (parameterValues != null) {
@@ -208,9 +201,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public <T extends Record> void readWithRecordProcessor(final String sql,
-			final Record inputRecord, T instanceToClone,
-			final IRecordProcessor<T> processor) throws SQLException {
+	public <T extends Record> void readWithRecordProcessor(final String sql, final Record inputRecord,
+			T instanceToClone, final IRecordProcessor<T> processor) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputRecord != null) {
@@ -230,10 +222,8 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public Object callStoredProcedure(String callableSql,
-			Object[] parameterValues, ValueType[] parameterTypes,
-			ValueType returnedValueType, IProcessSpOutput fn)
-			throws SQLException {
+	public Object callStoredProcedure(String callableSql, Object[] parameterValues, ValueType[] parameterTypes,
+			ValueType returnedValueType, IProcessSpOutput fn) throws SQLException {
 		try (CallableStatement cstmt = this.con.prepareCall(callableSql);) {
 
 			int startAt = 1;
@@ -243,8 +233,7 @@ public class ReadonlyHandle implements IReadonlyHandle {
 			}
 
 			if (parameterValues != null) {
-				DbUtil.setPsParamValues(cstmt, parameterValues, parameterTypes,
-						startAt);
+				DbUtil.setPsParamValues(cstmt, parameterValues, parameterTypes, startAt);
 			}
 
 			boolean hasResult = cstmt.execute();
@@ -268,13 +257,13 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public Object callStoredProcedure(String callableSql, Record inRec,
-			ValueType returnedValueType, IProcessSpOutput fn)
-			throws SQLException {
-		return this.callStoredProcedure(callableSql, inRec.fetchRawData(),
-				inRec.fetchValueTypes(), returnedValueType, fn);
+	public Object callStoredProcedure(String callableSql, Record inRec, ValueType returnedValueType,
+			IProcessSpOutput fn) throws SQLException {
+		return this.callStoredProcedure(callableSql, inRec.fetchRawData(), inRec.fetchValueTypes(), returnedValueType,
+				fn);
 
 	}
+
 	/**
 	 *
 	 * @return blob object
@@ -293,13 +282,11 @@ public class ReadonlyHandle implements IReadonlyHandle {
 		return this.con.createBlob();
 	}
 
-	protected static void warn(final String sql, final ValueType[] types,
-			final Object[] vals) {
+	protected static void warn(final String sql, final ValueType[] types, final Object[] vals) {
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append("RDBMS is not set up. Sql = ").append(sql);
 		for (int i = 0; i < types.length; i++) {
-			sbf.append('(').append(types[i]).append(", ").append(vals[i])
-					.append(") ");
+			sbf.append('(').append(types[i]).append(", ").append(vals[i]).append(") ");
 		}
 		logger.warn(sbf.toString());
 	}

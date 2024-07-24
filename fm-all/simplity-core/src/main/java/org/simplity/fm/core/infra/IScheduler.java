@@ -6,5 +6,6 @@ package org.simplity.fm.core.infra;
  *
  */
 public interface IScheduler {
+	// yet to design this
 
 }

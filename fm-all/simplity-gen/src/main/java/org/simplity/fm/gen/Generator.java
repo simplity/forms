@@ -34,8 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  */
 public class Generator {
-	protected static final Logger logger = LoggerFactory
-			.getLogger(Generator.class);
+	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
 
 	private static final String FOLDER = "/";
 
@@ -46,21 +45,18 @@ public class Generator {
 			+ "import _allMessages from \"./allMessages.json\";\n"
 			+ "import _allValueSchemas from \"./allValueSchemas.json\";\n\n";
 	private static final String EXPORTS = "export const generatedArtifacts = {\n"
-			+ "\tallListSources: _allListSources,\n"
-			+ "\tallMessages: _allMessages,\n"
+			+ "\tallListSources: _allListSources,\n" + "\tallMessages: _allMessages,\n"
 			+ "\tallValueSchemas: _allValueSchemas,\n" + "\tallForms: {";
 	/**
 	 * folders to be created/ensured for java sources
 	 */
-	private static final String[] JAVA_FOLDERS = {
-			Conventions.App.FOLDER_NAME_RECORD,
-			Conventions.App.FOLDER_NAME_FORM, Conventions.App.FOLDER_NAME_LIST,
-			Conventions.App.FOLDER_NAME_SQL};
+	private static final String[] JAVA_FOLDERS = { Conventions.App.FOLDER_NAME_RECORD, Conventions.App.FOLDER_NAME_FORM,
+			Conventions.App.FOLDER_NAME_LIST, Conventions.App.FOLDER_NAME_SQL };
 
 	/**
 	 * folders to be created/ensured for ts
 	 */
-	private static final String[] TS_FOLDERS = {TS_FOLDER_FORM};
+	private static final String[] TS_FOLDERS = { TS_FOLDER_FORM };
 
 	private static final String CREATE_SQL_COMMENT = "-- This file has the sql to create tables. It includes command to create primary keys.\n"
 			+ "-- It is intended to be included in a sql after the script that would delete tables.";
@@ -106,8 +102,7 @@ public class Generator {
 				logger.debug("All files in folder {} are deleted", folder);
 				for (final File ff : f.listFiles()) {
 					if (!ff.delete()) {
-						logger.error("Unable to delete file {}",
-								ff.getAbsolutePath());
+						logger.error("Unable to delete file {}", ff.getAbsolutePath());
 						return false;
 					}
 				}
@@ -115,19 +110,14 @@ public class Generator {
 			}
 
 			if (f.delete()) {
-				logger.debug(
-						"{} is a file. It is deleted to make way for a directory with the same name",
-						folder);
+				logger.debug("{} is a file. It is deleted to make way for a directory with the same name", folder);
 			} else {
-				logger.error(
-						"{} is a file. Unable to delete it to create a folder with that name",
-						folder);
+				logger.error("{} is a file. Unable to delete it to create a folder with that name", folder);
 				return false;
 			}
 		}
 		if (!f.mkdirs()) {
-			logger.error(
-					"Unable to create folder {}. Aborting..." + f.getPath());
+			logger.error("Unable to create folder {}. Aborting..." + f.getPath());
 			return false;
 		}
 		return true;
@@ -135,41 +125,31 @@ public class Generator {
 
 	/**
 	 *
-	 * @param inputRootFolder
-	 *            folder where application.xlsx file, and spec folder are
-	 *            located. e.g.
-	 * @param javaRootFolder
-	 *            java source folder where the sources are to be generated. null
-	 *            if java is not to be generated
-	 * @param javaRootPackage
-	 *            root
-	 * @param tsRootFolder
-	 *            folder where generated ts files are to be saved. null to not
-	 *            generate TS code.
+	 * @param inputRootFolder folder where application.xlsx file, and spec folder
+	 *                        are located. e.g.
+	 * @param javaRootFolder  java source folder where the sources are to be
+	 *                        generated. null if java is not to be generated
+	 * @param javaRootPackage root
+	 * @param tsRootFolder    folder where generated ts files are to be saved. null
+	 *                        to not generate TS code.
 	 * @return true if all OK. false in case of any error.
 	 */
-	public static boolean generate(final String inputRootFolder,
-			final String javaRootFolder, final String javaRootPackage,
-			final String tsRootFolder) {
+	public static boolean generate(final String inputRootFolder, final String javaRootFolder,
+			final String javaRootPackage, final String tsRootFolder) {
 
 		if (javaRootFolder == null && tsRootFolder == null) {
-			logger.error(
-					"Both javaRootFolder and tsRootFolder are null. Nothing to generate");
+			logger.error("Neither javaRootFolder nor tsRootFolder is specified for generation. Nothing to generate");
 			return false;
 		}
 
 		/**
 		 * we need the folder to end with '/'
 		 */
-		String inputRoot = inputRootFolder.endsWith(FOLDER)
-				? inputRootFolder
-				: inputRootFolder + FOLDER;
+		String inputRoot = inputRootFolder.endsWith(FOLDER) ? inputRootFolder : inputRootFolder + FOLDER;
 
 		String javaRoot = null;
 		if (javaRootFolder != null) {
-			javaRoot = javaRootFolder.endsWith(FOLDER)
-					? javaRootFolder
-					: javaRootFolder + FOLDER;
+			javaRoot = javaRootFolder.endsWith(FOLDER) ? javaRootFolder : javaRootFolder + FOLDER;
 			javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
 		}
 		String tsRoot = null;
@@ -179,16 +159,14 @@ public class Generator {
 					? tsRootFolder
 					: tsRootFolder + FOLDER;
 		}
-		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage,
-				tsRoot);
+		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage, tsRoot);
 		return gen.go();
 
 	}
 
 	/*
-	 * instance is private, to be used by the static class only. we used
-	 * instance to avoid passing large number of parameters across static
-	 * functions
+	 * instance is private, to be used by the static class only. we used instance to
+	 * avoid passing large number of parameters across static functions
 	 */
 
 	private final String inputRoot;
@@ -205,9 +183,11 @@ public class Generator {
 
 	private Application app;
 	private Map<String, Record> records;
+	private MessageMap messages;
+	private ValueListMap valueLists;
+	private ValueSchemaMap valueSchemas;
 
-	private Generator(String inputRoot, String javaOutputRoot,
-			String packageName, String tsSourceRoot) {
+	private Generator(String inputRoot, String javaOutputRoot, String packageName, String tsSourceRoot) {
 		this.inputRoot = inputRoot;
 		this.sqlOutputRoot = inputRoot + "dbSqls/";
 		this.javaOutputRoot = javaOutputRoot;
@@ -245,22 +225,43 @@ public class Generator {
 		}
 
 		/*
-		 * generate project level components like data types
+		 * load and generate project level components like messages, lists and schemas
 		 */
-		if (this.toGenerateJava) {
-			this.accumulate(
-					app.generateJava(this.javaOutputRoot, this.packageName));
+		fileName = this.inputRoot + Conventions.App.MESSAGES_FILE;
+		this.messages = Util.loadJson(fileName, MessageMap.class);
+		if (this.messages == null) {
+			this.messages = new MessageMap();
+		} else {
+			this.messages.init();
 		}
-		if (this.toGenerateTs) {
-			this.accumulate(app.generateTs(this.tsLibFolder));
 
-			fileName = this.inputRoot + Conventions.App.MESSAGES_FILE;
-			MessageMap messages = Util.loadJson(fileName, MessageMap.class);
-			if (messages == null) {
-				messages = new MessageMap();
-			}
-			this.accumulate(messages.generateTs(this.tsLibFolder));
+		fileName = this.inputRoot + Conventions.App.VALUE_SCHEMAS_FILE;
+		this.valueSchemas = Util.loadJson(fileName, ValueSchemaMap.class);
+		if (this.valueSchemas == null) {
+			this.valueSchemas = new ValueSchemaMap();
+		} else {
+			this.valueSchemas.init();
+		}
+
+		fileName = this.inputRoot + Conventions.App.LISTS_FILE;
+		this.valueLists = Util.loadJson(fileName, ValueListMap.class);
+		if (this.valueLists == null) {
+			this.valueLists = new ValueListMap();
+		} else {
+			this.valueLists.init();
+		}
+
+		if (this.toGenerateTs) {
 			writeIndexTs();
+			this.accumulate(this.messages.generateTs(this.tsLibFolder));
+			this.accumulate(this.valueLists.generateTs(this.tsLibFolder));
+			this.accumulate(this.valueSchemas.generateTs(this.tsLibFolder));
+		}
+
+		if (this.toGenerateJava) {
+			// no java for messages
+			this.accumulate(this.valueLists.generateJava(this.javaOutputRoot, this.packageName));
+			this.accumulate(this.valueSchemas.generateJava(this.javaOutputRoot, this.packageName));
 		}
 
 		// exports and import are built to write into gen.ts
@@ -279,6 +280,7 @@ public class Generator {
 		}
 
 		if (this.toGenerateJava) {
+			// this is generated at the end to ensure that the required Records are loaded..
 			this.accumulate(this.generateSqls());
 		}
 		return this.allOk;
@@ -314,15 +316,13 @@ public class Generator {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_FORM;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
-			logger.error("Forms folder {} not found. No forms are processed",
-					folderName);
+			logger.error("Forms folder {} not found. No forms are processed", folderName);
 			return;
 		}
 
 		logger.info("Going to process forms from folder {}", folderName);
 
-		String javaFolder = this.javaOutputRoot
-				+ Conventions.App.FOLDER_NAME_FORM + '/';
+		String javaFolder = this.javaOutputRoot + Conventions.App.FOLDER_NAME_FORM + '/';
 
 		for (final File file : folder.listFiles()) {
 			String fn = file.getName();
@@ -332,28 +332,28 @@ public class Generator {
 			}
 			logger.info("processing form : {}", fn);
 
-			fn = fn.substring(0,
-					fn.length() - Conventions.App.EXTENSION_FORM.length());
+			fn = fn.substring(0, fn.length() - Conventions.App.EXTENSION_FORM.length());
 			final Form form = Util.loadJson(file.getPath(), Form.class);
 			if (form == null) {
-				logger.error("Form {} did not load properly. Not processed",
-						fn);
-				return;
+				logger.error("Form {} did not load properly. Not processed", fn);
+				continue;
 			}
 
 			if (!fn.equals(form.name)) {
-				logger.error(
-						"Form name {} does not match with its file named {}",
-						form.name, fn);
-				return;
+				logger.error("Form name {} does not match with its file named {}", form.name, fn);
+				continue;
 			}
 
 			Record record = this.records.get(form.recordName);
 			if (record == null) {
-				logger.error(
-						"Form {} uses record {}, but that record is not defined",
-						form.name, form.recordName);
-				return;
+				logger.error("Form {} uses record {}, but that record is not defined", form.name, form.recordName);
+				continue;
+			}
+
+			if (!record.allOk) {
+				logger.error("Record {} is in error. Form {} uses this record. Hence this form is NOT processed",
+						record.name, form.name);
+				continue;
 			}
 
 			form.initialize(record);
@@ -361,7 +361,7 @@ public class Generator {
 				form.generateJava(javaFolder, this.packageName);
 			}
 			if (this.toGenerateTs) {
-				boolean done = form.generateTs(tsFormFolder);
+				boolean done = form.generateTs(this.tsFormFolder);
 				if (done) {
 					emitCommonFormTs(exports, imports, fn);
 				}
@@ -373,9 +373,7 @@ public class Generator {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_RECORD;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
-			logger.error(
-					"Records folder {} not found. No Records are processed",
-					folderName);
+			logger.error("Records folder {} not found. No Records are processed", folderName);
 			return;
 		}
 
@@ -387,9 +385,11 @@ public class Generator {
 		StringBuilder dataSqls = new StringBuilder(DATA_SQL_COMMENT);
 
 		if (this.toGenerateJava) {
-			javaFolder = this.javaOutputRoot
-					+ Conventions.App.FOLDER_NAME_RECORD + '/';
+			javaFolder = this.javaOutputRoot + Conventions.App.FOLDER_NAME_RECORD + '/';
 		}
+
+		final Map<String, Record> subRecords = new HashMap<>();
+		final Map<String, ValueSchema> schemas = this.valueSchemas.getSchemas();
 
 		for (final File file : folder.listFiles()) {
 			String fn = file.getName();
@@ -399,26 +399,50 @@ public class Generator {
 			}
 			logger.info("processing record : {}", fn);
 
-			fn = fn.substring(0,
-					fn.length() - Conventions.App.EXTENSION_RECORD.length());
+			fn = fn.substring(0, fn.length() - Conventions.App.EXTENSION_RECORD.length());
 			final Record record = Util.loadJson(file.getPath(), Record.class);
 			if (record == null) {
 				logger.error("Record {} not generated", fn);
-				return;
+				continue;
 			}
 
 			if (!fn.equals(record.name)) {
-				logger.error(
-						"Record name {} does not match with its file named {}",
-						record.name, fn);
-				return;
+				logger.error("Record name {} does not match with its file named {}. Skipped", record.name, fn);
+				continue;
 			}
 
-			record.init(fn, this.app.valueSchemas);
+			/**
+			 * sub-record may have to wait till the main-record is read and processed
+			 */
+			if (record.getMainRecordName() != null) {
+				subRecords.put(fn, record);
+				continue;
+			}
+
+			record.init(schemas);
 
 			this.records.put(record.name, record);
+		}
+
+		/**
+		 * init sub records, as their main-records are in place now
+		 */
+		if (subRecords.size() > 0) {
+			for (Record subRecord : subRecords.values()) {
+				Record record = this.records.get(subRecord.getMainRecordName());
+				if (record == null) {
+					logger.error(
+							"Sub-record {} uses {} as its main record but that main record is not defined. Sub-record SKIPPED");
+					continue;
+				}
+				subRecord.initSubRecord(schemas, record);
+				this.records.put(subRecord.name, record);
+			}
+		}
+
+		for (Record record : this.records.values()) {
 			if (this.toGenerateJava) {
-				record.generateJava(javaFolder, packageName);
+				record.generateJava(javaFolder, this.packageName);
 				record.emitSql(createSqls, dataSqls);
 			}
 
@@ -426,43 +450,35 @@ public class Generator {
 				Form form = Form.fromRecord(record);
 				final boolean done = form.generateTs(this.tsFormFolder);
 				if (done) {
-					emitCommonFormTs(exports, imports, fn);
+					emitCommonFormTs(exports, imports, record.name);
 				}
 			}
 		}
-
 		if (this.toGenerateJava) {
-			Util.writeOut(this.sqlOutputRoot + "createTables.sql",
-					createSqls.toString());
-			Util.writeOut(this.sqlOutputRoot + "addData.sql",
-					dataSqls.toString());
+			Util.writeOut(this.sqlOutputRoot + "createTables.sql", createSqls.toString());
+			Util.writeOut(this.sqlOutputRoot + "addData.sql", dataSqls.toString());
 		}
 	}
 
-	static private void emitCommonFormTs(StringBuilder exports,
-			StringBuilder imports, String formName) {
+	static private void emitCommonFormTs(StringBuilder exports, StringBuilder imports, String formName) {
 		// variable name is prefixed with _ to avoid clash with
 		// reserved words
-		imports.append("import _").append(formName).append(" from './form/")
-				.append(formName).append(".form.json';\n");
+		imports.append("import _").append(formName).append(" from './form/").append(formName).append(".form.json';\n");
 
-		exports.append("\n\t\t'").append(formName).append("': _")
-				.append(formName).append(',');
+		exports.append("\n\t\t'").append(formName).append("': _").append(formName).append(',');
 	}
 
 	private boolean generateSqls() {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_SQL;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
-			logger.error("Sqls folder {} not found. No Sqls are processed",
-					folderName);
+			logger.error("Sqls folder {} not found. No Sqls are processed", folderName);
 			return false;
 		}
 
 		logger.info("Going to process SQLs under folder {}", folderName);
 
-		String javaFolder = this.javaOutputRoot
-				+ Conventions.App.FOLDER_NAME_SQL + '/';
+		String javaFolder = this.javaOutputRoot + Conventions.App.FOLDER_NAME_SQL + '/';
 
 		for (final File file : folder.listFiles()) {
 			String fn = file.getName();
@@ -472,8 +488,7 @@ public class Generator {
 			}
 			logger.info("processing sql : {}", fn);
 
-			fn = fn.substring(0,
-					fn.length() - Conventions.App.EXTENSION_SQL.length());
+			fn = fn.substring(0, fn.length() - Conventions.App.EXTENSION_SQL.length());
 
 			final Sql sql = Util.loadJson(file.getPath(), Sql.class);
 			if (sql == null) {
@@ -482,13 +497,11 @@ public class Generator {
 			}
 
 			if (!fn.equals(sql.name)) {
-				logger.error(
-						"Sql name {} does not match with its file name: {}",
-						sql.name, fn);
+				logger.error("Sql name {} does not match with its file name: {}", sql.name, fn);
 				return false;
 			}
 
-			sql.init(this.app.valueSchemas, records);
+			sql.init(this.valueSchemas.getSchemas(), this.records);
 			sql.generateJava(javaFolder, this.packageName);
 
 		}

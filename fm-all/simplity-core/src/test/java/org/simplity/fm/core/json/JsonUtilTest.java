@@ -14,8 +14,7 @@ import org.simplity.fm.core.service.IInputData;
 import org.slf4j.LoggerFactory;
 
 class JsonUtilTest {
-	private static final org.slf4j.Logger logger = LoggerFactory
-			.getLogger(JsonUtilTest.class);
+	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(JsonUtilTest.class);
 	private static final String RES_NAME = "qry/qry.json";
 	private IInputData[] tests;
 	private IInputData testData;
@@ -25,7 +24,7 @@ class JsonUtilTest {
 			IInputData data = JsonUtil.newInputData(reader);
 			this.tests = data.getArray("tests").toDataArray();
 			this.testData = data.getData("testData");
-		} catch (IOException e) {
+		} catch (IOException e) {//
 		}
 
 	}
@@ -33,8 +32,7 @@ class JsonUtilTest {
 	@Test
 	void testAll() {
 		assertNotNull(this.tests, "json should have an array named 'tests'");
-		assertNotNull(this.testData,
-				"json should have an object named 'testData'");
+		assertNotNull(this.testData, "json should have an object named 'testData'");
 		assertEquals(4, this.tests.length, "json should have 4 tests");
 		this.testInvalidMemberNames();
 		this.testValidMemberNames();
@@ -65,8 +63,7 @@ class JsonUtilTest {
 		IInputData data = testCase.getData("data");
 		for (String memberName : data.getMemberNames()) {
 			String desc = data.getString(memberName);
-			assertEquals(JsonUtil.qryString(data, memberName), desc,
-					"\"" + memberName + "\": " + desc);
+			assertEquals(JsonUtil.qryString(data, memberName), desc, "\"" + memberName + "\": " + desc);
 		}
 
 	}
@@ -105,24 +102,24 @@ class JsonUtilTest {
 			return null;
 		}
 		switch (typ) {
-		case "text" :
+		case "text":
 			return s;
 
-		case "integer" :
+		case "integer":
 			try {
 				return Long.parseLong(s);
 			} catch (NumberFormatException e) {
 				return null;
 			}
 
-		case "decimal" :
+		case "decimal":
 			try {
 				return Double.parseDouble(s);
 			} catch (NumberFormatException e) {
 				return null;
 			}
 
-		case "boolean" :
+		case "boolean":
 			if (s.equals("true")) {
 				return true;
 			}
@@ -131,16 +128,18 @@ class JsonUtilTest {
 				return false;
 			}
 			return null;
+		default:
+			break;
 		}
 		return null;
 	}
 
 	private static final String VALUE = "value";
+
 	private void assertMatch(String qry, String typ, IInputData data) {
 		/**
 		 * how do we prove that a primitive member does not exist?? because,
-		 * queryBoolen() will return false!! We will use queryString() and then
-		 * infer...
+		 * queryBoolen() will return false!! We will use queryString() and then infer...
 		 */
 
 		String s = JsonUtil.qryString(this.testData, qry);
@@ -149,12 +148,12 @@ class JsonUtilTest {
 			assertNotNull(null, msg);
 		}
 		switch (typ) {
-		case "text" :
+		case "text":
 			String s1 = data.getString(VALUE);
 			assertEquals(s1, s, msg);
 			return;
 
-		case "integer" :
+		case "integer":
 			long n1 = data.getInteger(VALUE);
 			try {
 				long n2 = (long) Float.parseFloat(s.trim());
@@ -165,7 +164,7 @@ class JsonUtilTest {
 				return;
 			}
 
-		case "decimal" :
+		case "decimal":
 			double d1 = data.getDecimal(VALUE);
 			try {
 				double d2 = Double.parseDouble(s.trim());
@@ -176,9 +175,12 @@ class JsonUtilTest {
 				return;
 			}
 
-		case "boolean" :
+		case "boolean":
 			boolean b1 = data.getBoolean(VALUE);
 			assertEquals(b1 + "", s, msg);
+			return;
+		default:
+			break;
 		}
 
 	}

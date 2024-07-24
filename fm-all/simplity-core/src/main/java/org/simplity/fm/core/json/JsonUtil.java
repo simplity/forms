@@ -24,8 +24,8 @@ import com.google.gson.JsonParser;
  *
  */
 public class JsonUtil {
-	private static final Logger logger = LoggerFactory
-			.getLogger(JsonUtil.class);
+	static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
+
 	/**
 	 *
 	 * @return non-null empty instance
@@ -44,8 +44,7 @@ public class JsonUtil {
 
 	/**
 	 *
-	 * @param reader
-	 *            from which the input data is to be created
+	 * @param reader from which the input data is to be created
 	 * @return null if the input is not a valid json.
 	 */
 	public static IInputData newInputData(Reader reader) {
@@ -60,8 +59,7 @@ public class JsonUtil {
 
 	/**
 	 *
-	 * @param reader
-	 *            from which the input data is to be created
+	 * @param reader from which the input data is to be created
 	 * @return null if the input is not a valid json.
 	 */
 	public static IInputArray newInputArrayt(Reader reader) {
@@ -76,8 +74,7 @@ public class JsonUtil {
 
 	/**
 	 *
-	 * @param fileOrResource
-	 *            from which the input data is to be created
+	 * @param fileOrResource from which the input data is to be created
 	 * @return null if the input is not a valid json.
 	 */
 	public static IInputData newInputData(String fileOrResource) {
@@ -98,6 +95,7 @@ public class JsonUtil {
 		return new GsonOutputData(writer);
 
 	}
+
 	/**
 	 * read a json resource into a JSONObject
 	 *
@@ -107,40 +105,37 @@ public class JsonUtil {
 	static JsonObject readJsonResource(String fileOrResourceName) {
 		try (Reader r = IoUtil.getReader(fileOrResourceName)) {
 			if (r == null) {
-				logger.error("Unable to get a handle to resource {}",
-						fileOrResourceName);
+				logger.error("Unable to get a handle to resource {}", fileOrResourceName);
 				return null;
 			}
 			JsonElement ele = JsonParser.parseReader(r);
 			if (ele.isJsonObject()) {
 				return ele.getAsJsonObject();
 			}
-		} catch (Exception e) {
+		} catch (Exception e) {//
 		}
-		logger.error("resource {} has an invalid json object",
-				fileOrResourceName);
+		logger.error("resource {} has an invalid json object", fileOrResourceName);
 		return null;
 	}
+
 	/**
 	 * get the String value at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
-	 * @return null if in case of any error in pointing to the desired member,
-	 *         or the pointed member is not a primitive
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
+	 * @return null if in case of any error in pointing to the desired member, or
+	 *         the pointed member is not a primitive
 	 */
 	public static String qryString(IInputData inData, String qryString) {
 		JsonObject obj = ((GsonInputData) inData).getJsonObject();
@@ -154,21 +149,19 @@ public class JsonUtil {
 	/**
 	 * get the String value at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
 	 * @return 0 in case of any error in pointing to the desired member, or the
 	 *         pointed member is not a number
 	 */
@@ -184,21 +177,19 @@ public class JsonUtil {
 	/**
 	 * get the numeric value at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
 	 * @return 0 in case of any error in pointing to the desired member, or the
 	 *         pointed member is not a number
 	 */
@@ -214,23 +205,21 @@ public class JsonUtil {
 	/**
 	 * get the boolean value at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
-	 * @return false in case of any error in pointing to the desired member, or
-	 *         the pointed member is not a boolean
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
+	 * @return false in case of any error in pointing to the desired member, or the
+	 *         pointed member is not a boolean
 	 */
 	public static boolean qryBoolean(IInputData inData, String qryString) {
 		JsonObject obj = ((GsonInputData) inData).getJsonObject();
@@ -240,26 +229,25 @@ public class JsonUtil {
 		}
 		return ele.getAsBoolean();
 	}
+
 	/**
 	 * get the Data Object at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
-	 * @return null if in case of any error in pointing to the desired member,
-	 *         or the pointed member is not a data-object
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
+	 * @return null if in case of any error in pointing to the desired member, or
+	 *         the pointed member is not a data-object
 	 */
 	public static IInputData qryInputData(IInputData inData, String qryString) {
 		JsonObject obj = ((GsonInputData) inData).getJsonObject();
@@ -273,26 +261,23 @@ public class JsonUtil {
 	/**
 	 * get the Data Array at the specified location.
 	 *
-	 * @param inData
-	 *            from which to get the child data object
-	 * @param qryString
-	 *            conforms to query string format as follows:
+	 * @param inData    from which to get the child data object
+	 * @param qryString conforms to query string format as follows:
 	 *
-	 *            Should end with the leaf-node-member name that is being
-	 *            queried.
+	 *                  Should end with the leaf-node-member name that is being
+	 *                  queried.
 	 *
-	 *            should start with a member name of the data-object. If this is
-	 *            an array, it must be followed with [n] to point to the nth
-	 *            element.
+	 *                  should start with a member name of the data-object. If this
+	 *                  is an array, it must be followed with [n] to point to the
+	 *                  nth element.
 	 *
-	 *            .memberNamr points to the member of the current child member.
-	 *            Of course this is valid only if the current member is a
-	 *            data-object
-	 * @return null if in case of any error in pointing to the desired member,
-	 *         or the pointed member is not an array
+	 *                  .memberNamr points to the member of the current child
+	 *                  member. Of course this is valid only if the current member
+	 *                  is a data-object
+	 * @return null if in case of any error in pointing to the desired member, or
+	 *         the pointed member is not an array
 	 */
-	public static IInputArray getInputArray(IInputData inData,
-			String qryString) {
+	public static IInputArray getInputArray(IInputData inData, String qryString) {
 		JsonObject obj = ((GsonInputData) inData).getJsonObject();
 		JsonElement ele = queryAsEle(obj, qryString);
 		if (ele == null || ele.isJsonArray() == false) {
@@ -305,13 +290,11 @@ public class JsonUtil {
 	 *
 	 * @param <T>
 	 *
-	 * @param resourceOrFileName
-	 *            from which the object instance is to be loaded
-	 * @param cls
-	 *            class to be used to instantiate an object and load attributes
-	 *            from the json
-	 * @return an instance of T with its attributes loaded from the resource.
-	 *         null in case of any issue
+	 * @param resourceOrFileName from which the object instance is to be loaded
+	 * @param cls                class to be used to instantiate an object and load
+	 *                           attributes from the json
+	 * @return an instance of T with its attributes loaded from the resource. null
+	 *         in case of any issue
 	 */
 	public static <T> T load(String resourceOrFileName, Class<T> cls) {
 		try (Reader reader = IoUtil.getReader(resourceOrFileName)) {
@@ -327,24 +310,20 @@ public class JsonUtil {
 	 *
 	 * @param <T>
 	 *
-	 * @param inputData
-	 *            from which the object instance is to be loaded
-	 * @param cls
-	 *            class to be used to instantiate an object and load attributes
-	 *            from the json
-	 * @return an instance of T with its attributes loaded from the resource.
-	 *         null in case of any issue
+	 * @param inputData from which the object instance is to be loaded
+	 * @param cls       class to be used to instantiate an object and load
+	 *                  attributes from the json
+	 * @return an instance of T with its attributes loaded from the resource. null
+	 *         in case of any issue
 	 */
 	public static <T> T load(IInputData inputData, Class<T> cls) {
-		return new Gson().fromJson(((GsonInputData) inputData).getJsonObject(),
-				cls);
+		return new Gson().fromJson(((GsonInputData) inputData).getJsonObject(), cls);
 	}
+
 	/**
 	 *
-	 * @param inObj
-	 *            non-null
-	 * @param qryStr
-	 *            non-null
+	 * @param inObj  non-null
+	 * @param qryStr non-null
 	 * @return null in case of any error
 	 */
 	private static JsonObject queryAsObject(JsonObject inObj, String qryStr) {
@@ -357,10 +336,8 @@ public class JsonUtil {
 
 	/**
 	 *
-	 * @param inObj
-	 *            non-null
-	 * @param qryStr
-	 *            non-null
+	 * @param inObj  non-null
+	 * @param qryStr non-null
 	 * @return null in case of any error
 	 */
 	private static JsonArray queryAsArray(JsonObject inObj, String qryStr) {
@@ -370,12 +347,11 @@ public class JsonUtil {
 		}
 		return null;
 	}
+
 	/**
 	 *
-	 * @param inObj
-	 *            non-null
-	 * @param qryStr
-	 *            non-null
+	 * @param inObj  non-null
+	 * @param qryStr non-null
 	 * @return null in case of any error
 	 */
 	private static JsonElement queryAsEle(JsonObject inObj, String qryStr) {
@@ -428,17 +404,14 @@ public class JsonUtil {
 			if (closeAt == len - 1) { // it's an array of the form a.....c[idx]
 				int m = qry.lastIndexOf('[');
 				if (m == -1) {
-					logger.error(
-							"qryString : {} ends with a ']' with no matching ']' ",
-							qry);
+					logger.error("qryString : {} ends with a ']' with no matching ']' ", qry);
 					return null;
 				}
 				String idxText = qry.substring(m + 1, len - 1).trim();
 				try {
 					idx = Integer.parseInt(idxText);
 				} catch (NumberFormatException e) {
-					logger.error("qryString : {} has an invalid index '{}'",
-							qry, idxText);
+					logger.error("qryString : {} has an invalid index '{}'", qry, idxText);
 					return null;
 				}
 				data = qry.substring(0, m).trim();
@@ -449,21 +422,19 @@ public class JsonUtil {
 				member = qry;
 			}
 			if (member != null && member.indexOf(' ') != -1) {
-				logger.error(
-						"qryString : {} has spaces within the member name:'{}'",
-						qry, member);
+				logger.error("qryString : {} has spaces within the member name:'{}'", qry, member);
 				return null;
 			}
 			return new Qry(member, data, idx);
 		}
+
 		/**
-		 * name after the last dot, provided query ends as indexed. null
-		 * otherwise
+		 * name after the last dot, provided query ends as indexed. null otherwise
 		 */
 		protected final String memberName;
 		/**
-		 * object or array name whose member/element is to be extracted. null if
-		 * neither indexed, nor a dotted member
+		 * object or array name whose member/element is to be extracted. null if neither
+		 * indexed, nor a dotted member
 		 */
 		protected final String dataName;
 		/**

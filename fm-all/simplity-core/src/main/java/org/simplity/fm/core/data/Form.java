@@ -44,8 +44,7 @@ import org.slf4j.LoggerFactory;
  * component.
  *
  * @author simplity.org
- * @param <T>
- *            primary record that describes the data behind this form
+ * @param <T> primary record that describes the data behind this form
  *
  */
 public abstract class Form<T extends Record> {
@@ -76,8 +75,7 @@ public abstract class Form<T extends Record> {
 	protected final ChildForm<?>[] childForms;
 	private final boolean isDb;
 
-	protected Form(final String name, final T record,
-			final boolean[] operations, final ChildForm<?>[] childForms) {
+	protected Form(final String name, final T record, final boolean[] operations, final ChildForm<?>[] childForms) {
 		this.name = name;
 		this.record = record;
 		this.operations = operations;
@@ -108,15 +106,12 @@ public abstract class Form<T extends Record> {
 	/**
 	 * read rows for the child-forms
 	 *
-	 * @param rawData
-	 *            for the record for this form
-	 * @param outData
-	 *            to which the read rows are to be serialized into
+	 * @param rawData for the record for this form
+	 * @param outData to which the read rows are to be serialized into
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void readChildForms(final Object[] rawData,
-			final IOutputData outData, final IReadonlyHandle handle)
+	public void readChildForms(final Object[] rawData, final IOutputData outData, final IReadonlyHandle handle)
 			throws SQLException {
 		if (this.childForms != null) {
 			for (final ChildForm<?> child : Form.this.childForms) {
@@ -128,18 +123,13 @@ public abstract class Form<T extends Record> {
 	/**
 	 * load keys from the input. input is suspect.
 	 *
-	 * @param inputObject
-	 *            non-null
-	 * @param ctx
-	 *            non-null. any validation error is added to it
-	 * @return true record with parsed values. null if any input fails
-	 *         validation.
+	 * @param inputObject non-null
+	 * @param ctx         non-null. any validation error is added to it
+	 * @return true record with parsed values. null if any input fails validation.
 	 */
-	public boolean parseKeys(final IInputData inputObject,
-			final IServiceContext ctx) {
+	public boolean parseKeys(final IInputData inputObject, final IServiceContext ctx) {
 		if (!this.isDb) {
-			logger.error(
-					"This form is based on {} that is not a DbRecord. Keys can not be parsed");
+			logger.error("This form is based on {} that is not a DbRecord. Keys can not be parsed");
 			return false;
 		}
 		return ((DbRecord) this.record).parseKeys(inputObject, ctx);
@@ -148,39 +138,35 @@ public abstract class Form<T extends Record> {
 	/**
 	 *
 	 * @param operation
-	 * @return a service for this operation on the form. null if the operation
-	 *         is not allowed.
+	 * @return a service for this operation on the form. null if the operation is
+	 *         not allowed.
 	 */
 	public IService getService(final IoType operation) {
 		if (!this.operations[operation.ordinal()]) {
-			logger.info("{} operation is not allowed on record {}", operation,
-					this.name);
+			logger.info("{} operation is not allowed on record {}", operation, this.name);
 			return null;
 		}
 
 		String serviceName = operation.name();
-		serviceName = serviceName.substring(0, 1).toLowerCase()
-				+ serviceName.substring(1) + '_' + this.name;
+		serviceName = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.name;
 
 		/*
 		 * forms with children require form-based service
 		 */
 		if (this.childForms != null) {
 			switch (operation) {
-			case Get :
+			case Get:
 				return new Reader(serviceName);
-			case Create :
+			case Create:
 				return new Creater(serviceName);
-			case Update :
+			case Update:
 				return new Updater(serviceName);
-			case Delete :
+			case Delete:
 				return new Deleter(serviceName);
-			case Filter :
+			case Filter:
 				return new Filter(serviceName);
-			default :
-				throw new ApplicationError(
-						"Form needs to be designed for operation "
-								+ operation.name());
+			default:
+				throw new ApplicationError("Form needs to be designed for operation " + operation.name());
 			}
 		}
 
@@ -200,27 +186,25 @@ public abstract class Form<T extends Record> {
 	 */
 	protected class AutoService extends AbstractService {
 		private IoType operation;
+
 		protected AutoService(final String name, IoType operation) {
 			super(name);
 			this.operation = operation;
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx,
-				final IInputData inputPayload) throws Exception {
-			Form.this.record.parse(inputPayload, operation == IoType.Create,
-					ctx, null, 0);
+		public void serve(final IServiceContext ctx, final IInputData inputPayload) throws Exception {
+			Form.this.record.parse(inputPayload, this.operation == IoType.Create, ctx, null, 0);
 			if (ctx.allOk()) {
-				logger.info("Service " + this.serviceName
-						+ " succeeded in parsing input. Same is set as response");
+				logger.info("Service " + this.serviceName + " succeeded in parsing input. Same is set as response");
 				ctx.setAsResponse(Form.this.record);
 				return;
 			}
-			logger.error("Validation failed for service {} and operation {}",
-					this.serviceName, operation.name());
+			logger.error("Validation failed for service {} and operation {}", this.serviceName, this.operation.name());
 		}
 
 	}
+
 	protected class Reader extends AbstractService {
 
 		protected Reader(final String name) {
@@ -228,8 +212,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			if (!Form.this.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
 				return;
@@ -243,8 +226,8 @@ public abstract class Form<T extends Record> {
 					return;
 				}
 				/*
-				 * instead of storing data and then serializing it, we have
-				 * designed this service to serialize data then-and-there
+				 * instead of storing data and then serializing it, we have designed this
+				 * service to serialize data then-and-there
 				 */
 				final IOutputData outData = ctx.getOutputData();
 				outData.beginObject();
@@ -265,8 +248,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -280,10 +262,8 @@ public abstract class Form<T extends Record> {
 				}
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.insert(rec, payload, handle, ctx)) {
-						logger.error(
-								"Insert operation failed for a child form");
-						ctx.addMessage(
-								Message.newError(Message.MSG_INVALID_DATA));
+						logger.error("Insert operation failed for a child form");
+						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 					}
 				}
@@ -299,8 +279,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, false, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -315,10 +294,8 @@ public abstract class Form<T extends Record> {
 				}
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.update(rec, payload, handle, ctx)) {
-						logger.error(
-								"Update operation failed for a child form");
-						ctx.addMessage(
-								Message.newError(Message.MSG_INVALID_DATA));
+						logger.error("Update operation failed for a child form");
+						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 
 					}
@@ -335,8 +312,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
@@ -352,10 +328,8 @@ public abstract class Form<T extends Record> {
 
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.delete(rec, handle, ctx)) {
-						logger.error(
-								"Insert operation failed for a child form");
-						ctx.addMessage(
-								Message.newError(Message.MSG_INVALID_DATA));
+						logger.error("Insert operation failed for a child form");
+						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 						return false;
 					}
 				}
@@ -371,25 +345,22 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 
 			if (filter == null) {
-				logger.error(
-						"Error while parsing filter conditions from the input payload");
+				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
 
 			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle,
-						filter.getWhereClause(), filter.getWhereParamValues(),
-						filter.getWhereParamTypes());
+				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
+						filter.getWhereParamValues(), filter.getWhereParamTypes());
 				/*
-				 * instead of storing data and then serializing it, we have
-				 * designed this service to serialize data then-and-there
+				 * instead of storing data and then serializing it, we have designed this
+				 * service to serialize data then-and-there
 				 */
 				final IOutputData outData = ctx.getOutputData();
 				outData.beginObject();
@@ -429,8 +400,7 @@ public abstract class Form<T extends Record> {
 	@SuppressWarnings("unchecked")
 	public void override(final IServiceContext ctx) {
 		final String recordName = this.record.fetchName();
-		this.record = (T) AppManager.getAppInfra().getCompProvider()
-				.getRecord(recordName, ctx);
+		this.record = (T) AppManager.getAppInfra().getCompProvider().getRecord(recordName, ctx);
 		if (this.childForms != null) {
 			for (final ChildForm<?> lf : this.childForms) {
 				lf.override(this.record, ctx);

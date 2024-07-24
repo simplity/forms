@@ -19,6 +19,7 @@ import org.simplity.fm.core.valueschema.ValueType;
 public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	private final T record;
 	protected List<Object[]> rows = new ArrayList<>();
+
 	/**
 	 * construct with an instance of the underlying Record
 	 *
@@ -35,6 +36,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	public ValueType[] fetchValueTypes() {
 		return this.record.fetchValueTypes();
 	}
+
 	/**
 	 * add a record
 	 *
@@ -45,8 +47,8 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	}
 
 	/**
-	 * TO BE USED BY UTILITY PROGRAMS ONLY. caller MUST ensure that the values
-	 * in the row are of the right types
+	 * TO BE USED BY UTILITY PROGRAMS ONLY. caller MUST ensure that the values in
+	 * the row are of the right types
 	 *
 	 * @param row
 	 */
@@ -69,8 +71,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	}
 
 	/**
-	 * fetch is used instead of get to avoid clash with getters in generated
-	 * classes
+	 * fetch is used instead of get to avoid clash with getters in generated classes
 	 *
 	 * @param idx
 	 * @return record at 0-based index. null if the index is not valid
@@ -103,7 +104,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	@Override
 	public Iterator<T> iterator() {
 		final List<Object[]> r = this.rows;
-		return new Iterator<>() {
+		return new Iterator<T>() {
 			private int idx = 0;
 
 			@Override
@@ -117,6 +118,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 			}
 		};
 	}
+
 	@Override
 	public boolean process(Object[] row) throws SQLException {
 		// TODO Auto-generated method stub
