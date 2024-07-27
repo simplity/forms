@@ -49,46 +49,42 @@ public interface IServiceContext {
 	 *         false otherwise.
 	 */
 	boolean hasUserContext();
+
 	/**
 	 *
 	 * @param key
-	 * @return object associated with this key, null if no such key, or the
-	 *         value is null
+	 * @return object associated with this key, null if no such key, or the value is
+	 *         null
 	 */
 	Object getValue(String key);
 
 	/**
 	 * put an name-value pair in the context
 	 *
-	 * @param key
-	 *            non-null
-	 * @param value
-	 *            null has same effect as removing it. hence remove not
-	 *            provided.
+	 * @param key   non-null
+	 * @param value null has same effect as removing it. hence remove not provided.
 	 */
 	void setValue(String key, Object value);
 
 	/**
-	 * @return non-null user on whose behalf this service is requested. Note
-	 *         that this id COULD be different from the userId used by the
-	 *         client-facing UserContext. For example, the app may use a mail-id
-	 *         as userId for logging in, but may use a numeric userId internally
-	 *         as the unique userId. In this case UserContext uses mail-id
-	 *         (string) as userId while ServiceCOntext uses internalId (long) as
-	 *         userId. <br />
-	 *         Also, If a service is allowed for non-registered users, the app
-	 *         may use a a specific (hard-coded) userId for any session for such
-	 *         a user
+	 * @return non-null user on whose behalf this service is requested. Note that
+	 *         this id COULD be different from the userId used by the client-facing
+	 *         UserContext. For example, the app may use a mail-id as userId for
+	 *         logging in, but may use a numeric userId internally as the unique
+	 *         userId. In this case UserContext uses mail-id (string) as userId
+	 *         while ServiceCOntext uses internalId (long) as userId. <br />
+	 *         Also, If a service is allowed for non-registered users, the app may
+	 *         use a a specific (hard-coded) userId for any session for such a user
 	 */
 	Object getUserId();
 
 	/**
 	 *
-	 * @return non-null <code>IOutputData</code> for constructing service
-	 *         output. To be used for custom-way of creating output instead of
-	 *         using the methods available in this class. Once this method is
-	 *         called, this class will throw error if any attempt is made to get
-	 *         it again, or try adding output data.
+	 * @return non-null <code>IOutputData</code> for constructing service output. To
+	 *         be used for custom-way of creating output instead of using the
+	 *         methods available in this class. Once this method is called, this
+	 *         class will throw error if any attempt is made to get it again, or try
+	 *         adding output data.
 	 *
 	 *         It is to be noted that the instance in the middle of an object.
 	 *         Caller should leave it at that state. That is, a beginObject() is
@@ -99,36 +95,34 @@ public interface IServiceContext {
 
 	/**
 	 *
-	 * @return true if all ok. false if at least one error message is added to
-	 *         the context;
+	 * @return true if all ok. false if at least one error message is added to the
+	 *         context;
 	 */
 	boolean allOk();
 
 	/**
 	 *
-	 * @param message
-	 *            non-null message
+	 * @param message non-null message
 	 */
 	void addMessage(Message message);
 
 	/**
 	 *
-	 * @param messages
-	 *            non-null messages
+	 * @param messages non-null messages
 	 */
 	void addMessages(Collection<Message> messages);
 
 	/**
 	 *
-	 * @return non-null array all messages added so far. empty if no message
-	 *         added so far;
+	 * @return non-null array all messages added so far. empty if no message added
+	 *         so far;
 	 */
 	Message[] getMessages();
 
 	/**
-	 * @return tenantId, if this APP is designed for multi-tenant deployment,
-	 *         and the user context has set a tenant-id. null if it is not set
-	 *         in the context.
+	 * @return tenantId, if this APP is designed for multi-tenant deployment, and
+	 *         the user context has set a tenant-id. null if it is not set in the
+	 *         context.
 	 */
 	Object getTenantId();
 
@@ -136,28 +130,25 @@ public interface IServiceContext {
 	 * messages is not necessarily all errors. Some clients may want to track
 	 * errors.
 	 *
-	 * @return number errors accumulated in the context. Note that the count
-	 *         gets reset if the messages are reset
+	 * @return number errors accumulated in the context. Note that the count gets
+	 *         reset if the messages are reset
 	 */
 	int getNbrErrors();
 
 	/**
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result an ApplicationError()
-	 * exception. Also, this cannot be called after a call to getSerializer() is
-	 * called
+	 * serialize this data as response. Note that this can be called only once with
+	 * success. any subsequent call will result an ApplicationError() exception.
+	 * Also, this cannot be called after a call to getSerializer() is called
 	 *
-	 * @param record
-	 *            non-null;
+	 * @param record non-null;
 	 */
 	void setAsResponse(Record record);
 
 	/**
 	 *
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result an ApplicationError()
-	 * exception. Also, this cannot be called after a call to getSerializer() is
-	 * called
+	 * serialize this data as response. Note that this can be called only once with
+	 * success. any subsequent call will result an ApplicationError() exception.
+	 * Also, this cannot be called after a call to getSerializer() is called
 	 *
 	 * @param fields
 	 * @param objects
@@ -187,8 +178,7 @@ public interface IServiceContext {
 	 * @param childName
 	 * @param lines
 	 */
-	void setAsResponse(Record header, String childName,
-			List<? extends Record> lines);
+	void setAsResponse(Record header, String childName, List<? extends Record> lines);
 
 	/**
 	 *
@@ -199,15 +189,14 @@ public interface IServiceContext {
 
 	/**
 	 *
-	 * @return null if this service is not setting/resetting user session.
-	 *         non-null to set/reset user session after the service is executed
+	 * @return null if this service is not setting/resetting user session. non-null
+	 *         to set/reset user session after the service is executed
 	 */
 	UserContext getNewUserContext();
 
 	/**
 	 *
-	 * @param utx
-	 *            non-null user context to be set after the service completes.
+	 * @param utx non-null user context to be set after the service completes.
 	 */
 	void setNewUserContext(UserContext utx);
 
@@ -227,10 +216,10 @@ public interface IServiceContext {
 
 	/**
 	 * @param formName
-	 * @return id with which this form is over-ridden. null if it is not
-	 *         overridden
+	 * @return id with which this form is over-ridden. null if it is not overridden
 	 */
 	String getFormOverrideId(String formName);
+
 	/**
 	 *
 	 * @return should the user context be reset
@@ -242,6 +231,7 @@ public interface IServiceContext {
 	 * true; note that there is no argument. This action can not be reversed!!
 	 */
 	void markUserContextForReset();
+
 	/**
 	 * serialize and write for persistence
 	 *
@@ -256,4 +246,18 @@ public interface IServiceContext {
 	 *         message would have been added in case of any failure
 	 */
 	boolean load(Reader reader);
+
+	/**
+	 * 
+	 * @return the origin of the request. This is the IP address if the request is
+	 *         through HTTP. null if this is not relevant
+	 */
+	String getRequestOrigin();
+
+	/**
+	 * session id, if the request is made in a conversational mode. null otherwise
+	 * 
+	 * @return
+	 */
+	String getSessionId();
 }

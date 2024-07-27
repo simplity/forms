@@ -82,15 +82,12 @@ public class ValueList implements IInitializer {
 		Util.emitImport(sbf, org.simplity.fm.core.validn.RuntimeList.class);
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
-		sbf.append("\npublic class ").append(clsName)
-				.append(" extends RuntimeList {");
+		sbf.append("\npublic class ").append(clsName).append(" extends RuntimeList {");
 
-		sbf.append("\n\t private static final String NAME = \"")
-				.append(this.name).append("\";");
+		sbf.append("\n\t private static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\t private static final String LIST_SQL = \"SELECT ");
-		sbf.append(this.dbColumn1).append(C).append(this.dbColumn2)
-				.append(" FROM ").append(this.dbTableName);
+		sbf.append(this.dbColumn1).append(C).append(this.dbColumn2).append(" FROM ").append(this.dbTableName);
 
 		boolean whereAdded = false;
 		if (this.activeColumnName != null) {
@@ -117,8 +114,7 @@ public class ValueList implements IInitializer {
 		}
 		sbf.append("\";");
 
-		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ")
-				.append(this.dbColumn1).append(" FROM ")
+		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ").append(this.dbColumn1).append(" FROM ")
 				.append(this.dbTableName);
 		sbf.append(WHERE).append(this.dbColumn1).append("=?");
 		if (this.activeColumnName != null) {
@@ -130,14 +126,10 @@ public class ValueList implements IInitializer {
 		sbf.append("\";");
 
 		if (this.parentTable != null) {
-			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.")
-					.append(this.dbColumn1);
-			sbf.append(", a.").append(this.dbColumn2).append(", b.")
-					.append(this.parentNameColumnName).append(" FROM ");
-			sbf.append(this.dbTableName).append(" a, ").append(this.parentTable)
-					.append(" b ");
-			sbf.append(WHERE).append("a.").append(this.keyColumn).append("=b.")
-					.append(this.parentIdColumnName);
+			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.").append(this.dbColumn1);
+			sbf.append(", a.").append(this.dbColumn2).append(", b.").append(this.parentNameColumnName).append(" FROM ");
+			sbf.append(this.dbTableName).append(" a, ").append(this.parentTable).append(" b ");
+			sbf.append(WHERE).append("a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
 			if (this.tenantColumnName != null) {
 				sbf.append(AND).append(this.tenantColumnName).append("=?");
 			}
@@ -174,8 +166,7 @@ public class ValueList implements IInitializer {
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
-		sbf.append("\npublic class ").append(clsName)
-				.append(" extends KeyedValueList {");
+		sbf.append("\npublic class ").append(clsName).append(" extends KeyedValueList {");
 
 		sbf.append("\n\tprivate static final Object[] KEYS = {");
 
@@ -200,19 +191,16 @@ public class ValueList implements IInitializer {
 		vals.append("};");
 		sbf.append(vals.toString());
 
-		sbf.append("\n\tprivate static final String NAME = \"")
-				.append(this.name).append("\";");
+		sbf.append("\n\tprivate static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
 
-		sbf.append("\n\tpublic ").append(Util.toClassName(this.name))
-				.append("() {");
+		sbf.append("\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
 		sbf.append("\n\t\tthis.name = NAME;");
 		sbf.append("\n\t\tthis.values = new HashMap<>();");
 
 		sbf.append("\n\t\tfor (int i = 0; i < KEYS.length;i++) {");
-		sbf.append(
-				"\n\t\t\tthis.values.put(KEYS[i], new ValueList(KEYS[i], VALUES[i]));");
+		sbf.append("\n\t\t\tthis.values.put(KEYS[i], new ValueList(KEYS[i], VALUES[i]));");
 		sbf.append("\n\t\t}");
 		sbf.append("\n\t}");
 		sbf.append("\n}\n");
@@ -239,8 +227,7 @@ public class ValueList implements IInitializer {
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
-		sbf.append("\n\npublic class ").append(Util.toClassName(this.name))
-				.append(" extends ValueList {");
+		sbf.append("\n\npublic class ").append(Util.toClassName(this.name)).append(" extends ValueList {");
 		sbf.append("\n\tprivate static final Object[][] VALUES = { ");
 
 		for (final Pair p : this.list) {
@@ -248,7 +235,11 @@ public class ValueList implements IInitializer {
 			if (p.value instanceof String) {
 				sbf.append(Util.quotedString(p.value.toString()));
 			} else {
-				sbf.append(p.value).append('L');
+				/*
+				 * it may be double because of the way JSON parsers work
+				 */
+				long n = ((Number) p.value).longValue();
+				sbf.append(n).append('L');
 			}
 			sbf.append(C).append(Util.quotedString(p.label)).append("}");
 			sbf.append(C);
@@ -256,18 +247,15 @@ public class ValueList implements IInitializer {
 
 		sbf.setLength(sbf.length() - C.length());
 		sbf.append("\n\t};");
-		sbf.append("\n\t private static final String NAME = \"")
-				.append(this.name).append("\";");
+		sbf.append("\n\t private static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\n\t/**\n\t * @param name\n\t * @param valueList\n\t */");
-		sbf.append("\n\tpublic ").append(Util.toClassName(this.name))
-				.append("(String name, Object[][] valueList) {");
+		sbf.append("\n\tpublic ").append(Util.toClassName(this.name)).append("(String name, Object[][] valueList) {");
 		sbf.append("\n\t\tsuper(name, valueList);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n\n\t/**\n\t *").append(this.name).append("\n\t */");
-		sbf.append("\n\tpublic ").append(Util.toClassName(this.name))
-				.append("() {");
+		sbf.append("\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
 		sbf.append("\n\t\tsuper(NAME, VALUES);");
 		sbf.append("\n\t}");
 
@@ -288,8 +276,7 @@ public class ValueList implements IInitializer {
 	public boolean emitTs(StringBuilder sbf) {
 		sbf.append(T1).append('"').append(this.name).append("\": {");
 		sbf.append(T2).append("\"name\": \"").append(this.name).append("\",");
-		sbf.append(T2).append("\"listType\": \"").append(this.listType)
-				.append("\",");
+		sbf.append(T2).append("\"listType\": \"").append(this.listType).append("\",");
 		if (this.isKeyed) {
 			sbf.append(T2).append("\"isKeyed\": true,");
 		}
@@ -302,8 +289,7 @@ public class ValueList implements IInitializer {
 			sbf.append(T2).append("\"keyedLists\": {");
 
 			for (final Map.Entry<String, Pair[]> entry : this.keys.entrySet()) {
-				sbf.append(T3).append('"').append(entry.getKey())
-						.append("\": [");
+				sbf.append(T3).append('"').append(entry.getKey()).append("\": [");
 				emitTsPairs(sbf, entry.getValue(), T4);
 				sbf.append(T3).append("],");
 			}
@@ -317,8 +303,7 @@ public class ValueList implements IInitializer {
 		return true;
 	}
 
-	private static void emitTsPairs(StringBuilder sbf, Pair[] pairs,
-			String indent) {
+	private static void emitTsPairs(StringBuilder sbf, Pair[] pairs, String indent) {
 		for (final Pair p : pairs) {
 			sbf.append(indent).append('{');
 			sbf.append(indent).append("\t\"value\":");
@@ -327,8 +312,7 @@ public class ValueList implements IInitializer {
 			} else {
 				sbf.append(p.value);
 			}
-			sbf.append(',').append(indent).append("\t\"text\":")
-					.append(Util.quotedString(p.label));
+			sbf.append(',').append(indent).append("\t\"text\":").append(Util.quotedString(p.label));
 			sbf.append(indent).append("},");
 		}
 		sbf.setLength(sbf.length() - 1);

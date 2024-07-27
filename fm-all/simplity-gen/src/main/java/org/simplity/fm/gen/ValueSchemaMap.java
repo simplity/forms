@@ -11,6 +11,7 @@ import org.simplity.fm.core.valueschema.DecimalSchema;
 import org.simplity.fm.core.valueschema.IntegerSchema;
 import org.simplity.fm.core.valueschema.TextSchema;
 import org.simplity.fm.core.valueschema.TimestampSchema;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +25,39 @@ public class ValueSchemaMap {
 	protected static final Logger logger = LoggerFactory.getLogger(ValueSchemaMap.class);
 
 	private static final String C = ", ";
+	private static final String TENANT_ID = "_tenantId";
 
-	private Map<String, ValueSchema> valueSchemas = new HashMap<>();
+	/**
+	 * we use _text, _boolean etc.. as valueSchema for internal use when we know
+	 * that we don't have to validate a value, but we need to specify a valueSchema
+	 * 
+	 * create default valueSchema for each valueType
+	 * 
+	 * @return map that is initialized with default ones
+	 */
+	private static Map<String, ValueSchema> mapWithDefaults() {
+		Map<String, ValueSchema> schemas = new HashMap<>();
+		for (ValueType vt : ValueType.values()) {
+			String typ = Util.toName(vt.name());
+			String name = "_" + typ;
+			ValueSchema schema = new ValueSchema();
+			schema.name = name;
+			schema.valueType = typ;
+			schema.initialize(name, 0);
+			schemas.put(name, schema);
+		}
+		/*
+		 * and one special one for tenantKey.
+		 */
+		ValueSchema schema = new ValueSchema();
+		schema.name = TENANT_ID;
+		schema.valueType = "integer";
+		schema.initialize(TENANT_ID, 0);
+		schemas.put(TENANT_ID, schema);
+		return schemas;
+	}
+
+	private Map<String, ValueSchema> valueSchemas = mapWithDefaults();
 
 	/**
 	 *

@@ -143,7 +143,7 @@ public class ChildForm<T extends Record> {
 	@SuppressWarnings("unchecked")
 	public void override(final Record parent, final IServiceContext ctx) {
 		final String formName = this.form.getName();
-		this.form = (Form<T>) AppManager.getAppInfra().getCompProvider()
+		this.form = (Form<T>) AppManager.getApp().getCompProvider()
 				.getForm(formName, ctx);
 	}
 }

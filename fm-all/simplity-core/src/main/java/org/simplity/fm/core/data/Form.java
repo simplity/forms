@@ -219,7 +219,7 @@ public abstract class Form<T extends Record> {
 			}
 
 			final DbRecord rec = (DbRecord) Form.this.record;
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -254,7 +254,7 @@ public abstract class Form<T extends Record> {
 				logger.error("Error while validating the input payload");
 				return;
 			}
-			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.insert(handle)) {
 					logger.error("Insert operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -286,7 +286,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.update(handle)) {
 					logger.error("update operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -319,7 +319,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.delete(handle)) {
 					logger.error("Delete operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -355,7 +355,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
 						filter.getWhereParamValues(), filter.getWhereParamTypes());
 				/*
@@ -400,7 +400,7 @@ public abstract class Form<T extends Record> {
 	@SuppressWarnings("unchecked")
 	public void override(final IServiceContext ctx) {
 		final String recordName = this.record.fetchName();
-		this.record = (T) AppManager.getAppInfra().getCompProvider().getRecord(recordName, ctx);
+		this.record = (T) AppManager.getApp().getCompProvider().getRecord(recordName, ctx);
 		if (this.childForms != null) {
 			for (final ChildForm<?> lf : this.childForms) {
 				lf.override(this.record, ctx);

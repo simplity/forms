@@ -60,6 +60,7 @@ class Field {
 	String description;
 	boolean visibleInList;
 	boolean visibleInSave;
+	String fieldRendering;
 
 	// synthetic attributes
 	boolean isRequired;
@@ -192,10 +193,10 @@ class Field {
 		}
 		if (this.fieldTypeEnum == FieldType.PrimaryKey || this.fieldTypeEnum == FieldType.OptionalData
 				|| this.fieldTypeEnum == FieldType.RequiredData) {
-			String renderingType;
+			String renderingType = this.fieldRendering;
 			if (this.listName != null) {
 				renderingType = "select";
-			} else {
+			} else if (renderingType == null) {
 				renderingType = this.schemaInstance.getRenderType();
 			}
 			Util.addAttr(sbf, BEGIN, "renderType", renderingType);

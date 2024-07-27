@@ -153,7 +153,7 @@ public class Field {
 		if (valueListName == null) {
 			this.valueList = null;
 		} else {
-			this.valueList = AppManager.getAppInfra().getCompProvider()
+			this.valueList = AppManager.getApp().getCompProvider()
 					.getValueList(valueListName);
 		}
 	}
@@ -321,13 +321,13 @@ public class Field {
 		this.isRequired = over.isRequired;
 
 		if (over.dataType != null && over.dataType.isEmpty() == false) {
-			final ValueSchema dt = AppManager.getAppInfra().getCompProvider()
+			final ValueSchema dt = AppManager.getApp().getCompProvider()
 					.getValueSchema(over.dataType);
 			if (dt.getValueType() != this.getValueType()) {
 				throw new ApplicationError(
 						"Field {} is of value schema {}. It can not be overrideen with value schema '{}' because its value type is different");
 			}
-			this.valueSchema = AppManager.getAppInfra().getCompProvider()
+			this.valueSchema = AppManager.getApp().getCompProvider()
 					.getValueSchema(over.dataType);
 		}
 
@@ -340,7 +340,7 @@ public class Field {
 		}
 
 		if (over.listName != null && over.listName.isEmpty() == false) {
-			this.valueList = AppManager.getAppInfra().getCompProvider()
+			this.valueList = AppManager.getApp().getCompProvider()
 					.getValueList(over.listName);
 		}
 	}

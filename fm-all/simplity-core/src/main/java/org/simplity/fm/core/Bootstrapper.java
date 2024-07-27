@@ -22,9 +22,9 @@
 
 package org.simplity.fm.core;
 
-import org.simplity.fm.core.app.AppConfigInfo;
+import org.simplity.fm.core.app.AppConfig;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
-import org.simplity.fm.core.jdbc.DefaultConnectionFactory;
+import org.simplity.fm.core.infra.defalt.DefaultConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +43,8 @@ public class Bootstrapper {
 	 *
 	 * @return COnfig
 	 */
-	public AppConfigInfo getConfig() {
-		final AppConfigInfo config = new AppConfigInfo();
+	public AppConfig getConfig() {
+		final AppConfig config = new AppConfig();
 		config.appName = APP_NAME;
 		/*
 		 * so long as you keep this class in the rot package, it is safe to use

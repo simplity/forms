@@ -260,6 +260,7 @@ public class Generator {
 
 		if (this.toGenerateJava) {
 			// no java for messages
+			this.accumulate(this.messages.generateJava(this.javaOutputRoot, this.packageName));
 			this.accumulate(this.valueLists.generateJava(this.javaOutputRoot, this.packageName));
 			this.accumulate(this.valueSchemas.generateJava(this.javaOutputRoot, this.packageName));
 		}
@@ -350,7 +351,7 @@ public class Generator {
 				continue;
 			}
 
-			if (!record.allOk) {
+			if (record.gotErrors) {
 				logger.error("Record {} is in error. Form {} uses this record. Hence this form is NOT processed",
 						record.name, form.name);
 				continue;
@@ -432,11 +433,12 @@ public class Generator {
 				Record record = this.records.get(subRecord.getMainRecordName());
 				if (record == null) {
 					logger.error(
-							"Sub-record {} uses {} as its main record but that main record is not defined. Sub-record SKIPPED");
+							"Sub-record {} uses {} as its main record but that main record is not defined. Sub-record SKIPPED",
+							subRecord.name, subRecord.mainRecordName);
 					continue;
 				}
 				subRecord.initSubRecord(schemas, record);
-				this.records.put(subRecord.name, record);
+				this.records.put(subRecord.name, subRecord);
 			}
 		}
 

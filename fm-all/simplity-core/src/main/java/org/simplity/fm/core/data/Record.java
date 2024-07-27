@@ -27,7 +27,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.service.IInputArray;
@@ -86,16 +88,12 @@ public class Record {
 	 * simplest way to create a record for local use: with no unique name or
 	 * validations
 	 *
-	 * @param fields
-	 *            non-null non-empty
-	 * @param initialValues
-	 *            can be null
+	 * @param fields        non-null non-empty
+	 * @param initialValues can be null
 	 */
 	protected Record(final Field[] fields, final Object[] initialValues) {
 		this.metaData = new RecordMetaData(fields);
-		this.fieldValues = initialValues == null
-				? this.metaData.getDefaultValues()
-				: initialValues;
+		this.fieldValues = initialValues == null ? this.metaData.getDefaultValues() : initialValues;
 	}
 
 	/**
@@ -103,17 +101,15 @@ public class Record {
 	 */
 	protected Record(final RecordMetaData recordMeta, final Object[] values) {
 		this.metaData = recordMeta;
-		this.fieldValues = values == null
-				? recordMeta.getDefaultValues()
-				: values;
+		this.fieldValues = values == null ? recordMeta.getDefaultValues() : values;
 	}
 
 	/**
 	 * fetch used to avoid getters clashing with this method name
 	 *
-	 * @return unique name assigned to this record. concrete classes are
-	 *         generally generated from meta data files, and this name is based
-	 *         on the conventions used in the app
+	 * @return unique name assigned to this record. concrete classes are generally
+	 *         generated from meta data files, and this name is based on the
+	 *         conventions used in the app
 	 */
 	public String fetchName() {
 		return this.metaData.getName();
@@ -143,14 +139,12 @@ public class Record {
 	}
 
 	/**
-	 * set value for a field at the specified 0-based field index. Value is
-	 * silently ignored if the index is out of range
+	 * set value for a field at the specified 0-based field index. Value is silently
+	 * ignored if the index is out of range
 	 *
-	 * @param idx
-	 *            must be a valid index, failing which the operation is ignored
-	 * @param value
-	 *            MUST be one of the standard instances viz: String, Long,
-	 *            Double, Boolean, LocalData, Instant
+	 * @param idx   must be a valid index, failing which the operation is ignored
+	 * @param value MUST be one of the standard instances viz: String, Long, Double,
+	 *              Boolean, LocalData, Instant
 	 */
 	public void assignValue(final int idx, final Object value) {
 		try {
@@ -163,18 +157,16 @@ public class Record {
 	/**
 	 * UNSAFE API.
 	 *
-	 * @param values
-	 *            Must be handled with utmost care to ensure that the values are
-	 *            of right types. Each element must be one of the standard
-	 *            instances viz: String, Long, Double, Boolean, LocalData,
-	 *            Instant
+	 * @param values Must be handled with utmost care to ensure that the values are
+	 *               of right types. Each element must be one of the standard
+	 *               instances viz: String, Long, Double, Boolean, LocalData,
+	 *               Instant
 	 */
 	public void assignRawData(final Object[] values) {
 		int nbr = values == null ? 0 : values.length;
 		if (values == null || nbr != this.length()) {
-			throw new ApplicationError(
-					"Record has " + this.length() + " fields  while " + nbr
-							+ " values are being set using assignRawData()");
+			throw new ApplicationError("Record has " + this.length() + " fields  while " + nbr
+					+ " values are being set using assignRawData()");
 		}
 
 		for (int i = 0; i < values.length; i++) {
@@ -183,14 +175,13 @@ public class Record {
 	}
 
 	/**
-	 * get value of a field at the specified 0-based field index. Null is
-	 * returned if the index is out of range
+	 * get value of a field at the specified 0-based field index. Null is returned
+	 * if the index is out of range
 	 *
-	 * @param idx
-	 *            must be a valid index, failing which null is returned
-	 * @return null if the index is invalid, or the value is null. Otherwise one
-	 *         of the standard instances viz: String, Long, Double, Boolean,
-	 *         LocalData, Instant
+	 * @param idx must be a valid index, failing which null is returned
+	 * @return null if the index is invalid, or the value is null. Otherwise one of
+	 *         the standard instances viz: String, Long, Double, Boolean, LocalData,
+	 *         Instant
 	 */
 	public Object fetchValue(final int idx) {
 		try {
@@ -202,8 +193,8 @@ public class Record {
 	}
 
 	/**
-	 * @return the underlying array of data. Returned array is not a copy, and
-	 *         hence any changes made to that will affect this record
+	 * @return the underlying array of data. Returned array is not a copy, and hence
+	 *         any changes made to that will affect this record
 	 */
 	public Object[] fetchRawData() {
 		return this.fieldValues;
@@ -226,8 +217,8 @@ public class Record {
 	/**
 	 *
 	 * @param idx
-	 * @return get value at this index as long. 0 if the index is not valid, or
-	 *         the value is not long
+	 * @return get value at this index as long. 0 if the index is not valid, or the
+	 *         value is not long
 	 */
 	protected long fetchLongValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -247,13 +238,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of integer type. false otherwise,
-	 *         and the value is not set
+	 * @return true if field exists, and is of integer type. false otherwise, and
+	 *         the value is not set
 	 */
 	protected boolean assignLongValue(final int idx, final long value) {
 		final Field field = this.metaData.getField(idx);
@@ -283,8 +273,8 @@ public class Record {
 	/**
 	 *
 	 * @param idx
-	 * @return value of the field as text. null if no such field, or the field
-	 *         has null value. toString() of object if it is non-string
+	 * @return value of the field as text. null if no such field, or the field has
+	 *         null value. toString() of object if it is non-string
 	 */
 	protected String fetchStringValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -296,13 +286,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of String type. false otherwise, and
-	 *         the value is not set
+	 * @return true if field exists, and is of String type. false otherwise, and the
+	 *         value is not set
 	 */
 	protected boolean assignStringValue(final int idx, final String value) {
 		final Field field = this.metaData.getField(idx);
@@ -329,8 +318,8 @@ public class Record {
 	/**
 	 *
 	 * @param idx
-	 * @return value of the field as Date. null if the field is not a date
-	 *         field, or it has null value
+	 * @return value of the field as Date. null if the field is not a date field, or
+	 *         it has null value
 	 */
 	protected LocalDate fetchDateValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -350,13 +339,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of Date type. false otherwise, and
-	 *         the value is not set
+	 * @return true if field exists, and is of Date type. false otherwise, and the
+	 *         value is not set
 	 */
 	protected boolean assignDateValue(final int idx, final LocalDate value) {
 		final Field field = this.metaData.getField(idx);
@@ -382,8 +370,7 @@ public class Record {
 	/**
 	 *
 	 * @return value of the field as boolean. false if no such field, or the
-	 * @param idx
-	 *            field is null,or the field is not boolean.
+	 * @param idx field is null,or the field is not boolean.
 	 */
 	protected boolean fetchBoolValue(final int idx) {
 		Object obj = this.fetchValue(idx);
@@ -402,13 +389,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of boolean type. false otherwise,
-	 *         and the value is not set
+	 * @return true if field exists, and is of boolean type. false otherwise, and
+	 *         the value is not set
 	 */
 	protected boolean assignBoolValue(final int idx, final boolean value) {
 		final Field field = this.metaData.getField(idx);
@@ -434,8 +420,8 @@ public class Record {
 	/**
 	 *
 	 * @param idx
-	 * @return value of the field if it decimal. 0 index is invalid or the value
-	 *         is not double/decimal.
+	 * @return value of the field if it decimal. 0 index is invalid or the value is
+	 *         not double/decimal.
 	 */
 	protected double fetchDecimalValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -458,13 +444,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of double type. false otherwise, and
-	 *         the value is not set
+	 * @return true if field exists, and is of double type. false otherwise, and the
+	 *         value is not set
 	 */
 	protected boolean assignDecimlValue(final int idx, final double value) {
 		final Field field = this.metaData.getField(idx);
@@ -497,8 +482,8 @@ public class Record {
 	 * localDateTime as of now.
 	 *
 	 * @param idx
-	 * @return value of the field as instant of time. null if the field is not
-	 *         an instant. field, or it has null value
+	 * @return value of the field as instant of time. null if the field is not an
+	 *         instant. field, or it has null value
 	 */
 	protected Instant fetchTimestampValue(final int idx) {
 		final Object obj = this.fetchValue(idx);
@@ -521,13 +506,12 @@ public class Record {
 
 	/**
 	 *
-	 * @param idx
-	 *            index of the field. refer to getFieldIndex to get the index by
-	 *            name
+	 * @param idx   index of the field. refer to getFieldIndex to get the index by
+	 *              name
 	 * @param value
 	 *
-	 * @return true if field exists, and is of Instant type. false otherwise,
-	 *         and the value is not set
+	 * @return true if field exists, and is of Instant type. false otherwise, and
+	 *         the value is not set
 	 */
 	protected boolean assignTimestampValue(final int idx, final Instant value) {
 		final Field field = this.metaData.getField(idx);
@@ -551,55 +535,44 @@ public class Record {
 	}
 
 	private void logError(final int idx) {
-		logger.error(
-				"Invalid index {} used for setting value in a record with {} values",
-				idx, this.metaData.getFields().length);
+		logger.error("Invalid index {} used for setting value in a record with {} values", idx,
+				this.metaData.getFields().length);
 	}
 
 	/**
 	 * parse this record from a serialized input when the object is the root.
 	 *
-	 * @param inputObject
-	 *            input data
-	 * @param forInsert
-	 *            true if the data is being parsed for an insert operation,
-	 *            false if it is meant for an update instead
+	 * @param inputObject input data
+	 * @param forInsert   true if the data is being parsed for an insert operation,
+	 *                    false if it is meant for an update instead
 	 * @param ctx
-	 * @return true if all ok. false if any error message is added to the
-	 *         context
+	 * @return true if all ok. false if any error message is added to the context
 	 */
-	public boolean parse(final IInputData inputObject, final boolean forInsert,
-			final IServiceContext ctx) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx) {
 		return this.parse(inputObject, forInsert, ctx, null, 0);
 	}
 
 	/**
-	 * parse this record from a serialized input when the record is inside an
-	 * array as a child of a parent object
+	 * parse this record from a serialized input when the record is inside an array
+	 * as a child of a parent object
 	 *
-	 * @param inputObject
-	 *            input data
-	 * @param forInsert
-	 *            true if the data is being parsed for an insert operation,
-	 *            false if it is meant for an update instead
+	 * @param inputObject input data
+	 * @param forInsert   true if the data is being parsed for an insert operation,
+	 *                    false if it is meant for an update instead
 	 * @param ctx
-	 * @param tableName
-	 *            if the input data is for a table.collection if this record,
-	 *            then this is the name of the attribute with which the table is
-	 *            received. null if the data is at the root level, else n
-	 * @param rowNbr
-	 *            relevant if tablaeName is not-null.
-	 * @return true if all ok. false if any error message is added to the
-	 *         context
+	 * @param tableName   if the input data is for a table.collection if this
+	 *                    record, then this is the name of the attribute with which
+	 *                    the table is received. null if the data is at the root
+	 *                    level, else n
+	 * @param rowNbr      relevant if tablaeName is not-null.
+	 * @return true if all ok. false if any error message is added to the context
 	 */
-	public boolean parse(final IInputData inputObject, final boolean forInsert,
-			final IServiceContext ctx, final String tableName,
-			final int rowNbr) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
 		boolean ok = true;
 		for (final Field field : this.metaData.getFields()) {
 			final String value = inputObject.getString(field.getName());
-			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName,
-					rowNbr)) {
+			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName, rowNbr)) {
 				ok = false;
 			}
 		}
@@ -608,9 +581,7 @@ public class Record {
 		if (vals != null) {
 			for (final IValidation vln : vals) {
 				if (vln.isValid(this, ctx) == false) {
-					logger.error(
-							"field {} failed an inter-field validaiton associated with it",
-							vln.getFieldName());
+					logger.error("field {} failed an inter-field validation associated with it", vln.getFieldName());
 					ok = false;
 				}
 			}
@@ -621,19 +592,15 @@ public class Record {
 	/**
 	 * parse this record from a serialized input
 	 *
-	 * @param inputObject
-	 *            input object that has a member for this table
-	 * @param memberName
-	 *            name of the array-member in the object
-	 * @param forInsert
-	 *            true if the data is being parsed for an insert operation,
-	 *            false if it is meant for an update instead
+	 * @param inputObject input object that has a member for this table
+	 * @param memberName  name of the array-member in the object
+	 * @param forInsert   true if the data is being parsed for an insert operation,
+	 *                    false if it is meant for an update instead
 	 * @param ctx
 	 * @return list of parsed data rows. null in case of any error.
 	 */
-	public List<? extends Record> parseTable(final IInputData inputObject,
-			final String memberName, final boolean forInsert,
-			final IServiceContext ctx) {
+	public List<? extends Record> parseTable(final IInputData inputObject, final String memberName,
+			final boolean forInsert, final IServiceContext ctx) {
 		final List<Record> list = new ArrayList<>();
 		final IInputArray arr = inputObject.getArray(memberName);
 		if (arr == null) {
@@ -649,7 +616,8 @@ public class Record {
 				list.clear(); // indicate error condition
 				break;
 			}
-		} ;
+		}
+		;
 		/*
 		 * empty list means we encountered some error
 		 */
@@ -663,8 +631,7 @@ public class Record {
 	 * @param outData
 	 * @throws IOException
 	 */
-	protected void serializeRows(final IOutputData outData,
-			final Object[][] rows) throws IOException {
+	protected void serializeRows(final IOutputData outData, final Object[][] rows) throws IOException {
 		if (rows == null || rows.length == 0) {
 			return;
 		}
@@ -676,27 +643,52 @@ public class Record {
 	}
 
 	/**
+	 * copies values for matching fields from the other record. A field with the
+	 * same name AND valueType is considered a match
+	 * 
+	 * @param otherRecord
+	 * @return number of fields matched and copied
+	 */
+	public int copyFrom(Record otherRecord) {
+		Field[] otherFields = otherRecord.fetchFields();
+		Map<String, Field> map = new HashMap<>(otherFields.length);
+		for (Field f : otherFields) {
+			map.put(f.getName(), f);
+		}
+		Object[] otherValues = otherRecord.fieldValues;
+		int nbr = 0;
+		for (Field thisField : this.fetchFields()) {
+			Field otherField = map.get(thisField.getName());
+			if (otherField != null && otherField.getValueType() == thisField.getValueType()) {
+				this.fieldValues[thisField.getIndex()] = otherValues[otherField.getIndex()];
+				nbr++;
+			}
+		}
+		return nbr;
+
+	}
+
+	/**
 	 * make a copy of this record.
 	 *
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
 	public Record makeACopy() {
-		return this.newInstance(
-				Arrays.copyOf(this.fieldValues, this.fieldValues.length));
+		return this.newInstance(Arrays.copyOf(this.fieldValues, this.fieldValues.length));
 	}
 
 	/**
 	 *
-	 * @return a new instance of this record. Used by utilities where doing a
-	 *         new class() is not possible;
+	 * @return a new instance of this record. Used by utilities where doing a new
+	 *         class() is not possible;
 	 */
 	public Record newInstance() {
 		return this.newInstance(null);
 	}
 
 	/**
-	 * create a new instance of this object with this array of data. TO BE USED
-	 * BY INTERNAL UTILITY.
+	 * create a new instance of this object with this array of data. TO BE USED BY
+	 * INTERNAL UTILITY.
 	 *
 	 * @param values
 	 *

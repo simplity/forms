@@ -60,10 +60,13 @@ public class Conventions {
 		public static final String[] HDR_NAMES_FOR_IP = { "X-Real-IP", "X-Forwarded-For", "Remote-Addr" };
 
 		/**
-		 * IP address of the client-machine is extracted into the InputObject with this
-		 * name
+		 * name in the context for user-IP address
 		 */
 		public static final String CLIENT_IP_FIELD_NAME = "_clientIp";
+		/**
+		 * name in the context for sessionId
+		 */
+		public static final String SESSION_ID_FIELD_NAME = "_sessionId";
 		/**
 		 * all Ok
 		 */

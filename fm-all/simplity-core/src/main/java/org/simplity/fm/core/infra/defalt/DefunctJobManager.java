@@ -20,21 +20,27 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import org.simplity.fm.core.infra.IAccessController;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IServiceContext;
+import java.io.Reader;
+
+import org.simplity.fm.core.infra.IJobManager;
+import org.simplity.fm.core.job.IJobHandle;
 
 /**
  * @author simplity.org
  *
  */
-public class DefaultAccessController implements IAccessController {
+public class DefunctJobManager implements IJobManager {
 
 	@Override
-	public boolean okToServe(final IService service, final IServiceContext ctx) {
-		return true;
+	public IJobHandle newJob(final Reader reader, final String serviceName) {
+		return null;
+	}
+
+	@Override
+	public IJobHandle getJob(final String jobId) {
+		return null;
 	}
 
 }

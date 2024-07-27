@@ -20,27 +20,10 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
-
-import org.simplity.fm.core.infra.IEmailer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
+ * dummy/stubs for plugins
+ * 
  * @author simplity.org
  *
  */
-public class DefaultEmailer implements IEmailer {
-	private static final Logger logger = LoggerFactory.getLogger(DefaultEmailer.class);
-
-	@Override
-	public void sendEmail(final String toMailIds, final String subject, final String content) {
-		logger.warn("Emailer not configured. Message NOT SENT. to:{}, subject:{}, text:{}", toMailIds, subject, content);
-	}
-
-	@Override
-	public void sendBulkEmails(final String toMailIds, final String subject, final String content) {
-		logger.warn("Emailer not configured. Message NOT SENT. to:{}, subject:{}, text:{}", toMailIds, subject, content);
-	}
-
-}
+package org.simplity.fm.core.infra.defalt;

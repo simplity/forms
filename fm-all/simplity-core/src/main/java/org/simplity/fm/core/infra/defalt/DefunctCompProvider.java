@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
@@ -34,10 +34,11 @@ import org.simplity.fm.core.validn.IValueList;
 import org.simplity.fm.core.valueschema.ValueSchema;
 
 /**
+ * 
  * @author simplity.org
  *
  */
-public class DefaultCompProvider implements ICompProvider {
+public class DefunctCompProvider implements ICompProvider {
 	private static void error() {
 		throw new ApplicationError("The app is not configured to provide components.");
 	}

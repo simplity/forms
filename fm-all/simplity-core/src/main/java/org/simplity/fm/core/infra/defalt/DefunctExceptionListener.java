@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.infra.IExceptionListener;
@@ -30,7 +30,7 @@ import org.simplity.fm.core.service.IServiceContext;
  * @author simplity.org
  *
  */
-public class DefaultExceptionListener implements IExceptionListener {
+public class DefunctExceptionListener implements IExceptionListener {
 
 	@Override
 	public void listen(final IServiceContext ctx, final Throwable e) {

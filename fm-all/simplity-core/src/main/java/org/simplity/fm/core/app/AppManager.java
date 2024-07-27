@@ -13,20 +13,17 @@ import org.slf4j.LoggerFactory;
  */
 public class AppManager {
 
-	protected static final Logger logger = LoggerFactory
-			.getLogger(AppManager.class);
+	protected static final Logger logger = LoggerFactory.getLogger(AppManager.class);
 
 	protected static final String ERROR = "Error in Config Data: ";
 	protected static final String NO_MULTI_APP_YET = ERROR
 			+ "We are yet to implement multi-app environement. Only one APP can be instantiated";
-	protected static final String NO_NAME = ERROR
-			+ "Application name is missing";
-	protected static final String DUP_NAME = ERROR
-			+ "Application name is already in use";
+	protected static final String NO_NAME = ERROR + "Application name is missing";
+	protected static final String DUP_NAME = ERROR + "Application name is already in use";
 
 	/**
-	 * we will use some technique, like ThreadLocal in a multi-app environment.
-	 * As of now we arr working with single app per process
+	 * we will use some technique, like ThreadLocal in a multi-app environment. As
+	 * of now we arr working with single app per process
 	 */
 	// private static final ThreadLocal<IApp> currentApp = new ThreadLocal<>();
 	// private static final Map<String, IApp>allApps = new HashMap<>();
@@ -34,15 +31,15 @@ public class AppManager {
 	private static App currentApp;
 
 	/**
-	 * create a new App instance with the given configuration details. WIll
-	 * always return a non-null instance. Throws ApplicationError in case of any
-	 * error with the configuration details. Caller must handle the exception
+	 * create a new App instance with the given configuration details. WIll always
+	 * return a non-null instance. Throws ApplicationError in case of any error with
+	 * the configuration details. Caller must handle the exception
 	 *
 	 * @param config
-	 * @return app non-null instance. Throws Application Error in case of any
-	 *         issue with the configuration
+	 * @return app non-null instance. Throws Application Error in case of any issue
+	 *         with the configuration
 	 */
-	public static IApp newAppInstance(AppConfigInfo config) {
+	public static IApp newAppInstance(AppConfig config) {
 
 		/**
 		 * we are not yet ready with multi-app design
@@ -69,37 +66,20 @@ public class AppManager {
 
 			return app;
 		} catch (Exception e) {
-			logger.error(
-					"Error while creating application with config {}. Error: {}",
-					config.appName, e.getMessage());
+			logger.error("Error while creating application with config {}. Error: {}", config.appName, e.getMessage());
 			return null;
 		}
 
 	}
 
 	/**
-	 * This is intended to be used by components that are invoked as part of a
-	 * service execution. Services are likely to be executed in a multi-threaded
-	 * environment, and the components may want to access the app under-which
-	 * they are executing. This method is designed to return the app instance
-	 * under which the component methods are invoked.
-	 *
-	 * As of now, we are assuming single-app environment
-	 *
-	 * @return app instance that is associated with this thread of execution.
-	 *         null if no app is initiated
+	 * app instance provides access to all the infrastructure components like
+	 * DbDriver as well as app-components like services
+	 * 
+	 * @return app instance that is associated with this thread of execution. null
+	 *         if no app is initiated
 	 */
 	public static IApp getApp() {
-		// return currentApp.get();
-		return currentApp;
-	}
-
-	/**
-	 * access to infra-components that are configured for this app.
-	 *
-	 * @return non-null
-	 */
-	public static IAppInfra getAppInfra() {
 		return currentApp;
 	}
 }

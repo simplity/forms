@@ -52,42 +52,35 @@ import org.slf4j.LoggerFactory;
  *
  */
 public abstract class DbRecord extends Record {
-	protected static final Logger logger = LoggerFactory
-			.getLogger(DbRecord.class);
+	protected static final Logger logger = LoggerFactory.getLogger(DbRecord.class);
 
 	protected final Dba dba;
 
-	protected DbRecord(final Dba dba, final RecordMetaData meta,
-			final Object[] fieldValues) {
+	protected DbRecord(final Dba dba, final RecordMetaData meta, final Object[] fieldValues) {
 		super(meta, fieldValues);
 		this.dba = dba;
 	}
 
 	@Override
-	public boolean parse(final IInputData inputObject, final boolean forInsert,
-			final IServiceContext ctx, final String tableName,
-			final int rowNbr) {
+	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
 		if (!super.parse(inputObject, forInsert, ctx, tableName, rowNbr)) {
 			return false;
 		}
 		/*
 		 * validate db-specific fields
 		 */
-		return this.dba.validate(this.fieldValues, forInsert, ctx, tableName,
-				rowNbr);
+		return this.dba.validate(this.fieldValues, forInsert, ctx, tableName, rowNbr);
 	}
 
 	/**
 	 * load keys from a JSON. input is suspect.
 	 *
-	 * @param inputObject
-	 *            non-null
-	 * @param ctx
-	 *            non-null. any validation error is added to it
+	 * @param inputObject non-null
+	 * @param ctx         non-null. any validation error is added to it
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
-	public boolean parseKeys(final IInputData inputObject,
-			final IServiceContext ctx) {
+	public boolean parseKeys(final IInputData inputObject, final IServiceContext ctx) {
 		return this.dba.parseKeys(inputObject, this.fieldValues, ctx);
 	}
 
@@ -105,8 +98,8 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * read is expected to succeed. hence an exception is thrown in case if no
-	 * row is not read
+	 * read is expected to succeed. hence an exception is thrown in case if no row
+	 * is not read
 	 *
 	 * @param handle
 	 *
@@ -114,37 +107,33 @@ public abstract class DbRecord extends Record {
 	 */
 	public void readOrFail(final IReadonlyHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
-			throw new SQLException("Read failed for " + this.fetchName()
-					+ this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
 	/**
-	 * select multiple rows from the db based on the filtering criterion. Meant
-	 * for use by frame-work and utilities. End programmers should not use this
-	 * API. They should use a filter-sql instead.
+	 * select multiple rows from the db based on the filtering criterion. Meant for
+	 * use by frame-work and utilities. End programmers should not use this API.
+	 * They should use a filter-sql instead.
 	 *
 	 * @param handle
-	 * @param whereClauseStartingWithWhere
-	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
-	 *            practice is to use parameters rather than dynamic sql. That is
-	 *            you should use a=? rather than a = 32
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
+	 * @param whereClauseStartingWithWhere e.g. "WHERE a=? and b=?" null if all rows
+	 *                                     are to be read. Best practice is to use
+	 *                                     parameters rather than dynamic sql. That
+	 *                                     is you should use a=? rather than a = 32
+	 * @param values                       null or empty if where-clause is null or
+	 *                                     has no parameters. every element MUST be
+	 *                                     non-null and must be one of the standard
+	 *                                     objects we use String, Long, Double,
+	 *                                     Boolean, LocalDate, Instant
 	 *
-	 * @param types
-	 *            value types of values array
+	 * @param types                        value types of values array
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
-	public List<Object[]> filter(final IReadonlyHandle handle,
-			final String whereClauseStartingWithWhere, final Object[] values,
-			ValueType[] types) throws SQLException {
-		return this.dba.filter(handle, whereClauseStartingWithWhere, values,
-				types);
+	public List<Object[]> filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
+			final Object[] values, ValueType[] types) throws SQLException {
+		return this.dba.filter(handle, whereClauseStartingWithWhere, values, types);
 	}
 
 	/**
@@ -161,18 +150,17 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * insert is expected to succeed. hence an exception is thrown in case if no
-	 * row is not inserted
+	 * insert is expected to succeed. hence an exception is thrown in case if no row
+	 * is not inserted
 	 *
 	 * @param handle
 	 *
 	 * @throws SQLException
 	 */
-	public void insertOrFail(final IReadWriteHandle handle)
-			throws SQLException {
+	public void insertOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
-			throw new SQLException("Insert failed silently for "
-					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException(
+					"Insert failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -190,24 +178,23 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * update is expected to succeed. hence an exception is thrown in case if no
-	 * row is updated
+	 * update is expected to succeed. hence an exception is thrown in case if no row
+	 * is updated
 	 *
 	 * @param handle
 	 *
 	 * @throws SQLException
 	 */
-	public void updateOrFail(final IReadWriteHandle handle)
-			throws SQLException {
+	public void updateOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
-			throw new SQLException("Update failed silently for "
-					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException(
+					"Update failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
 	/**
-	 * insert or update this, based on the primary key. possible only if the
-	 * primary key is generated
+	 * insert or update this, based on the primary key. possible only if the primary
+	 * key is generated
 	 *
 	 * @param handle
 	 * @return true if it was indeed saved
@@ -223,8 +210,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void saveOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
-			throw new SQLException("Save failed silently for "
-					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException(
+					"Save failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 
 	}
@@ -242,18 +229,17 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * delete is expected to succeed. hence an exception is thrown in case if no
-	 * row is not deleted
+	 * delete is expected to succeed. hence an exception is thrown in case if no row
+	 * is not deleted
 	 *
 	 * @param handle
 	 *
 	 * @throws SQLException
 	 */
-	public void deleteOrFail(final IReadWriteHandle handle)
-			throws SQLException {
+	public void deleteOrFail(final IReadWriteHandle handle) throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
-			throw new SQLException("Delete failed silently for "
-					+ this.fetchName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException(
+					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -273,42 +259,36 @@ public abstract class DbRecord extends Record {
 	/**
 	 * get a service for the specific operation on this record
 	 *
-	 * @param operation
-	 *            non-null
-	 * @param serviceName
-	 *            optional. If not specified, record-names service name is used
+	 * @param operation   non-null
+	 * @param serviceName optional. If not specified, record-names service name is
+	 *                    used
 	 * @return service if this record is designed for this operation. null
 	 *         otherwise.
 	 */
-	public IService getService(final IoType operation,
-			final String serviceName) {
+	public IService getService(final IoType operation, final String serviceName) {
 		if (!this.dba.operationAllowed(operation)) {
-			logger.info("{} operation is not allowed on record {}", operation,
-					this.fetchName());
+			logger.info("{} operation is not allowed on record {}", operation, this.fetchName());
 			return null;
 		}
 
 		String sn = serviceName;
 		if (sn == null || sn.isEmpty()) {
 			sn = operation.name();
-			sn = serviceName.substring(0, 1).toLowerCase()
-					+ serviceName.substring(1) + '_' + this.fetchName();
+			sn = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.fetchName();
 		}
 		switch (operation) {
-		case Get :
+		case Get:
 			return new Reader(sn);
-		case Create :
+		case Create:
 			return new Creater(sn);
-		case Update :
+		case Update:
 			return new Updater(sn);
-		case Delete :
+		case Delete:
 			return new Deleter(sn);
-		case Filter :
+		case Filter:
 			return new Filter(sn);
-		default :
-			throw new ApplicationError(
-					"DbRecord needs to be designed for operation "
-							+ operation.name());
+		default:
+			throw new ApplicationError("DbRecord needs to be designed for operation " + operation.name());
 		}
 	}
 
@@ -319,15 +299,14 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -348,15 +327,22 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processWriter(null);
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
+				if (rec.insert(handle)) {
+					return true;
+				}
+
+				logger.error("Insert operation failed silently");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return false;
+			});
 		}
 	}
 
@@ -367,16 +353,14 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, false, ctx, null, 0)) {
-				logger.error(
-						"Error while validating data from the input payload");
+				logger.error("Error while validating data from the input payload");
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (rec.update(handle)) {
 					return true;
 				}
@@ -395,15 +379,14 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
 				return;
 			}
 
-			AppManager.getAppInfra().getDbDriver().processWriter(handle -> {
+			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (rec.delete(handle)) {
 					return true;
 				}
@@ -423,20 +406,17 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload)
-				throws Exception {
+		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
-				logger.error(
-						"Error while parsing filter conditions from th einput payload");
+				logger.error("Error while parsing filter conditions from th einput payload");
 				return;
 			}
 			final Object[][][] result = new Object[1][][];
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle,
-						filter.getWhereClause(), filter.getWhereParamValues(),
-						filter.getWhereParamTypes());
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
+				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
+						filter.getWhereParamValues(), filter.getWhereParamTypes());
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				}
@@ -449,8 +429,7 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * fetch is used instead of get to avoid clash with getters in generated
-	 * classes
+	 * fetch is used instead of get to avoid clash with getters in generated classes
 	 *
 	 * @param fieldName
 	 * @return db field specified by this name, or null if there is no such name
@@ -460,11 +439,9 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
-	 * fetch is used instead of get to avoid clash with getters in generated
-	 * classes
+	 * fetch is used instead of get to avoid clash with getters in generated classes
 	 *
-	 * @return index of the generated key, or -1 if this record has no generated
-	 *         key
+	 * @return index of the generated key, or -1 if this record has no generated key
 	 */
 	public int fetchGeneratedKeyIndex() {
 		return this.dba.getGeneratedKeyIndex();

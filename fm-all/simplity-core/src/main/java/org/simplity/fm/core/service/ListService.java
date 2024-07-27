@@ -77,7 +77,7 @@ public class ListService extends AbstractService {
 			return;
 		}
 
-		final IValueList list = AppManager.getAppInfra().getCompProvider()
+		final IValueList list = AppManager.getApp().getCompProvider()
 				.getValueList(listName);
 		if (list == null) {
 			reportError(ctx, "list " + listName + " is not configured");

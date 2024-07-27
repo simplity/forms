@@ -14,7 +14,7 @@ import org.simplity.fm.core.infra.ITexter;
  * Data structure with details of how the App is configured to run at this time
  *
  */
-public class AppConfigInfo {
+public class AppConfig {
 	/**
 	 * must be set to a unique name
 	 */

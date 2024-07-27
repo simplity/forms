@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.impl;
+package org.simplity.fm.core.infra.defalt;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,9 +57,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 
-public class CompProvider implements ICompProvider {
-	private static final Logger logger = LoggerFactory
-			.getLogger(CompProvider.class);
+public class DefaultCompProvider implements ICompProvider {
+	private static final Logger logger = LoggerFactory.getLogger(DefaultCompProvider.class);
 	private static final char DOT = '.';
 	private static final String RECORD = Conventions.App.RECORD_CLASS_SUFIX;
 	private static final String FORM = Conventions.App.FORM_CLASS_SUFIX;
@@ -78,63 +77,47 @@ public class CompProvider implements ICompProvider {
 	private final Map<String, IService> services = new HashMap<>();
 	private final Map<String, IFunction> functions = new HashMap<>();
 
-	/**
-	 * @param rootPackageName
-	 * @return instance, or null in case of any errors in creating one for the
-	 *         root package
-	 */
-	public static CompProvider getPrivider(final String rootPackageName) {
+	public DefaultCompProvider(final String rootPackageName) {
+		final String root = rootPackageName + DOT;
+		final String genRoot = root + Conventions.App.FOLDER_NAME_GEN + DOT;
 
-		final String genRoot = rootPackageName + DOT
-				+ Conventions.App.FOLDER_NAME_GEN + DOT;
-		String cls = genRoot
-				+ Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME;
-		IValueSchemas types = null;
-		try {
-			types = (IValueSchemas) Class.forName(cls).getConstructor()
-					.newInstance();
-		} catch (final Exception e) {
-			logger.error("Unable to locate class {}  as IDataTypes", cls);
-			return null;
-		}
-
-		IMessages messages = null;
-		try {
-			cls = genRoot + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
-			messages = (IMessages) Class.forName(cls).getConstructor()
-					.newInstance();
-		} catch (final Exception e) {
-			logger.warn(
-					"Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts",
-					cls);
-		}
-
-		return new CompProvider(types, messages, rootPackageName);
-	}
-
-	private CompProvider(final IValueSchemas dataTypes,
-			final IMessages messages, final String rootPackage) {
-		this.dataTypes = dataTypes;
-		this.messages = messages;
-		final String genRoot = rootPackage + DOT
-				+ Conventions.App.FOLDER_NAME_GEN + DOT;
+		this.dataTypes = locateSchemas(genRoot);
+		this.messages = locateMessages(genRoot);
 		this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
 		this.recordRoot = genRoot + Conventions.App.FOLDER_NAME_RECORD + DOT;
 		this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
-		this.customListRoot = rootPackage + DOT
-				+ Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
-		this.serviceRoot = rootPackage + DOT
-				+ Conventions.App.FOLDER_NAME_SERVICE + DOT;
-		this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
+		this.customListRoot = root + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
+		this.serviceRoot = root + Conventions.App.FOLDER_NAME_SERVICE + DOT;
+		this.fnRoot = root + Conventions.App.FOLDER_NAME_FN + DOT;
 		/*
 		 * add hard-wired services to the list
 		 */
-		this.services.put(Conventions.App.SERVICE_LIST,
-				ListService.getInstance());
+		this.services.put(Conventions.App.SERVICE_LIST, ListService.getInstance());
 		/*
 		 * add standard functions
 		 */
 		this.addStandardFuntions();
+	}
+
+	private static IValueSchemas locateSchemas(String genRoot) {
+		String cls = genRoot + Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME;
+		try {
+			return (IValueSchemas) Class.forName(cls).getConstructor().newInstance();
+		} catch (final Exception e) {
+			logger.error("Unable to locate class {}  as IDataTypes", cls);
+			return null;
+		}
+	}
+
+	private static IMessages locateMessages(String genRoot) {
+		String cls = genRoot + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
+		try {
+			return (IMessages) Class.forName(cls).getConstructor().newInstance();
+		} catch (final Exception e) {
+			logger.warn("Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts",
+					cls);
+			return null;
+		}
 	}
 
 	private void addStandardFuntions() {
@@ -171,22 +154,17 @@ public class CompProvider implements ICompProvider {
 		final String clsName = toClassName(listId);
 		final String cls = this.listRoot + clsName;
 		try {
-			list = (IValueList) Class.forName(cls).getConstructor()
-					.newInstance();
+			list = (IValueList) Class.forName(cls).getConstructor().newInstance();
 		} catch (final Exception e) {
 			final String cls1 = this.customListRoot + clsName;
 			try {
-				list = (IValueList) Class.forName(cls1).getConstructor()
-						.newInstance();
+				list = (IValueList) Class.forName(cls1).getConstructor().newInstance();
 			} catch (final ClassNotFoundException e1) {
-				logger.error(
-						"No list named {} because we could not locate class {} or {}",
-						listId, cls, cls1);
+				logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
 				return null;
 			} catch (final Exception e1) {
 				logger.error("Internal Error: List named" + listId
-						+ " exists but an excption occured while while creating an instance. Error :",
-						e);
+						+ " exists but an excption occured while while creating an instance. Error :", e);
 				return null;
 			}
 		}
@@ -200,45 +178,39 @@ public class CompProvider implements ICompProvider {
 	}
 
 	@Override
-	public IService getService(final String serviceId,
-			final IServiceContext ctx) {
+	public IService getService(final String serviceId, final IServiceContext ctx) {
 		IService service = this.services.get(serviceId);
 		if (service != null) {
 			return service;
 		}
 		/*
-		 * we first check for a class. this approach allows us to over-ride
-		 * standard formIO services
+		 * we first check for a class. this approach allows us to over-ride standard
+		 * formIO services
 		 */
 		final String cls = this.serviceRoot + toClassName(serviceId);
 		try {
-			service = (IService) Class.forName(cls).getConstructor()
-					.newInstance();
+			service = (IService) Class.forName(cls).getConstructor().newInstance();
 			this.services.put(serviceId, service);
 		} catch (final Exception e) {
 			/*
-			 * it is not a class. Let us see if we can generate it. Also, form
-			 * based services are not cached to simplify form overrides. This is
-			 * not an issue because the for is anyways cached, and hence no disk
-			 * access f\even if we do not cache the service
+			 * it is not a class. Let us see if we can generate it. Also, form based
+			 * services are not cached to simplify form overrides. This is not an issue
+			 * because the for is anyways cached, and hence no disk access f\even if we do
+			 * not cache the service
 			 */
 			service = this.tryFormIo(serviceId, ctx);
 			if (service == null) {
-				logger.error("Service {} is not served by this application",
-						serviceId);
+				logger.error("Service {} is not served by this application", serviceId);
 				return null;
 			}
 		}
 		return service;
 	}
 
-	private IService tryFormIo(final String serviceName,
-			final IServiceContext ctx) {
-		final int idx = serviceName
-				.indexOf(Conventions.Request.SERVICE_OPER_SEPARATOR);
+	private IService tryFormIo(final String serviceName, final IServiceContext ctx) {
+		final int idx = serviceName.indexOf(Conventions.Request.SERVICE_OPER_SEPARATOR);
 		if (idx <= 0) {
-			logger.info(
-					"Service name {} is not of the form operation_name. Service is not generated");
+			logger.info("Service name {} is not of the form operation_name. Service is not generated");
 			return null;
 		}
 
@@ -254,16 +226,14 @@ public class CompProvider implements ICompProvider {
 		}
 
 		final String formName = serviceName.substring(idx + 1);
-		logger.info("Looking to generate a service for operantion {} on {}",
-				opern, formName);
+		logger.info("Looking to generate a service for operantion {} on {}", opern, formName);
 
 		/*
-		 * we provide flexibility for the service name to have Form suffix at
-		 * the end, failing which we try the name itself as form
+		 * we provide flexibility for the service name to have Form suffix at the end,
+		 * failing which we try the name itself as form
 		 */
 		if (formName.endsWith(FORM)) {
-			final String fn = formName.substring(0,
-					formName.length() - FORM.length());
+			final String fn = formName.substring(0, formName.length() - FORM.length());
 			final Form<?> form = this.getForm(fn);
 			if (form != null) {
 				return form.getService(opern);
@@ -283,9 +253,8 @@ public class CompProvider implements ICompProvider {
 			return ((DbRecord) rec).getService(opern, serviceName);
 		}
 
-		logger.info(
-				"{} is not a form or DbRecord and hence a service is not generated for oepration {}",
-				formName, opern);
+		logger.info("{} is not a form or DbRecord and hence a service is not generated for oepration {}", formName,
+				opern);
 		return null;
 
 	}
@@ -300,9 +269,7 @@ public class CompProvider implements ICompProvider {
 		try {
 			fn = (IFunction) Class.forName(cls).getConstructor().newInstance();
 		} catch (final Exception e) {
-			logger.error(
-					"No Function named {} because we could not locate class {}",
-					functionName, cls);
+			logger.error("No Function named {} because we could not locate class {}", functionName, cls);
 			return null;
 		}
 		this.functions.put(functionName, fn);
@@ -315,14 +282,11 @@ public class CompProvider implements ICompProvider {
 			return name.substring(0, 1).toUpperCase() + name.substring(1);
 		}
 		idx++;
-		return name.substring(0, idx)
-				+ name.substring(idx, idx + 1).toUpperCase()
-				+ name.substring(idx + 1);
+		return name.substring(0, idx) + name.substring(idx, idx + 1).toUpperCase() + name.substring(idx + 1);
 	}
 
 	@Override
-	public Record getRecord(final String recordName,
-			final IServiceContext ctx) {
+	public Record getRecord(final String recordName, final IServiceContext ctx) {
 		final String id = ctx.getRecordOverrideId(recordName);
 		if (id == null) {
 			return this.getRecord(recordName);
@@ -355,14 +319,11 @@ public class CompProvider implements ICompProvider {
 		try {
 			return (Record) Class.forName(cls).getConstructor().newInstance();
 		} catch (final ClassNotFoundException e) {
-			logger.error(
-					"No record named {} because we could not locate class {}",
-					recordName, cls);
+			logger.error("No record named {} because we could not locate class {}", recordName, cls);
 			return null;
 		} catch (final Exception e) {
 			logger.error("Internal Error: record named" + recordName
-					+ " exists but an excption occured while while creating an instance. Error :",
-					e);
+					+ " exists but an excption occured while while creating an instance. Error :", e);
 			return null;
 		}
 	}
@@ -409,14 +370,11 @@ public class CompProvider implements ICompProvider {
 		try {
 			return (Form<?>) Class.forName(cls).getConstructor().newInstance();
 		} catch (final ClassNotFoundException e) {
-			logger.error(
-					"No form named {} because we could not locate class {}",
-					formId, cls);
+			logger.error("No form named {} because we could not locate class {}", formId, cls);
 			return null;
 		} catch (final Exception e) {
 			logger.error("Internal Error: Form named " + formId
-					+ " exists but an excption occured while creating an instance. Error :",
-					e);
+					+ " exists but an exception occurred while creating an instance. Error :", e);
 			return null;
 		}
 	}

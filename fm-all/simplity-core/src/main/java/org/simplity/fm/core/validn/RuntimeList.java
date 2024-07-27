@@ -97,7 +97,7 @@ public class RuntimeList implements IValueList {
 		final List<Object[]> list = new ArrayList<>();
 
 		try {
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				/*
 				 * we may have 0,1 or 2 params
 				 */
@@ -161,7 +161,7 @@ public class RuntimeList implements IValueList {
 
 		boolean[] isValid = {false}; // so that lambda function can change this
 		try {
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				/*
 				 * we may have 1 or 2 params
 				 */
@@ -206,7 +206,7 @@ public class RuntimeList implements IValueList {
 		final Map<String, String> entries = new HashMap<>();
 
 		try {
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				Object[] params = {ctx.getTenantId()};
 				ValueType[] paramTypes = {ValueType.Integer};
 				if (this.isTenantSpecific == false) {
@@ -240,7 +240,7 @@ public class RuntimeList implements IValueList {
 		final Object tenantId = ctx.getTenantId();
 
 		try {
-			AppManager.getAppInfra().getDbDriver().processReader(handle -> {
+			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				// get all the keys first
 				Object[] params = {tenantId};
 				ValueType[] paramTypes = {ValueType.Integer};

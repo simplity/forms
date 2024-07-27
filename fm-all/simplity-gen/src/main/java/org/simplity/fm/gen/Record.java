@@ -102,9 +102,9 @@ class Record {
 
 	private String className;
 	/*
-	 * false in case of any error in this meta-data
+	 * got errors?
 	 */
-	boolean allOk;
+	boolean gotErrors;
 
 	/*
 	 * some tables may have primary key, but not have anything to update
@@ -124,13 +124,12 @@ class Record {
 		/*
 		 * nameInDb, if specified, must be the same as the main-form
 		 */
-		this.allOk = true;
 		if (this.nameInDb != null) {
 			if (this.nameInDb.equals(mainRecord.nameInDb) == false) {
 				logger.error(
 						"nameInDb is to be specified if this sub-record is to be used for db-operations. However, it can not be different from the one specified in the main record. Sub record {} uses {} as nameInDb while its main record {} uses {} as nameInDb.",
 						this.name, this.nameInDb, this.mainRecordName, mainRecord.nameInDb);
-				this.allOk = false;
+				this.gotErrors = true;
 			}
 		}
 
@@ -141,7 +140,7 @@ class Record {
 			if (field == null) {
 				logger.error("Field {} in subRecord {} is not found in the main record {}", fn, this.name,
 						this.mainRecordName);
-				this.allOk = false;
+				this.gotErrors = true;
 			}
 			this.fields[i] = field;
 		}
@@ -172,7 +171,8 @@ class Record {
 			Field existing = this.fieldsMap.put(field.name, field);
 			if (existing != null) {
 				logger.error("Field {} is a duplicate in record {}", field.name, this.name);
-				this.allOk = false;
+				this.gotErrors = true;
+				;
 			}
 
 			if (field.listName != null) {
@@ -188,7 +188,8 @@ class Record {
 				logger.error("{} is linked to a db-column {} but does not specify a fieldType.", field.name,
 						field.nameInDb);
 				ft = FieldType.OptionalData;
-				this.allOk = false;
+				this.gotErrors = true;
+				;
 			}
 
 			switch (ft) {
@@ -196,7 +197,8 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error("{} is defined as a generated primary key, but {} is also defined as a primary key.",
 							keyList.get(0).name, field.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				} else {
 					keyList.add(field);
 				}
@@ -206,13 +208,15 @@ class Record {
 				if (this.generatedKeyField != null) {
 					logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
 							field.name, keyList.get(0).name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				} else {
 					if (keyList.size() > 0) {
 						logger.error(
 								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
 								field.name, keyList.get(0).name);
-						this.allOk = false;
+						this.gotErrors = true;
+						;
 						keyList.clear();
 					}
 					keyList.add(field);
@@ -225,14 +229,16 @@ class Record {
 					logger.error(
 							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
 							field.name, field.valueSchema);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
 				} else {
 					logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
 							this.tenantField.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				break;
 
@@ -242,7 +248,8 @@ class Record {
 				} else {
 					logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
 							createdAt.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				break;
 
@@ -252,7 +259,8 @@ class Record {
 				} else {
 					logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
 							createdBy.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				break;
 
@@ -265,7 +273,8 @@ class Record {
 				} else {
 					logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
 							this.timestampField.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				break;
 
@@ -275,7 +284,8 @@ class Record {
 				} else {
 					logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
 							modifiedBy.name);
-					this.allOk = false;
+					this.gotErrors = true;
+					;
 				}
 				break;
 
@@ -296,15 +306,16 @@ class Record {
 			logger.error(
 					"Table is designed to use time-stamp for concurrency, but no field with columnType=modifiedAt");
 			this.useTimestampCheck = false;
-			this.allOk = false;
+			this.gotErrors = true;
+			;
 		}
 
 	}
 
 	boolean generateJava(final String folderName, final String javaPackage) {
 
-		if (!this.allOk) {
-			logger.error("Record {] has errors. Java code not generated");
+		if (this.gotErrors) {
+			logger.error("Record {} has errors. Java code not generated", this.name);
 			return false;
 		}
 
@@ -714,7 +725,7 @@ class Record {
 	}
 
 	boolean emitJavaTableClass(final StringBuilder sbf, final String generatedPackage) {
-		if (!this.allOk) {
+		if (this.gotErrors) {
 			logger.error("Record {} has errors. Java code not generated for the table. ", this.name);
 			return false;
 		}
@@ -769,10 +780,13 @@ class Record {
 	 * @return true if sql is emitted, false otherwise
 	 */
 	public boolean emitSql(final StringBuilder createSbf, final StringBuilder dataSbf) {
-		if (this.allOk == false || this.mainRecordName != null || this.nameInDb == null) {
+		if (this.mainRecordName != null || this.nameInDb == null) {
 			return false;
 		}
-
+		if (this.gotErrors) {
+			logger.error("Record {} is in error. SQL script NOT generated ", this.name);
+			return false;
+		}
 		createSbf.append("\n\nCREATE TABLE ").append(this.nameInDb).append("(\n\t");
 		dataSbf.append("\n\nINSERT INTO ").append(this.nameInDb).append(" (");
 		StringBuilder valSbf = new StringBuilder("\nVALUES (");

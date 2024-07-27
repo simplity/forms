@@ -30,16 +30,6 @@ import java.util.UUID;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.conf.defalt.DefaultAccessController;
-import org.simplity.fm.core.conf.defalt.DefaultCompProvider;
-import org.simplity.fm.core.conf.defalt.DefaultContextFactory;
-import org.simplity.fm.core.conf.defalt.DefaultDbConFactory;
-import org.simplity.fm.core.conf.defalt.DefaultEmailer;
-import org.simplity.fm.core.conf.defalt.DefaultExceptionListener;
-import org.simplity.fm.core.conf.defalt.DefaultRequestLogger;
-import org.simplity.fm.core.conf.defalt.DefaultSessionCacher;
-import org.simplity.fm.core.conf.defalt.DefaultTexter;
-import org.simplity.fm.core.conf.impl.CompProvider;
 import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.infra.IAccessController;
 import org.simplity.fm.core.infra.ICompProvider;
@@ -49,6 +39,16 @@ import org.simplity.fm.core.infra.IRequestLogger;
 import org.simplity.fm.core.infra.IServiceContextFactory;
 import org.simplity.fm.core.infra.ISessionCache;
 import org.simplity.fm.core.infra.ITexter;
+import org.simplity.fm.core.infra.defalt.DefunctAccessController;
+import org.simplity.fm.core.infra.defalt.DefaultCompProvider;
+import org.simplity.fm.core.infra.defalt.DefaultContextFactory;
+import org.simplity.fm.core.infra.defalt.DefunctDbConFactory;
+import org.simplity.fm.core.infra.defalt.DefunctEmailer;
+import org.simplity.fm.core.infra.defalt.DefunctExceptionListener;
+import org.simplity.fm.core.infra.defalt.DefunctRequestLogger;
+import org.simplity.fm.core.infra.defalt.DefaultSessionCacher;
+import org.simplity.fm.core.infra.defalt.DefunctTexter;
+import org.simplity.fm.core.infra.defalt.DefunctCompProvider;
 import org.simplity.fm.core.jdbc.DbDriver;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.IInputData;
@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
  * IAppInfra to the down-stream components
  *
  */
-class App implements IApp, IAppInfra {
+class App implements IApp {
 
 	/*
 	 * tag/property/member name
@@ -98,7 +98,7 @@ class App implements IApp, IAppInfra {
 	 * @param config
 	 * @throws Exception
 	 */
-	App(final AppConfigInfo config) throws Exception {
+	App(final AppConfig config) throws Exception {
 		this.appName = config.appName;
 		this.serveGuests = config.guestsOk;
 		this.loginServiceName = config.loginServiceName;
@@ -109,9 +109,9 @@ class App implements IApp, IAppInfra {
 		if (text == null || text.isEmpty()) {
 			logger.error(
 					"root package name is required to locate app components. This app will throw exception if any component is requested");
-			this.compProvider = new DefaultCompProvider();
+			this.compProvider = new DefunctCompProvider();
 		} else {
-			this.compProvider = CompProvider.getPrivider(text);
+			this.compProvider = new DefaultCompProvider(text);
 			if (this.compProvider == null) {
 				throw new Exception("Error while initializing comp provider using root package " + text);
 			}
@@ -119,14 +119,14 @@ class App implements IApp, IAppInfra {
 
 		if (config.accessController == null) {
 			logger.warn("No access controller configured. All services granted for all users");
-			this.guard = new DefaultAccessController();
+			this.guard = new DefunctAccessController();
 		} else {
 			this.guard = config.accessController;
 		}
 
 		if (config.dbConnectionFactory == null) {
 			logger.warn("No DB connection configured. No db access");
-			this.rdbDriver = new DbDriver(new DefaultDbConFactory());
+			this.rdbDriver = new DbDriver(new DefunctDbConFactory());
 		} else {
 			this.rdbDriver = new DbDriver(config.dbConnectionFactory);
 		}
@@ -134,7 +134,7 @@ class App implements IApp, IAppInfra {
 		if (config.exceptionListener == null) {
 			logger.warn(
 					"No exception listener configured. All exceptions will just be logged before responding to the client");
-			this.listener = new DefaultExceptionListener();
+			this.listener = new DefunctExceptionListener();
 		} else {
 			this.listener = config.exceptionListener;
 		}
@@ -148,7 +148,7 @@ class App implements IApp, IAppInfra {
 
 		if (config.requestLogger == null) {
 			logger.warn("No Request logger configured. requests will be merged with general logging..");
-			this.reqLogger = new DefaultRequestLogger();
+			this.reqLogger = new DefunctRequestLogger();
 		} else {
 			this.reqLogger = config.requestLogger;
 		}
@@ -156,7 +156,7 @@ class App implements IApp, IAppInfra {
 		if (config.texter == null) {
 			logger.warn(
 					"SMS texts can not be sent as the facility is not configured. SMS text will insted be just logged");
-			this.texter = new DefaultTexter();
+			this.texter = new DefunctTexter();
 		} else {
 			this.texter = config.texter;
 		}
@@ -170,7 +170,7 @@ class App implements IApp, IAppInfra {
 
 		if (config.emailer == null) {
 			logger.warn("No custom factory is defined to create service context. A default one is used");
-			this.emailer = new DefaultEmailer();
+			this.emailer = new DefunctEmailer();
 		} else {
 			this.emailer = config.emailer;
 		}
@@ -276,7 +276,8 @@ class App implements IApp, IAppInfra {
 			 * make the IP available to the service as well
 			 */
 			String ip = inData.getString(Conventions.Http.CLIENT_IP_FIELD_NAME);
-			data.addValue(Conventions.Http.CLIENT_IP_FIELD_NAME, ip);
+			ctx.setValue(Conventions.Http.CLIENT_IP_FIELD_NAME, ip);
+			ctx.setValue(Conventions.Http.SESSION_ID_FIELD_NAME, sessionId);
 
 			this.reqLogger.log(userId, serviceName, ip, inData.toString());
 

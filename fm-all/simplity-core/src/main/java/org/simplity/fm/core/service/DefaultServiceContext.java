@@ -50,8 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DefaultServiceContext implements IServiceContext {
-	protected static Logger logger = LoggerFactory
-			.getLogger(DefaultServiceContext.class);
+	protected static Logger logger = LoggerFactory.getLogger(DefaultServiceContext.class);
 
 	protected final IOutputData outData;
 	protected final UserContext currentUtx;
@@ -69,18 +68,14 @@ public class DefaultServiceContext implements IServiceContext {
 
 	/**
 	 *
-	 * @param session
-	 *            can be null
-	 * @param outData
-	 *            non-null
+	 * @param session can be null
+	 * @param outData non-null
 	 */
-	public DefaultServiceContext(final UserContext session,
-			final IOutputData outData) {
+	public DefaultServiceContext(final UserContext session, final IOutputData outData) {
 		this.outData = outData;
 		this.currentUtx = session;
 		/*
-		 * apps may use an internal id instead. And that id can be part of the
-		 * session
+		 * apps may use an internal id instead. And that id can be part of the session
 		 */
 		if (session == null) {
 			this.userId = null;
@@ -104,6 +99,7 @@ public class DefaultServiceContext implements IServiceContext {
 		throw new ApplicationError(
 				"Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
 	}
+
 	@Override
 	public IOutputData getOutputData() {
 		return this.outData;
@@ -223,8 +219,7 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName,
-			final DbTable<?> lines) {
+	public void setAsResponse(final Record header, final String childName, final DbTable<?> lines) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
@@ -246,8 +241,7 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName,
-			final List<? extends Record> lines) {
+	public void setAsResponse(final Record header, final String childName, final List<? extends Record> lines) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
@@ -316,6 +310,7 @@ public class DefaultServiceContext implements IServiceContext {
 	public void markUserContextForReset() {
 		this.resetSession = true;
 	}
+
 	@Override
 	public void persist(Writer writer) {
 		// TODO Auto-generated method stub
@@ -326,5 +321,15 @@ public class DefaultServiceContext implements IServiceContext {
 	public boolean load(Reader reader) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public String getRequestOrigin() {
+		return (String) this.getValue(Conventions.Http.CLIENT_IP_FIELD_NAME);
+	}
+
+	@Override
+	public String getSessionId() {
+		return (String) this.getValue(Conventions.Http.SESSION_ID_FIELD_NAME);
 	}
 }

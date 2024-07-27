@@ -17,7 +17,7 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void processReader(final IDbReader reader) throws SQLException;
+	public void doReadonlyOperations(final IDbReader reader) throws SQLException;
 
 	/**
 	 * do read-only operations using a specific schema name
@@ -29,7 +29,7 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void processReader(final String schemaName, final IDbReader reader)
+	public void doReadonlyOperations(final String schemaName, final IDbReader reader)
 			throws SQLException;
 	/**
 	 * do read-write operations on the rdbms within a transaction boundary. The
@@ -42,7 +42,7 @@ public interface IDbDriver {
 	 *            on exceptions as well.
 	 * @throws SQLException
 	 */
-	public void processWriter(final IDbWriter updater) throws SQLException;
+	public void doReadWriteOperations(final IDbWriter updater) throws SQLException;
 	/**
 	 * do read-write-operations in a transaction using a specific schema name
 	 *
@@ -59,7 +59,7 @@ public interface IDbDriver {
 	 * @throws SQLException
 	 *
 	 */
-	public void processWriter(final String schemaName, final IDbWriter updater)
+	public void doReadWriteOperations(final String schemaName, final IDbWriter updater)
 			throws SQLException;
 	/**
 	 * Meant for db operations that are to be committed/rolled-back possibly
@@ -75,7 +75,7 @@ public interface IDbDriver {
 	 *             other SqlException
 	 *
 	 */
-	public void processTransacter(final IDbTransacter transacter)
+	public void doMultipleTransactions(final IDbTransacter transacter)
 			throws SQLException;
 	/**
 	 * Meant for db operations that are to be committed/rolled-back possibly
@@ -93,6 +93,6 @@ public interface IDbDriver {
 	 *             other SqlException
 	 *
 	 */
-	public void processTransacter(final String schemaName,
+	public void doMultipleTransactions(final String schemaName,
 			final IDbTransacter transacter) throws SQLException;
 }

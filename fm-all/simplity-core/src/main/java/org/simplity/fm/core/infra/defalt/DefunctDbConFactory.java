@@ -20,29 +20,29 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.infra.IServiceContextFactory;
-import org.simplity.fm.core.service.DefaultServiceContext;
-import org.simplity.fm.core.service.IOutputData;
-import org.simplity.fm.core.service.IServiceContext;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.infra.IDbConnectionFactory;
 
 /**
  * @author simplity.org
  *
  */
-public class DefaultContextFactory implements IServiceContextFactory {
+public class DefunctDbConFactory implements IDbConnectionFactory {
+	private static final String ERROR = "No db connection factory is set for this app. No DB operations are possible";
 
 	@Override
-	public IServiceContext newContext(final UserContext session,
-			IOutputData outData) {
-		return new DefaultServiceContext(session, outData);
+	public Connection getConnection() throws SQLException {
+		throw new ApplicationError(ERROR);
 	}
 
 	@Override
-	public IServiceContext newSessionLessContext(IOutputData outData) {
-		return new DefaultServiceContext(null, outData);
+	public Connection getConnection(final String schema) throws SQLException {
+		throw new ApplicationError(ERROR);
 	}
 
 }

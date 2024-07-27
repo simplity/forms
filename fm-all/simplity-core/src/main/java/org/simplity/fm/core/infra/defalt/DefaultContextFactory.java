@@ -20,29 +20,29 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import java.io.Reader;
-
-import org.simplity.fm.core.infra.IJobManager;
-import org.simplity.fm.core.job.IJobHandle;
+import org.simplity.fm.core.UserContext;
+import org.simplity.fm.core.infra.IServiceContextFactory;
+import org.simplity.fm.core.service.DefaultServiceContext;
+import org.simplity.fm.core.service.IOutputData;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * @author simplity.org
  *
  */
-public class DefaultJobManager implements IJobManager {
+public class DefaultContextFactory implements IServiceContextFactory {
 
 	@Override
-	public IJobHandle newJob(final Reader reader, final String serviceName) {
-		// TODO Auto-generated method stub
-		return null;
+	public IServiceContext newContext(final UserContext session,
+			IOutputData outData) {
+		return new DefaultServiceContext(session, outData);
 	}
 
 	@Override
-	public IJobHandle getJob(final String jobId) {
-		// TODO Auto-generated method stub
-		return null;
+	public IServiceContext newSessionLessContext(IOutputData outData) {
+		return new DefaultServiceContext(null, outData);
 	}
 
 }

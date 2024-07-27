@@ -71,7 +71,7 @@ public class DependentListValidation implements IValidation {
 			return true;
 		}
 
-		final IValueList vl = AppManager.getAppInfra().getCompProvider()
+		final IValueList vl = AppManager.getApp().getCompProvider()
 				.getValueList(this.listName);
 		if (vl == null) {
 			return true;

@@ -66,7 +66,7 @@ class FormParser {
 	private static final Logger logger = LoggerFactory
 			.getLogger(FormParser.class);
 
-	private final ICompProvider compProvider = AppManager.getAppInfra()
+	private final ICompProvider compProvider = AppManager.getApp()
 			.getCompProvider();
 	/*
 	 * what is defined in this processor

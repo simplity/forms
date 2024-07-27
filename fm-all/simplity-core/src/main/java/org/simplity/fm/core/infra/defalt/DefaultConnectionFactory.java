@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.jdbc;
+package org.simplity.fm.core.infra.defalt;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

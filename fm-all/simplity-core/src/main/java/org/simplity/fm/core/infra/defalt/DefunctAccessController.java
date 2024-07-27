@@ -20,22 +20,21 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import org.simplity.fm.core.infra.IRequestLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.simplity.fm.core.infra.IAccessController;
+import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * @author simplity.org
  *
  */
-public class DefaultRequestLogger implements IRequestLogger {
-	private static final Logger logger = LoggerFactory.getLogger(DefaultRequestLogger.class);
+public class DefunctAccessController implements IAccessController {
 
 	@Override
-	public void log(final String loginId, final String serviceName, final String ip, final String input) {
-		logger.info("user {} from IP: {} requested for service:{} with data\n{}", loginId, ip, serviceName, input);
-
+	public boolean okToServe(final IService service, final IServiceContext ctx) {
+		return true;
 	}
+
 }

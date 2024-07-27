@@ -48,7 +48,7 @@ public class UploaderParser {
 	protected static final Logger logger = LoggerFactory
 			.getLogger(UploaderParser.class);
 
-	private final ICompProvider compProvider = AppManager.getAppInfra()
+	private final ICompProvider compProvider = AppManager.getApp()
 			.getCompProvider();
 	private final Map<String, String> params = new HashMap<>();
 	private final Map<String, Map<String, String>> valueLists = new HashMap<>();

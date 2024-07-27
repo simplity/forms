@@ -300,7 +300,6 @@ public class Sql {
 				if (recName == null) {
 					continue;
 				}
-				this.spOutputClassNames[i] = Util.toClassName(recName) + "Record";
 
 				Record rec = records.get(recName);
 				if (rec == null) {
@@ -309,7 +308,7 @@ public class Sql {
 							+ " is specified as outputRecord, but it is not defined as a record");
 					continue;
 				}
-				this.spOutputClassNames[i] = Util.toClassName(recName);
+				this.spOutputClassNames[i] = Util.toClassName(recName) + "Record";
 			}
 		}
 
@@ -624,13 +623,13 @@ public class Sql {
 
 	private void emitStaticFields(final StringBuilder sbf) {
 		if (this.isSp) {
-			sbf.append(P).append("String PROC_NAME = ").append(this.procedureName).append(';');
+			sbf.append(P).append("String PROC_NAME = \"").append(this.procedureName).append("\";");
 			sbf.append(P).append("ValueType RET_TYPE = ").append(this.returnValueType).append(';');
-			sbf.append(P).append("Class<?> SP_OUT_CLASSES = ");
+			sbf.append(P).append("Class<?>[] SP_OUT_CLASSES = ");
 			emitClassArray(sbf, this.spOutputClassNames);
 		}
 
-		sbf.append(P).append("String SQL = \"").append(this.preparedSql).append("\";");
+		sbf.append(P).append("String SQL = ").append(Util.quotedString(this.preparedSql)).append(";");
 
 		sbf.append(P).append("Field[] IN_FIELDS = ");
 
@@ -710,14 +709,23 @@ public class Sql {
 		}
 		sbf.append("new Class<?>[]{");
 		for (String name : names) {
-			sbf.append(name).append(".class").append(",");
+			if (name == null) {
+				sbf.append("null,");
+			} else {
+				sbf.append(Util.toClassName(name)).append(".class").append(",");
+			}
 		}
 		sbf.setLength(sbf.length() - 1);
+		sbf.append("};");
 	}
 
 	private void emitConstructor(final StringBuilder sbf) {
 		sbf.append("\n\n\t/** \n\t * default constructor\n\t */\n\tpublic ").append(this.thisClassName).append("() {");
-		sbf.append("\n\t\tsuper(SQL, IN_FIELDS, OUT_TYPES);");
+		if (this.isSp) {
+			sbf.append("\n\t\tsuper(PROC_NAME, RET_TYPE, SP_OUT_CLASSES, IN_FIELDS, OUT_TYPES);");
+		} else {
+			sbf.append("\n\t\tsuper(SQL, IN_FIELDS, OUT_TYPES);");
+		}
 		sbf.append("\n\t}");
 	}
 
@@ -890,7 +898,7 @@ public class Sql {
 		sbf.append(HANDLE_PARAM);
 		sbf.append(NON_ZERO_RETURN);
 		sbf.append(END_FAIL_COMMENT);
-		sbf.append(BEGIN_OVERRIDE_METHOD).append("int write(final IReadWriteHandle handle").append(SQL_EX);
+		sbf.append(BEGIN_OVERRIDE_METHOD).append("int writeOrFail(final IReadWriteHandle handle").append(SQL_EX);
 		sbf.append(SUPER_RETURN).append("write(handle);");
 		sbf.append(END_METHOD);
 	}

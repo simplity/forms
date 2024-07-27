@@ -63,7 +63,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void processReader(final IDbReader reader) throws SQLException {
+	public void doReadonlyOperations(final IDbReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doReadOnly(con, reader);
@@ -71,7 +71,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void processReader(final String schemaName, final IDbReader reader)
+	public void doReadonlyOperations(final String schemaName, final IDbReader reader)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -91,7 +91,7 @@ public class DbDriver implements IDbDriver {
 	 * @throws SQLException
 	 */
 	@Override
-	public void processWriter(final IDbWriter updater) throws SQLException {
+	public void doReadWriteOperations(final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doReadWrite(con, updater);
@@ -99,7 +99,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void processWriter(final String schemaName, final IDbWriter updater)
+	public void doReadWriteOperations(final String schemaName, final IDbWriter updater)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
@@ -108,7 +108,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void processTransacter(final IDbTransacter transacter)
+	public void doMultipleTransactions(final IDbTransacter transacter)
 			throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
@@ -117,7 +117,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void processTransacter(final String schemaName,
+	public void doMultipleTransactions(final String schemaName,
 			final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {

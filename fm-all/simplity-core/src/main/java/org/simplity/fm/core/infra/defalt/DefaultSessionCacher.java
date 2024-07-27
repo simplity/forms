@@ -20,22 +20,59 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import org.simplity.fm.core.infra.ITexter;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.simplity.fm.core.UserContext;
+import org.simplity.fm.core.infra.ISessionCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * a stand-in cacher that is nothing but a map.
+ *
  * @author simplity.org
  *
  */
-public class DefaultTexter implements ITexter {
-	private static final Logger logger = LoggerFactory.getLogger(DefaultTexter.class);
+public class DefaultSessionCacher implements ISessionCache {
+	private static final Logger logger = LoggerFactory.getLogger(DefaultSessionCacher.class);
+	private final Map<String, UserContext> sessions = new HashMap<>();
 
 	@Override
-	public void sendText(final String senderId, final String numbers, final String sms) {
-		logger.warn("Text messages NOT SENT from:{} to:{},  text:{}", senderId, numbers, sms);
+	public void put(final String id, final UserContext session) {
+		if (id == null) {
+			logger.error("Caching not possible for a null key.");
+		} else if (session == null) {
+			logger.error("Null sessions are not cached.");
+		} else {
+			this.sessions.put(id, session);
+		}
+	}
+
+	@Override
+	public UserContext get(final String id) {
+		if (id == null) {
+			logger.error("key is to be non-null for a get().");
+			return null;
+		}
+		return this.sessions.get(id);
+	}
+
+	@Override
+	public UserContext remove(final String id) {
+		if (id == null) {
+			logger.error("key is to be non-null for a remove().");
+			return null;
+		}
+		return this.sessions.remove(id);
+	}
+
+	@Override
+	public void clear() {
+		logger.info("Sessions cleared");
+		this.sessions.clear();
 	}
 
 }

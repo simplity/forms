@@ -20,29 +20,22 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
+package org.simplity.fm.core.infra.defalt;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.infra.IDbConnectionFactory;
+import org.simplity.fm.core.infra.IRequestLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author simplity.org
  *
  */
-public class DefaultDbConFactory implements IDbConnectionFactory {
-	private static final String ERROR = "No db connection factory is set for this app. No DB operations are possible";
+public class DefunctRequestLogger implements IRequestLogger {
+	private static final Logger logger = LoggerFactory.getLogger(DefunctRequestLogger.class);
 
 	@Override
-	public Connection getConnection() throws SQLException {
-		throw new ApplicationError(ERROR);
-	}
+	public void log(final String loginId, final String serviceName, final String ip, final String input) {
+		logger.info("user {} from IP: {} requested for service:{} with data\n{}", loginId, ip, serviceName, input);
 
-	@Override
-	public Connection getConnection(final String schema) throws SQLException {
-		throw new ApplicationError(ERROR);
 	}
-
 }

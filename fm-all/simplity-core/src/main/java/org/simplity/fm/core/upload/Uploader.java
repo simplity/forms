@@ -51,7 +51,7 @@ public class Uploader {
 	public UploadResult upload(final IUploadClient client,
 			final IServiceContext ctx) throws SQLException {
 		final Worker worker = new Worker(client, ctx);
-		AppManager.getAppInfra().getDbDriver().processTransacter(handle -> {
+		AppManager.getApp().getDbDriver().doMultipleTransactions(handle -> {
 
 			worker.transact(handle);
 		});

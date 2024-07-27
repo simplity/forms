@@ -64,11 +64,11 @@ public class Form {
 
 	final Set<String> keyFieldNames = new HashSet<>();
 
-	boolean allOk;
+	boolean gotErrors;
 
 	void initialize(final Record rec) {
 		this.record = rec;
-		this.allOk = rec.allOk;
+		this.gotErrors = rec.gotErrors;
 		this.recordName = rec.name;
 
 		if (this.operations == null) {
@@ -94,7 +94,7 @@ public class Form {
 	}
 
 	boolean generateJava(final String folderName, final String packageName) {
-		if (!this.allOk) {
+		if (this.gotErrors) {
 			logger.error("Record {} is in error. Java Code for Form {} NOT generated", this.recordName, this.name);
 			return false;
 		}
@@ -224,8 +224,8 @@ public class Form {
 	private static final char Q = '"';
 
 	boolean generateTs(String folderName) {
-		if (!this.allOk) {
-			logger.error("Record {} is in error. TS code for form {} not generated");
+		if (this.gotErrors) {
+			logger.error("Record {} is in error. TS code for form {} not generated", this.recordName, this.name);
 			return false;
 		}
 
