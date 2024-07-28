@@ -141,8 +141,9 @@ class Record {
 				logger.error("Field {} in subRecord {} is not found in the main record {}", fn, this.name,
 						this.mainRecordName);
 				this.gotErrors = true;
+			} else {
+				this.fields[i] = field.makeACopy(i);
 			}
-			this.fields[i] = field;
 		}
 
 		this.init(schemas);
@@ -384,7 +385,9 @@ class Record {
 		sbf.append("Record {");
 
 		this.emitJavaFields(sbf, isDb);
-		this.emitValidOps(sbf);
+		if (isDb) {
+			this.emitValidOps(sbf);
+		}
 		this.emitJavaValidations(sbf);
 
 		sbf.append("\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
@@ -567,7 +570,7 @@ class Record {
 				sbf.append(C).append(f.index);
 				sbf.append(C).append(Util.quotedString(field.listName));
 				sbf.append(C).append(Util.quotedString(field.name));
-				sbf.append(C).append(Util.quotedString(field.errorId));
+				sbf.append(C).append(Util.quotedString(field.messageId));
 				sbf.append(")");
 				sbf.append(sufix);
 			}

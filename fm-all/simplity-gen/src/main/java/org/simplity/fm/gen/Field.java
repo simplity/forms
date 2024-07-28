@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class Field {
+class Field implements Cloneable {
 	private static final Map<String, FieldType> fieldTypes = createMap();
 	private static final Logger logger = LoggerFactory.getLogger(Field.class);
 	private static final String C = ", ";
@@ -48,7 +48,7 @@ class Field {
 	String nameInDb;
 	boolean isList;
 	String valueSchema;
-	String errorId;
+	String messageId;
 	String defaultValue;
 	String listName;
 	String listKey;
@@ -68,6 +68,11 @@ class Field {
 
 	int index;
 	FieldType fieldTypeEnum;
+
+	public Field() {
+		super();
+
+	}
 
 	public void init(final int idx, Map<String, ValueSchema> schemas) {
 		this.index = idx;
@@ -94,6 +99,21 @@ class Field {
 		this.isRequired = this.fieldTypeEnum == FieldType.RequiredData || this.fieldTypeEnum == FieldType.PrimaryKey;
 	}
 
+	/**
+	 * must be called only after init() of this field
+	 */
+	Field makeACopy(final int idx) {
+		try {
+			Field copy = (Field) super.clone();
+			copy.index = idx;
+			logger.info("Field {} cloned with source-messageId={} and copies-messageId={}", copy.name, this.messageId,
+					copy.messageId);
+			return copy;
+		} catch (Exception e) {
+			throw new ApplicationError("Field.makeACopy() is broken!!");
+		}
+	}
+
 	void emitJavaCode(final StringBuilder sbf, final boolean isDb) {
 		sbf.append("\n\t\t\tnew ");
 		if (isDb) {
@@ -110,8 +130,8 @@ class Field {
 		sbf.append(C).append(this.isList);
 		// 5. default value as string
 		sbf.append(C).append(Util.quotedString(this.defaultValue));
-		// 6. error id
-		sbf.append(C).append(Util.quotedString(this.errorId));
+		// 6. message id
+		sbf.append(C).append(Util.quotedString(this.messageId));
 		// 7. listName as string, null if not required
 		/*
 		 * list is handled by inter-field in case key is specified
@@ -182,7 +202,7 @@ class Field {
 		Util.addAttr(sbf, BEGIN, "prefix", this.fieldPrefix);
 		Util.addAttr(sbf, BEGIN, "placeHolder", this.placeHolder);
 		Util.addAttr(sbf, BEGIN, "hint", this.description);
-		Util.addAttr(sbf, BEGIN, "errorId", this.errorId);
+		Util.addAttr(sbf, BEGIN, "messageId", this.messageId);
 		Util.addAttr(sbf, BEGIN, "listName", this.listName);
 		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
 		if (this.visibleInList) {

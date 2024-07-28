@@ -448,7 +448,7 @@ public class Generator {
 				record.emitSql(createSqls, dataSqls);
 			}
 
-			if (this.toGenerateTs) {
+			if (this.toGenerateTs && record.isVisibleToClient) {
 				Form form = Form.fromRecord(record);
 				final boolean done = form.generateTs(this.tsFormFolder);
 				if (done) {

@@ -24,7 +24,7 @@ package org.simplity.fm.core;
 
 import org.simplity.fm.core.app.AppConfig;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
-import org.simplity.fm.core.infra.defalt.DefaultConnectionFactory;
+import org.simplity.fm.core.infra.defalt.JdbcConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public class Bootstrapper {
 		logger.info(
 				"Setting up db with driver name = {} and connectionString=****",
 				driverName);
-		return DefaultConnectionFactory.getFactory(conString, driverName);
+		return JdbcConnectionFactory.getFactory(conString, driverName);
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class Bootstrapper {
 	private static IDbConnectionFactory dbSetupWithDataSource() {
 		final String dataSourceName = "the designated JNDI name as per the documentation of the container/framework that provides this service";
 		logger.info("Setting up db with dataSource name = {}", dataSourceName);
-		return DefaultConnectionFactory.getFactory(dataSourceName);
+		return JdbcConnectionFactory.getFactory(dataSourceName);
 	}
 
 	/**

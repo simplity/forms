@@ -559,7 +559,7 @@ public class Sql {
 
 		sbf.append(" FROM ").append(this.readFrom).append(' ').append(this.sql);
 
-		return sbf.toString() + this.sql;
+		return sbf.toString();
 	}
 
 	private void emitImports(final StringBuilder sbf, final String rootPackage) {

@@ -200,8 +200,8 @@ public class Dba {
 		if (indexes == null) {
 			return null;
 		}
-		ValueType[] types = new ValueType[fields.length];
-		for (int i = 0; i < fields.length; i++) {
+		ValueType[] types = new ValueType[indexes.length];
+		for (int i = 0; i < types.length; i++) {
 			types[i] = fields[indexes[i]].getValueType();
 		}
 		return types;

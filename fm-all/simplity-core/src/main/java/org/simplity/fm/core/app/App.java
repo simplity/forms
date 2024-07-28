@@ -39,16 +39,16 @@ import org.simplity.fm.core.infra.IRequestLogger;
 import org.simplity.fm.core.infra.IServiceContextFactory;
 import org.simplity.fm.core.infra.ISessionCache;
 import org.simplity.fm.core.infra.ITexter;
-import org.simplity.fm.core.infra.defalt.DefunctAccessController;
 import org.simplity.fm.core.infra.defalt.DefaultCompProvider;
 import org.simplity.fm.core.infra.defalt.DefaultContextFactory;
+import org.simplity.fm.core.infra.defalt.DefaultSessionCacher;
+import org.simplity.fm.core.infra.defalt.DefunctAccessController;
+import org.simplity.fm.core.infra.defalt.DefunctCompProvider;
 import org.simplity.fm.core.infra.defalt.DefunctDbConFactory;
 import org.simplity.fm.core.infra.defalt.DefunctEmailer;
 import org.simplity.fm.core.infra.defalt.DefunctExceptionListener;
 import org.simplity.fm.core.infra.defalt.DefunctRequestLogger;
-import org.simplity.fm.core.infra.defalt.DefaultSessionCacher;
 import org.simplity.fm.core.infra.defalt.DefunctTexter;
-import org.simplity.fm.core.infra.defalt.DefunctCompProvider;
 import org.simplity.fm.core.jdbc.DbDriver;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.IInputData;
@@ -219,12 +219,12 @@ class App implements IApp {
 	@Override
 	public RequestStatus serve(IInputData inData, Writer writer) throws IOException {
 		IServiceContext ctx = null;
+		String serviceName = inData.getString(TAG_SERVICE);
+		if (serviceName == null || serviceName.isEmpty()) {
+			logger.error("Attribute named {} is required for service name", TAG_SERVICE);
+			return writeErrorResponse(RequestStatus.ServiceNameRequired, writer);
+		}
 		try {
-			String serviceName = inData.getString(TAG_SERVICE);
-			if (serviceName == null || serviceName.isEmpty()) {
-				logger.error("Attribute named {} is required for service name", TAG_SERVICE);
-				return writeErrorResponse(RequestStatus.ServiceNameRequired, writer);
-			}
 
 			UserContext utx = null;
 			String userId = null;
@@ -312,7 +312,7 @@ class App implements IApp {
 			return status;
 
 		} catch (Exception | Error e) {
-			logger.error("Service {} threw an exception: " + e.getMessage());
+			logger.error("Service {} threw an exception: {} ", serviceName);
 			e.printStackTrace();
 			this.listener.listen(ctx, e);
 			return writeErrorResponse(RequestStatus.ServerError, writer);

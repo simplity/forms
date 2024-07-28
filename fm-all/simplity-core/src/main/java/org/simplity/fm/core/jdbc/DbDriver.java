@@ -29,6 +29,8 @@ import org.simplity.fm.core.db.IDbDriver;
 import org.simplity.fm.core.db.IDbReader;
 import org.simplity.fm.core.db.IDbTransacter;
 import org.simplity.fm.core.db.IDbWriter;
+import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.db.ITransactionHandle;
 import org.simplity.fm.core.infra.IDbConnectionFactory;
 import org.slf4j.Logger;
@@ -47,8 +49,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DbDriver implements IDbDriver {
-	protected static final Logger logger = LoggerFactory
-			.getLogger(DbDriver.class);
+	protected static final Logger logger = LoggerFactory.getLogger(DbDriver.class);
 
 	private final IDbConnectionFactory factory;
 
@@ -71,8 +72,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doReadonlyOperations(final String schemaName, final IDbReader reader)
-			throws SQLException {
+	public void doReadonlyOperations(final String schemaName, final IDbReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
 			doReadOnly(con, reader);
@@ -83,11 +83,10 @@ public class DbDriver implements IDbDriver {
 	 * do read-write operations on the rdbms within a transaction boundary. The
 	 * transaction is managed by the driver.
 	 *
-	 * @param updater
-	 *            function that reads from db and writes to it within a
-	 *            transaction boundary. returns true to commit the transaction,
-	 *            or false to signal a roll-back. The transaction is rolled back
-	 *            on exceptions as well.
+	 * @param updater function that reads from db and writes to it within a
+	 *                transaction boundary. returns true to commit the transaction,
+	 *                or false to signal a roll-back. The transaction is rolled back
+	 *                on exceptions as well.
 	 * @throws SQLException
 	 */
 	@Override
@@ -99,8 +98,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doReadWriteOperations(final String schemaName, final IDbWriter updater)
-			throws SQLException {
+	public void doReadWriteOperations(final String schemaName, final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
 			doReadWrite(con, updater);
@@ -108,8 +106,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doMultipleTransactions(final IDbTransacter transacter)
-			throws SQLException {
+	public void doMultipleTransactions(final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			doTransact(con, transacter);
@@ -117,8 +114,7 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doMultipleTransactions(final String schemaName,
-			final IDbTransacter transacter) throws SQLException {
+	public void doMultipleTransactions(final String schemaName, final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
 			doTransact(con, transacter);
@@ -133,24 +129,21 @@ public class DbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doReadOnly(final Connection con, final IDbReader reader)
-			throws SQLException {
-		final ReadonlyHandle handle = new ReadonlyHandle(con);
+	private static void doReadOnly(final Connection con, final IDbReader reader) throws SQLException {
+
+		final IReadonlyHandle handle = new ReadonlyHandle(con);
 		try {
 			con.setReadOnly(true);
 			reader.read(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			logger.error(
-					"Exception occurred in the middle of a transaction: {}, {}",
-					e, e.getMessage());
+			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
 			throw new SQLException(e.getMessage());
 		}
 	}
 
-	private static void doReadWrite(final Connection con,
-			final IDbWriter updater) throws SQLException {
-		final ReadWriteHandle handle = new ReadWriteHandle(con);
+	private static void doReadWrite(final Connection con, final IDbWriter updater) throws SQLException {
+		final IReadWriteHandle handle = new ReadWriteHandle(con);
 		try {
 			con.setAutoCommit(false);
 			if (updater.readWrite(handle)) {
@@ -161,9 +154,7 @@ public class DbDriver implements IDbDriver {
 
 		} catch (final Exception e) {
 			e.printStackTrace();
-			logger.error(
-					"Exception occurred in the middle of a transaction: {}, {}",
-					e, e.getMessage());
+			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
 			try {
 				con.rollback();
 			} catch (final Exception ignore) {
@@ -173,15 +164,13 @@ public class DbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doTransact(final Connection con,
-			final IDbTransacter transacter) throws SQLException {
+	private static void doTransact(final Connection con, final IDbTransacter transacter) throws SQLException {
 		final ITransactionHandle handle = new TransactionHandle(con);
 		try {
 			transacter.transact(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			logger.error("Exception thrown by a batch processor. {}, {}", e,
-					e.getMessage());
+			logger.error("Exception thrown by a batch processor. {}, {}", e, e.getMessage());
 			final SQLException se = new SQLException(e.getMessage());
 			try {
 				con.rollback();

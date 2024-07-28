@@ -52,8 +52,8 @@ import com.google.gson.stream.JsonToken;
 public class Util {
 	private static final char Q = '"';
 	/**
-	 * Gson is not a small object. It is immutable and thread safe. Hence with
-	 * this small trick, we can avoid repeated creation of Gson instances
+	 * Gson is not a small object. It is immutable and thread safe. Hence with this
+	 * small trick, we can avoid repeated creation of Gson instances
 	 */
 	private static final Gson GSON = new Gson();
 	/**
@@ -95,8 +95,8 @@ public class Util {
 	private static final Logger logger = LoggerFactory.getLogger(Util.class);
 
 	/**
-	 * enclose the string inside double quotes, after escaping chars, if
-	 * required, for the same
+	 * enclose the string inside double quotes, after escaping chars, if required,
+	 * for the same
 	 *
 	 * @param s
 	 * @return escaped string with enclosed quotes
@@ -110,8 +110,7 @@ public class Util {
 
 	/**
 	 *
-	 * @param obj
-	 *            to be quoted
+	 * @param obj to be quoted
 	 * @return a quoted string for the object
 	 */
 	public static String escapeTs(final Object obj) {
@@ -154,8 +153,7 @@ public class Util {
 
 	/**
 	 *
-	 * @param name
-	 *            field/column name
+	 * @param name field/column name
 	 * @return default label based on the name
 	 */
 	public static String toLabel(final String name) {
@@ -179,6 +177,7 @@ public class Util {
 	}
 
 	private static final int DIFF = 'a' - 'A';
+
 	/**
 	 *
 	 * @param c
@@ -248,24 +247,20 @@ public class Util {
 	/**
 	 * write the contents to the named file
 	 *
-	 * @param fileName
-	 *            non-null
-	 * @param text
-	 *            non-null
+	 * @param fileName non-null
+	 * @param text     non-null
 	 */
 	public static void writeOut(final String fileName, final String text) {
 		try (Writer writer = new FileWriter(new File(fileName))) {
 			writer.write(text);
 			logger.info("File {} generated.", fileName);
 		} catch (final Exception e) {
-			logger.error("Error while writing file {} \n {}", fileName,
-					e.getMessage());
+			logger.error("Error while writing file {} \n {}", fileName, e.getMessage());
 		}
 	}
 
 	/**
-	 * quote the string-value for String, else just the string value of the
-	 * object
+	 * quote the string-value for String, else just the string value of the object
 	 *
 	 * @param obj
 	 * @return value of this object, quoted if it is a string
@@ -289,19 +284,19 @@ public class Util {
 	 */
 	public static Class<?> getDataTypeClass(final ValueType valueType) {
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			return BooleanSchema.class;
-		case Date :
+		case Date:
 			return DateSchema.class;
-		case Decimal :
+		case Decimal:
 			return DecimalSchema.class;
-		case Integer :
+		case Integer:
 			return IntegerSchema.class;
-		case Text :
+		case Text:
 			return TextSchema.class;
-		case Timestamp :
+		case Timestamp:
 			return TimestampSchema.class;
-		default :
+		default:
 			logger.error("{} is not a known value type", valueType);
 			return TextSchema.class;
 		}
@@ -313,8 +308,7 @@ public class Util {
 	 * @param arr
 	 * @param sbf
 	 */
-	public static void emitStringArray(final String[] arr,
-			final StringBuilder sbf) {
+	public static void emitStringArray(final String[] arr, final StringBuilder sbf) {
 		sbf.append("new String[]{");
 		boolean firstOne = true;
 		for (final String s : arr) {
@@ -334,16 +328,15 @@ public class Util {
 	 * @param sbf
 	 * @param fields
 	 */
-	public static void emitFieldsArray(final StringBuilder sbf,
-			final Field[] fields) {
+	public static void emitFieldsArray(final StringBuilder sbf, final Field[] fields) {
 		sbf.append("new Field[]{");
-		int idx = -1;
+		boolean firstOne = true;
 		for (final Field field : fields) {
-			idx++;
-			if (idx > 0) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
 				sbf.append(',');
 			}
-			field.index = idx;
 			field.emitJavaCode(sbf, false);
 		}
 		sbf.append('}');
@@ -355,8 +348,7 @@ public class Util {
 	 * @param fields
 	 * @param sbf
 	 */
-	public static void emitTypesArray(final Field[] fields,
-			final StringBuilder sbf) {
+	public static void emitTypesArray(final Field[] fields, final StringBuilder sbf) {
 		sbf.append("new ValueType[]{");
 		boolean firstOne = true;
 		for (final Field f : fields) {
@@ -365,35 +357,29 @@ public class Util {
 			} else {
 				sbf.append(',');
 			}
-			sbf.append("ValueType.")
-					.append(f.schemaInstance.valueTypeEnum.name());
+			sbf.append("ValueType.").append(f.schemaInstance.valueTypeEnum.name());
 		}
 		sbf.append('}');
 	}
 
 	/**
-	 * emit getter functions with proper type from the underlying values
-	 * Object[]
+	 * emit getter functions with proper type from the underlying values Object[]
 	 *
 	 * @param sbf
 	 * @param fields
 	 * @param valuesArrayName
 	 */
-	public static void emitGettersFromValues(final StringBuilder sbf,
-			IField[] fields, String valuesArrayName) {
+	public static void emitGettersFromValues(final StringBuilder sbf, IField[] fields, String valuesArrayName) {
 		for (final IField f : fields) {
 			String typ = Util.JAVA_VALUE_TYPES[f.getValueType().ordinal()];
 
 			final String nam = f.getName();
 			final String cls = Util.toClassName(nam);
 
-			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam)
-					.append("\n\t */");
-			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls)
-					.append("(){");
-			sbf.append("\n\t\t\treturn (").append(typ).append(") ")
-					.append(valuesArrayName).append('[').append(f.getIndex())
-					.append("];");
+			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam).append("\n\t */");
+			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\t\t\treturn (").append(typ).append(") ").append(valuesArrayName).append('[')
+					.append(f.getIndex()).append("];");
 			sbf.append("\n\t\t}");
 		}
 	}
@@ -405,20 +391,15 @@ public class Util {
 	 * @param fields
 	 * @param valuesArrayName
 	 */
-	public static void emitSettersValues(final StringBuilder sbf,
-			IField[] fields, String valuesArrayName) {
+	public static void emitSettersValues(final StringBuilder sbf, IField[] fields, String valuesArrayName) {
 		for (final IField f : fields) {
-			final String typ = Util.JAVA_VALUE_TYPES[f.getValueType()
-					.ordinal()];
+			final String typ = Util.JAVA_VALUE_TYPES[f.getValueType().ordinal()];
 			final String nam = f.getName();
 			final String cls = Util.toClassName(nam);
 
-			sbf.append("\n\n\t/**\n\t * @param value value of ").append(nam)
-					.append("\n\t */");
-			sbf.append("\n\t\tpublic void set").append(cls).append("( ")
-					.append(typ).append(" value){");
-			sbf.append("\n\t\t\t").append(valuesArrayName).append('[')
-					.append(f.getIndex()).append("] = value;");
+			sbf.append("\n\n\t/**\n\t * @param value value of ").append(nam).append("\n\t */");
+			sbf.append("\n\t\tpublic void set").append(cls).append("( ").append(typ).append(" value){");
+			sbf.append("\n\t\t\t").append(valuesArrayName).append('[').append(f.getIndex()).append("] = value;");
 			sbf.append("\n\t\t}");
 		}
 	}
@@ -440,6 +421,7 @@ public class Util {
 		}
 
 	}
+
 	/**
 	 * add att: "value', but only if it is required
 	 *
@@ -448,57 +430,48 @@ public class Util {
 	 * @param att
 	 * @param val
 	 */
-	public static void addAttr(final StringBuilder sbf, final String prefix,
-			final String att, final String val) {
+	public static void addAttr(final StringBuilder sbf, final String prefix, final String att, final String val) {
 		if (val == null || val.isEmpty()) {
 			return;
 		}
-		sbf.append(prefix).append(Util.quotedString(att)).append(": ")
-				.append(Util.quotedString(val)).append(',');
+		sbf.append(prefix).append(Util.quotedString(att)).append(": ").append(Util.quotedString(val)).append(',');
 	}
 
 	/**
 	 *
-	 * @param <T>
-	 *            type of object to be loaded
-	 * @param fileName
-	 *            absolute file name of the json file
-	 * @param cls
-	 *            class of the object to be loaded
+	 * @param <T>      type of object to be loaded
+	 * @param fileName absolute file name of the json file
+	 * @param cls      class of the object to be loaded
 	 * @return loaded object instance, or null in case of any error
 	 */
 	public static <T> T loadJson(String fileName, Class<T> cls) {
 		File f = new File(fileName);
 		if (f.exists() == false) {
-			logger.error("project configuration file {} not found. Aborting..",
-					fileName);
+			logger.error("project configuration file {} not found. Aborting..", fileName);
 			return null;
 		}
 
 		try (JsonReader reader = new JsonReader(new FileReader(f))) {
 			return GSON.fromJson(reader, cls);
 		} catch (final Exception e) {
-			logger.error("Exception while trying to read file {}. Error: {}",
-					f.getPath(), e.getMessage());
+			logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
 			e.printStackTrace();
 			return null;
 		}
 
 	}
+
 	/**
 	 * An object may want to initialize itself after setting all the attributes
 	 */
 	interface IInitializer {
 		/**
 		 *
-		 * @param name
-		 *            member name. typically becomes name attribute of the
-		 *            object
-		 * @param idx
-		 *            0-based index of this member. this is generally not the
-		 *            right thing to do in a json because the order of
-		 *            attributes is not significant.However,in our design, we
-		 *            would like to make use of it and hence this
+		 * @param name member name. typically becomes name attribute of the object
+		 * @param idx  0-based index of this member. this is generally not the right
+		 *             thing to do in a json because the order of attributes is not
+		 *             significant.However,in our design, we would like to make use of
+		 *             it and hence this
 		 */
 		void initialize(String name, int idx);
 	}
@@ -509,49 +482,46 @@ public class Util {
 	 * @param reader
 	 * @throws IOException
 	 */
-	public static void swallowAToken(final JsonReader reader)
-			throws IOException {
+	public static void swallowAToken(final JsonReader reader) throws IOException {
 		final JsonToken token = reader.peek();
 		switch (token) {
 
-		case BEGIN_ARRAY :
+		case BEGIN_ARRAY:
 			GSON.fromJson(reader, Object[].class);
 			return;
 
-		case BEGIN_OBJECT :
+		case BEGIN_OBJECT:
 			GSON.fromJson(reader, Object.class);
 			return;
 
-		case BOOLEAN :
-		case NUMBER :
-		case STRING :
+		case BOOLEAN:
+		case NUMBER:
+		case STRING:
 			reader.nextString();
 			return;
 
-		case NAME :
+		case NAME:
 			reader.nextName();
 			return;
 
-		case NULL :
+		case NULL:
 			reader.nextNull();
 			return;
 
-		case END_ARRAY :
+		case END_ARRAY:
 			reader.endArray();
 			return;
-		case END_OBJECT :
+		case END_OBJECT:
 			reader.endArray();
 			return;
-		case END_DOCUMENT :
+		case END_DOCUMENT:
 			return;
-		default :
-			logger.warn("Util is not designed to swallow the token {} ",
-					token.name());
+		default:
+			logger.warn("Util is not designed to swallow the token {} ", token.name());
 		}
 	}
 
-	static void emitJavaGettersAndSetters(final Field[] fields,
-			final StringBuilder sbf) {
+	static void emitJavaGettersAndSetters(final Field[] fields, final StringBuilder sbf) {
 		for (final Field f : fields) {
 			ValueSchema vs = f.schemaInstance;
 			String typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
@@ -562,18 +532,13 @@ public class Util {
 			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
 			sbf.append("\n\t * @param value to be assigned to ").append(nam);
 			sbf.append("\n\t */");
-			sbf.append("\n\tpublic void set").append(cls).append('(')
-					.append(typ).append(" value){");
-			sbf.append("\n\t\tthis.fieldValues[").append(f.index)
-					.append("] = value;");
+			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
+			sbf.append("\n\t\tthis.fieldValues[").append(f.index).append("] = value;");
 			sbf.append("\n\t}");
 
-			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam)
-					.append("\n\t */");
-			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls)
-					.append("(){");
-			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(")
-					.append(f.index).append(");");
+			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
+			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
 			sbf.append("\n\t}");
 		}
 
