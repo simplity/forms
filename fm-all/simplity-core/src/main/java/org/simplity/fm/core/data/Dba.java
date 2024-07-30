@@ -381,7 +381,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean insert(final IReadWriteHandle handle, final Object[] rowToInsert) throws SQLException {
-		if (this.keyIndexes == null) {
+		if (this.insertIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
 

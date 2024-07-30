@@ -106,10 +106,7 @@ class Record {
 	 */
 	boolean gotErrors;
 
-	/*
-	 * some tables may have primary key, but not have anything to update
-	 */
-	boolean isUpdatable;
+	Set<IoType> allowedIos;
 
 	/**
 	 * 
@@ -308,9 +305,55 @@ class Record {
 					"Table is designed to use time-stamp for concurrency, but no field with columnType=modifiedAt");
 			this.useTimestampCheck = false;
 			this.gotErrors = true;
-			;
 		}
 
+		if (this.operations != null && this.operations.length != 0) {
+			if (this.nameInDb != null) {
+				this.checkDbOperations();
+			} else {
+				logger.error(
+						"One or more operations are specified, but nameInDb is not specified. db-operations can be performed only if the nameInDb is specified");
+				this.gotErrors = true;
+			}
+		} else if (this.nameInDb != null) {
+			logger.error(
+					"nameInDb is specified as {} but no operations are specified. You must specify the operations that can be performed using this record.");
+			this.gotErrors = true;
+		}
+	}
+
+	private void checkDbOperations() {
+
+		this.allowedIos = new HashSet<>();
+		for (String s : this.operations) {
+			if (s == null) {
+				continue;
+			}
+			// we want to be case insensitive..
+			s = s.toLowerCase();
+			if (s.equals("save")) {
+				this.allowedIos.add(IoType.Create);
+				this.allowedIos.add(IoType.Update);
+			} else {
+				s = s.substring(0, 1).toUpperCase() + s.substring(1);
+				try {
+					IoType typ = IoType.valueOf(s);
+					this.allowedIos.add(typ);
+				} catch (IllegalArgumentException e) {
+					logger.error("{} is not a valid db operation. Please correct operations array.", s);
+					this.gotErrors = true;
+					return;
+				}
+			}
+		}
+
+		if (this.keyFields == null) {
+			if (this.allowedIos.contains(IoType.Get) || this.allowedIos.contains(IoType.Delete)
+					|| this.allowedIos.contains(IoType.Update)) {
+				logger.error("Key field/s are required for read/get, crate/insert or delete operations");
+				this.gotErrors = true;
+			}
+		}
 	}
 
 	boolean generateJava(final String folderName, final String javaPackage) {
@@ -438,38 +481,32 @@ class Record {
 	private void emitDbSpecific(final StringBuilder sbf) {
 		sbf.append("\n\t/* DB related */");
 
-		this.emitSelect(sbf);
+		StringBuilder whereClause = new StringBuilder();
+		StringBuilder indexes = new StringBuilder();
+
 		if (this.keyFields == null) {
-			logger.debug(
-					"No keys defined for the db table. only filter operation is allowed. Other operations require primary key/s.");
+			sbf.append(P).append("String WHERE = null;");
+			sbf.append(P).append("int[] WHERE_IDX = null;");
 		} else {
-			this.emitInsert(sbf);
-
-			/*
-			 * indexes is to be built like "1,2,3,4"
-			 */
-			final StringBuilder indexes = new StringBuilder();
-			/*
-			 * clause is going to be like " WHERE k1=? AND k2=?...."
-			 */
-			final StringBuilder clause = new StringBuilder();
-			this.makeWhere(clause, indexes, this.keyFields);
-
-			sbf.append(P).append("String WHERE = \"").append(clause.toString()).append("\";");
+			this.makeWhere(whereClause, indexes);
+			sbf.append(P).append("String WHERE = \"").append(whereClause.toString()).append("\";");
 			sbf.append(P).append("int[] WHERE_IDX = {").append(indexes.toString()).append("};");
-
-			this.emitUpdate(sbf, clause.toString(), indexes.toString());
-			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.nameInDb).append("\";");
 		}
 
-		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb)
-				.append("\", OPERS, SELECT, SELECT_IDX,");
-		if (this.keyFields == null) {
-			sbf.append("null, null, null, null, null, null, null");
+		this.emitSelect(sbf);
+		this.emitInsert(sbf);
+		this.emitUpdate(sbf, whereClause.toString(), indexes.toString());
+
+		sbf.append(P).append("String DELETE = ");
+		if (this.allowedIos.contains(IoType.Delete)) {
+			sbf.append("\"DELETE FROM ").append(this.nameInDb).append("\";");
 		} else {
-			sbf.append("INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX");
+			sbf.append("null;");
 		}
-		sbf.append(");");
+
+		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, ").append(Util.quotedString(this.nameInDb))
+				.append(", OPERS, SELECT, SELECT_IDX, INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX);");
+
 		/*
 		 * constructor
 		 */
@@ -479,6 +516,7 @@ class Record {
 		sbf.append("\n\n\t/**\n\t * @param values initial values\n\t */");
 		sbf.append("\n\tpublic ").append(this.className)
 				.append("(Object[] values) {\n\t\tsuper(DBA, META, values);\n\t}");
+
 	}
 
 	private void emitJavaFields(final StringBuilder sbf, final boolean isDb) {
@@ -502,26 +540,14 @@ class Record {
 
 	private void emitValidOps(StringBuilder sbf) {
 		sbf.append("\n\tprivate static final boolean[] OPERS = {");
-		Set<String> set = null;
-		if (this.operations != null && this.operations.length > 0) {
-			set = new HashSet<>();
-			for (String s : this.operations) {
-				if (s == null) {
-					continue;
-				}
-				// we want to be case insensitive..
-				s = s.toLowerCase();
-				s = s.substring(0, 1).toUpperCase() + s.substring(1);
-				set.add(s);
-			}
-		}
 		for (IoType op : IoType.values()) {
-			if (set != null && set.contains(op.name())) {
+			if (this.allowedIos != null && this.allowedIos.contains(op)) {
 				sbf.append("true,");
 			} else {
 				sbf.append("false,");
 			}
 		}
+
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("};");
 	}
@@ -586,10 +612,10 @@ class Record {
 		sbf.append("\n\t};");
 	}
 
-	private void makeWhere(final StringBuilder clause, final StringBuilder indexes, final Field[] keys) {
+	private void makeWhere(final StringBuilder clause, final StringBuilder indexes) {
 		clause.append(" WHERE ");
 		boolean firstOne = true;
-		for (final Field field : keys) {
+		for (final Field field : this.keyFields) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -609,11 +635,20 @@ class Record {
 	}
 
 	private void emitSelect(final StringBuilder sbf) {
+		sbf.append(P).append("String SELECT = ");
+		if (this.allowedIos.contains(IoType.Get) == false) {
+			sbf.append("null;");
+			sbf.append(P).append("int[] SELECT_IDX = null;");
+			return;
+		}
 		final StringBuilder idxSbf = new StringBuilder();
-		sbf.append(P).append("String SELECT = \"SELECT ");
+		sbf.append(" \"SELECT ");
 
 		boolean firstOne = true;
 		for (final Field field : this.fields) {
+			if (field.nameInDb == null) {
+				continue;
+			}
 			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null) {
 				continue;
@@ -635,13 +670,23 @@ class Record {
 	}
 
 	private void emitInsert(final StringBuilder sbf) {
-		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(this.nameInDb).append('(');
+		sbf.append(P).append(" String INSERT = ");
+		if (this.allowedIos.contains(IoType.Create) == false) {
+			sbf.append("null;");
+			sbf.append(P).append("int[] INSERT_IDX = null;");
+			return;
+		}
+
+		sbf.append("\"INSERT INTO ").append(this.nameInDb).append('(');
 		final StringBuilder idxSbf = new StringBuilder();
 		idxSbf.append(P).append("int[] INSERT_IDX = {");
 		final StringBuilder vbf = new StringBuilder();
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
+			if (field.nameInDb == null) {
+				continue;
+			}
 			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null || ct.isInserted() == false) {
 				continue;
@@ -671,8 +716,15 @@ class Record {
 	}
 
 	private void emitUpdate(final StringBuilder sbf, final String whereClause, final String whereIndexes) {
+		sbf.append(P).append(" String UPDATE = ");
+		if (this.allowedIos.contains(IoType.Create) == false) {
+			sbf.append("null;");
+			sbf.append(P).append("int[] UPDATE_IDX = null;");
+			return;
+		}
+
 		final StringBuilder updateBuf = new StringBuilder();
-		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(this.nameInDb).append(" SET ");
+		updateBuf.append(" \"UPDATE ").append(this.nameInDb).append(" SET ");
 
 		final StringBuilder idxBuf = new StringBuilder();
 		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
@@ -680,6 +732,9 @@ class Record {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
+			if (field.nameInDb == null) {
+				continue;
+			}
 			final FieldType ct = field.fieldTypeEnum;
 			if (ct == null || ct.isUpdated() == false) {
 				continue;
@@ -705,13 +760,8 @@ class Record {
 			}
 		}
 		if (firstOne) {
-			/*
-			 * nothing to update
-			 */
-			this.isUpdatable = false;
 			return;
 		}
-		this.isUpdatable = true;
 		// update sql will have the where indexes at the end
 		if (!firstField) {
 			idxBuf.append(C);

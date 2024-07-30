@@ -33,12 +33,11 @@ import java.util.Set;
 public interface IInputData {
 
 	/**
-	 * To be used to explore data with unknown/flexible schema. Also useful in
-	 * case nulls are allowed by design. Simplity recommends using additional
-	 * data elements rather than resorting to nullable fields.
+	 * To be used to explore data with unknown/flexible schema. Also useful in case
+	 * nulls are allowed by design. Simplity recommends using additional data
+	 * elements rather than resorting to nullable fields.
 	 *
-	 * @param name
-	 *            member name
+	 * @param name member name
 	 *
 	 * @return non-null value
 	 */
@@ -60,36 +59,37 @@ public interface IInputData {
 	IInputArray getArray(String name);
 
 	/**
-	 * value is zero if the member is missing or is not a number. getText() may
-	 * be used if there is a need to differentiate zero from missing member
+	 * value is zero if the member is missing or is not a number. getText() may be
+	 * used if there is a need to differentiate zero from missing member
 	 *
 	 * @param name
-	 * @return 0 if member is non-text, non-numeric. text is parsed into
-	 *         integral value
+	 * @return 0 if member is non-text, non-numeric. text is parsed into integral
+	 *         value
 	 */
 	long getInteger(String name);
 
 	/**
 	 *
 	 * @param name
-	 * @return null if member is missing, or is not a primitive. it is null if
-	 *         the member is IInputObject or IInputArray.
+	 * @return string value of this primitive property. null if member is missing,
+	 *         or is not a primitive. it is null if the member is IInputObject or
+	 *         IInputArray.
 	 */
 	String getString(String name);
 
 	/**
 	 *
 	 * @param name
-	 * @return true if the member is boolean and is true. Also true if it is
-	 *         text 'true', or '1' or integer 1; false otherwise
+	 * @return true if the member is boolean and is true. Also true if it is text
+	 *         'true', or '1' or integer 1; false otherwise
 	 */
 	boolean getBoolean(String name);
 
 	/**
 	 *
 	 * @param name
-	 * @return if member is text, it is parsed into decimal. 0 if it is non-text
-	 *         and non-number
+	 * @return if member is text, it is parsed into decimal. 0 if it is non-text and
+	 *         non-number
 	 */
 	double getDecimal(String name);
 
@@ -100,8 +100,8 @@ public interface IInputData {
 	boolean isEmpty();
 
 	/**
-	 * allows exploring unknown data. Obviously, bit expensive with construction
-	 * of Map etc..
+	 * allows exploring unknown data. Obviously, bit expensive with construction of
+	 * Map etc..
 	 *
 	 * @return member names
 	 */
@@ -110,10 +110,8 @@ public interface IInputData {
 	/**
 	 * to be used carefully. This alters the inputData.
 	 *
-	 * @param memberName
-	 *            name of the member
-	 * @param value
-	 *            string value of the member
+	 * @param memberName name of the member
+	 * @param value      string value of the member
 	 */
 
 	void addValue(String memberName, String value);

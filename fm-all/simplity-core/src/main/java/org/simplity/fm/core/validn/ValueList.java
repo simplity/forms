@@ -38,8 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  */
 public class ValueList implements IValueList {
-	private static final Logger logger = LoggerFactory
-			.getLogger(ValueList.class);
+	private static final Logger logger = LoggerFactory.getLogger(ValueList.class);
 	/*
 	 * it is object, to allow keyed-list to re-use it as its collection
 	 */
@@ -54,10 +53,8 @@ public class ValueList implements IValueList {
 
 	/**
 	 *
-	 * @param name
-	 *            non-null unique name
-	 * @param valueList
-	 *            non-null non-empty [Object, String][]
+	 * @param name      non-null unique name
+	 * @param valueList non-null non-empty [Object, String][]
 	 */
 	public ValueList(final Object name, final Object[][] valueList) {
 		this.name = name;
@@ -79,9 +76,8 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue,
-			final IServiceContext ctx) {
-		final boolean ok = this.values.contains(fieldValue.toString());
+	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+		final boolean ok = this.values.contains(fieldValue);
 		if (!ok) {
 			logger.error("{} is not found in list {}", fieldValue, this.name);
 		}
@@ -89,8 +85,7 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final Object keyValue,
-			final IServiceContext ctx) {
+	public Object[][] getList(final Object keyValue, final IServiceContext ctx) {
 		return this.valueList;
 	}
 
@@ -107,6 +102,7 @@ public class ValueList implements IValueList {
 	public Map<String, Object[][]> getAllLists(IServiceContext ctx) {
 		return null;
 	}
+
 	@Override
 	public boolean authenticationRequired() {
 		return this.authenticationRequired;

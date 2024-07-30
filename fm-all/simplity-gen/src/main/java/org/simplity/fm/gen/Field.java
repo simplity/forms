@@ -106,8 +106,6 @@ class Field implements Cloneable {
 		try {
 			Field copy = (Field) super.clone();
 			copy.index = idx;
-			logger.info("Field {} cloned with source-messageId={} and copies-messageId={}", copy.name, this.messageId,
-					copy.messageId);
 			return copy;
 		} catch (Exception e) {
 			throw new ApplicationError("Field.makeACopy() is broken!!");

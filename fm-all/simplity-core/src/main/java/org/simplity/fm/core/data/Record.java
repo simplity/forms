@@ -128,7 +128,7 @@ public class Record {
 	 * @return number of columns in this table
 	 */
 	public int length() {
-		return this.metaData.getValidations().length;
+		return this.fieldValues.length;
 	}
 
 	/**
