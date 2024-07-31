@@ -1,1 +1,0 @@
-"# simplity-gen README" 

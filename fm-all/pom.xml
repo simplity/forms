@@ -108,5 +108,6 @@
 		<module>simplity-gen</module>
 		<module>simplity-example</module>
 		<module>simplity-http</module>
+		<module>simplity-kafka</module>
 	</modules>
 </project>
