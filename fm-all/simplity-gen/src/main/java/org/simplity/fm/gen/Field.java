@@ -193,6 +193,7 @@ class Field implements Cloneable {
 		if (lbl == null || lbl.isEmpty()) {
 			lbl = Util.toLabel(this.name);
 		}
+		sbf.append(BEGIN).append("\"compType\":\"field\",");
 		Util.addAttr(sbf, BEGIN, "label", lbl);
 		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);
 		Util.addAttr(sbf, BEGIN, "icon", this.icon);
@@ -209,16 +210,19 @@ class Field implements Cloneable {
 		if (this.visibleInSave) {
 			sbf.append(BEGIN).append("\"visibleInSave\" : true,");
 		}
+		String renderingType = "hidden";
 		if (this.fieldTypeEnum == FieldType.PrimaryKey || this.fieldTypeEnum == FieldType.OptionalData
 				|| this.fieldTypeEnum == FieldType.RequiredData) {
-			String renderingType = this.fieldRendering;
 			if (this.listName != null) {
 				renderingType = "select";
-			} else if (renderingType == null) {
+			} else if (this.fieldRendering == null) {
+				renderingType = this.fieldRendering;
+			} else {
 				renderingType = this.schemaInstance.getRenderType();
 			}
-			Util.addAttr(sbf, BEGIN, "renderType", renderingType);
 		}
+		Util.addAttr(sbf, BEGIN, "renderAs", renderingType);
+
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t\t}");
 	}

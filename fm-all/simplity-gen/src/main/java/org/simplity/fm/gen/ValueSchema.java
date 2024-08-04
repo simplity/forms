@@ -160,10 +160,13 @@ public class ValueSchema implements Util.IInitializer {
 	 */
 	public String getRenderType() {
 		if (this.valueTypeEnum == ValueType.Boolean) {
-			return "checkbox";
+			return "check-box";
 		}
 		if (this.maxLength > Application.TEXT_AREA_CUTOFF) {
-			return "textarea";
+			return "tex-area";
+		}
+		if (this.name.equalsIgnoreCase("password")) {
+			return "password";
 		}
 		return "text";
 	}
