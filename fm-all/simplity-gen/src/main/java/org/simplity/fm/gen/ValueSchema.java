@@ -168,7 +168,7 @@ public class ValueSchema implements Util.IInitializer {
 		if (this.name.equalsIgnoreCase("password")) {
 			return "password";
 		}
-		return "text";
+		return "text-field";
 	}
 
 	/**
