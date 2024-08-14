@@ -41,12 +41,18 @@ public class Generator {
 	private static final String TS_FOLDER_FORM = "lib/form/";
 	private static final String TS_FOLDER_LIB = "lib/";
 
-	private static final String IMPORTS = "import _allListSources from \"./allListSources.json\";\n"
-			+ "import _allMessages from \"./allMessages.json\";\n"
-			+ "import _allValueSchemas from \"./allValueSchemas.json\";\n\n";
-	private static final String EXPORTS = "export const generatedArtifacts = {\n"
-			+ "\tallListSources: _allListSources,\n" + "\tallMessages: _allMessages,\n"
-			+ "\tallValueSchemas: _allValueSchemas,\n" + "\tallForms: {";
+	/*
+	 * this constant is pasted from index.ts.txt file
+	 */
+	private static final String GEN_FILE = "import { allListSources } from './allListSources';\n"
+			+ "import { allMessages } from './allMessages';\n"
+			+ "import { allValueSchemas } from './allValueSchemas';\n" + "import { allForms } from './allForms';\n"
+			+ "\n" + "export type ListSourceName = keyof typeof allListSources;\n"
+			+ "export type MessageName = keyof typeof allMessages;\n"
+			+ "export type ValueSchemaName = keyof typeof allValueSchemas;\n"
+			+ "export type FormName = keyof typeof allForms;\n" + "\n" + "export const generatedArtifacts = {\n"
+			+ "  allListSources,\n" + "  allMessages,\n" + "  allValueSchemas,\n" + "  allForms,\n" + "};";
+
 	/**
 	 * folders to be created/ensured for java sources
 	 */
@@ -266,18 +272,20 @@ public class Generator {
 		}
 
 		// exports and import are built to write into gen.ts
-		StringBuilder imports = new StringBuilder(IMPORTS);
-		StringBuilder exports = new StringBuilder(EXPORTS);
+		StringBuilder imports = new StringBuilder();
+		StringBuilder exports = new StringBuilder(
+				"\n\nexport type FormName = keyof typeof allForms;\nexport const allForms = {" + "");
 
 		this.generateRecords(exports, imports);
 		this.generateForms(exports, imports);
 
 		if (this.toGenerateTs) {
 			exports.setLength(exports.length() - 1); // remove the last comma
-			exports.append("\n\t}\n};\n\n");
-			imports.append('\n').append(exports);
+			exports.append("\n}\n");
+			imports.append(exports);
 
-			Util.writeOut(this.tsLibFolder + "gen.ts", imports.toString());
+			Util.writeOut(this.tsLibFolder + "allForms.ts", imports.toString());
+			Util.writeOut(this.tsLibFolder + "gen.ts", GEN_FILE);
 		}
 
 		if (this.toGenerateJava) {
@@ -437,7 +445,7 @@ public class Generator {
 							subRecord.name, subRecord.mainRecordName);
 					continue;
 				}
-				subRecord.initSubRecord(schemas, record);
+				subRecord.initExtendedRecord(schemas, record);
 				this.records.put(subRecord.name, subRecord);
 			}
 		}
@@ -465,9 +473,9 @@ public class Generator {
 	static private void emitCommonFormTs(StringBuilder exports, StringBuilder imports, String formName) {
 		// variable name is prefixed with _ to avoid clash with
 		// reserved words
-		imports.append("import _").append(formName).append(" from './form/").append(formName).append(".form.json';\n");
+		imports.append("import { ").append(formName).append(" } from './form/").append(formName).append(".form';\n");
 
-		exports.append("\n\t\t'").append(formName).append("': _").append(formName).append(',');
+		exports.append(formName).append(',');
 	}
 
 	private boolean generateSqls() {

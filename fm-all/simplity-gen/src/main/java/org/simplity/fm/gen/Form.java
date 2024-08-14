@@ -231,7 +231,7 @@ public class Form {
 
 		logger.info("TS for form {} being generated into folder {}", this.name, folderName);
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append('{');
+		sbf.append("export const ").append(this.name).append(" = {");
 		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
 		sbf.append("\n\t\"operations\": {");
 		if (this.operations == null || this.operations.length == 0) {
@@ -286,7 +286,7 @@ public class Form {
 
 		sbf.append("\n}\n");
 
-		Util.writeOut(folderName + this.name + ".form.json", sbf.toString());
+		Util.writeOut(folderName + this.name + ".form.ts", sbf.toString());
 
 		return true;
 

@@ -117,7 +117,7 @@ class Record {
 		return this.mainRecordName;
 	}
 
-	public void initSubRecord(Map<String, ValueSchema> schemas, Record mainRecord) {
+	public void initExtendedRecord(Map<String, ValueSchema> schemas, Record mainRecord) {
 		/*
 		 * nameInDb, if specified, must be the same as the main-form
 		 */
@@ -130,19 +130,35 @@ class Record {
 			}
 		}
 
-		this.fields = new Field[this.fieldNames.length];
+		int nbrNewFields = this.fields == null ? 0 : this.fields.length;
+		int totalFields = this.fieldNames.length + nbrNewFields;
+
+		/*
+		 * copy fields from the main record
+		 */
+		Field[] flds = new Field[totalFields];
 		for (int i = 0; i < this.fieldNames.length; i++) {
 			String fn = this.fieldNames[i];
 			Field field = mainRecord.fieldsMap.get(fn);
 			if (field == null) {
-				logger.error("Field {} in subRecord {} is not found in the main record {}", fn, this.name,
-						this.mainRecordName);
+				logger.error("Extended record {} specifies a field {}  but it is not found in the main record {}",
+						this.name, fn, this.mainRecordName);
 				this.gotErrors = true;
 			} else {
-				this.fields[i] = field.makeACopy(i);
+				flds[i] = field.makeACopy(i);
 			}
 		}
 
+		/*
+		 * append any fields specified in this record
+		 */
+		if (nbrNewFields > 0) {
+			int j = this.fieldNames.length;
+			for (int i = 0; i < nbrNewFields; i++, j++) {
+				flds[j] = this.fields[i];
+			}
+		}
+		this.fields = flds;
 		this.init(schemas);
 	}
 

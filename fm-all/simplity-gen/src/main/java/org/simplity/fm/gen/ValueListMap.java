@@ -56,7 +56,7 @@ public class ValueListMap {
 		logger.info("Generating TS code for lists...");
 
 		StringBuilder sbf = new StringBuilder();
-		sbf.append('{');
+		sbf.append("\nexport const allListSources = {");
 
 		for (ValueList list : this.valueLists.values()) {
 			list.emitTs(sbf);
@@ -64,7 +64,7 @@ public class ValueListMap {
 		}
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n}\n");
-		Util.writeOut(folder + "allListSources.json", sbf.toString());
+		Util.writeOut(folder + "allListSources.ts", sbf.toString());
 		logger.info("TS code for {} lists generated", this.valueLists.size());
 		return true;
 	}
