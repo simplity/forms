@@ -60,7 +60,7 @@ class Field implements Cloneable {
 	String description;
 	boolean visibleInList;
 	boolean visibleInSave;
-	String fieldRendering;
+	String renderAs;
 
 	// synthetic attributes
 	boolean isRequired;
@@ -215,8 +215,8 @@ class Field implements Cloneable {
 				|| this.fieldTypeEnum == FieldType.RequiredData) {
 			if (this.listName != null) {
 				renderingType = "select";
-			} else if (this.fieldRendering != null) {
-				renderingType = this.fieldRendering;
+			} else if (this.renderAs != null) {
+				renderingType = this.renderAs;
 			} else {
 				renderingType = this.schemaInstance.getRenderType();
 			}
