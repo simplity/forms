@@ -70,7 +70,7 @@ class App implements IApp {
 	/*
 	 * tag/property/member name
 	 */
-	private static final String TAG_SESSION = "session";
+	private static final String TAG_SESSION_ID = Conventions.Http.SESSION_ID_FIELD_NAME;
 	private static final String TAG_SERVICE = "service";
 	private static final String TAG_STATUS = "status";
 	private static final String TAG_STATUS_DESC = "statusDescription";
@@ -228,7 +228,7 @@ class App implements IApp {
 
 			UserContext utx = null;
 			String userId = null;
-			String sessionId = inData.getString(TAG_SESSION);
+			String sessionId = inData.getString(TAG_SESSION_ID);
 			if (sessionId != null && sessionId.isEmpty()) {
 				sessionId = null;
 			}
@@ -299,7 +299,7 @@ class App implements IApp {
 				}
 				String token = UUID.randomUUID().toString();
 				this.cache.put(token, newCtx);
-				outData.addName(TAG_SESSION).addValue(token);
+				outData.addName(TAG_SESSION_ID).addValue(token);
 			}
 
 			Message[] messages = ctx.getMessages();

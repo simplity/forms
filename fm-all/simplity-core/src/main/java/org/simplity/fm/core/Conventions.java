@@ -66,7 +66,7 @@ public class Conventions {
 		/**
 		 * name in the context for sessionId
 		 */
-		public static final String SESSION_ID_FIELD_NAME = "_sessionId";
+		public static final String SESSION_ID_FIELD_NAME = "sessionId";
 		/**
 		 * all Ok
 		 */
