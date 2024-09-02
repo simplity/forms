@@ -353,9 +353,9 @@ public class Generator {
 				continue;
 			}
 
-			Record record = this.records.get(form.recordName);
+			Record record = this.records.get(form.mainRecordName);
 			if (record == null) {
-				logger.error("Form {} uses record {}, but that record is not defined", form.name, form.recordName);
+				logger.error("Form {} uses record {}, but that record is not defined", form.name, form.mainRecordName);
 				continue;
 			}
 

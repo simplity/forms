@@ -23,7 +23,6 @@ package org.simplity.fm.core;
 
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.service.IOutputData;
-import org.simplity.fm.core.valueschema.InvalidValueException;
 
 /**
  * represents a validation error while accepting data from a client for a field
@@ -33,33 +32,6 @@ import org.simplity.fm.core.valueschema.InvalidValueException;
  */
 public class Message {
 	/**
-	 * message to be used if the user is not authorized for this specific form
-	 * instance
-	 */
-	public static final String MSG_NOT_AUTHORIZED = "notAuthorized";
-	/**
-	 * time stamp value is invalid
-	 */
-	public static final String INVALID_TIMESTAMP = "invalidTimestamp";
-	/**
-	 * time stamp value is mismatch
-	 */
-	public static final String CONCURRENT_UPDATE = "concurrentUpdate";
-	/**
-	 * error to be used in case of any internal error
-	 */
-	public static final String MSG_INTERNAL_ERROR = "internalError";
-
-	/**
-	 * error to be used in case of any internal error
-	 */
-	public static final String MSG_INVALID_DATA = "invalidData";
-	/**
-	 * error to be used to indicate that value is required for an input field
-	 */
-	public static final String FIELD_REQUIRED = "valueRequired";
-
-	/**
 	 * create an error message for a message id
 	 *
 	 * @param messageId
@@ -67,14 +39,6 @@ public class Message {
 	 */
 	public static Message newError(final String messageId) {
 		return new Message(MessageType.Error, messageId, null, null, null, -1);
-	}
-
-	/**
-	 * @param e
-	 * @return a validation message based on the exception
-	 */
-	public static Message newValidationError(final InvalidValueException e) {
-		return new Message(MessageType.Error, e.getMessageId(), e.getFieldName(), e.getParams(), null, -1);
 	}
 
 	/**

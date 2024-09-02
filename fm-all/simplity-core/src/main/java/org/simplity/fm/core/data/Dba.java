@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
@@ -619,7 +620,7 @@ public class Dba {
 
 		if (this.keyIndexes == null) {
 			logger.error("No keys defined for this db record.");
-			ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+			ctx.addMessage(Message.newError(Conventions.MessageId.INTERNAL_ERROR));
 			return false;
 		}
 
@@ -628,7 +629,7 @@ public class Dba {
 			final DbField f = this.dbFields[idx];
 			final String value = inputObject.getString(f.getName());
 			if (value == null || value.isEmpty()) {
-				ctx.addMessage(Message.newFieldError(f.getName(), Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(f.getName(), Conventions.MessageId.VALUE_REQUIRED, ""));
 				ok = false;
 			}
 			/*

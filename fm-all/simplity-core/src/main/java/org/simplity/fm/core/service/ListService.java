@@ -40,8 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ListService extends AbstractService {
 	private static final ListService instance = new ListService();
-	protected static final Logger logger = LoggerFactory
-			.getLogger(ListService.class);
+	protected static final Logger logger = LoggerFactory.getLogger(ListService.class);
 
 	private static final String INPUT_LIST = Conventions.Request.TAG_LIST;
 	private static final String INPUT_KEY = Conventions.Request.TAG_KEY;
@@ -68,26 +67,25 @@ public class ListService extends AbstractService {
 		ctx.getOutputData().addName(OUTPUT_LIST).beginArray().endArray();
 		ctx.addMessage(Message.newError(msg));
 	}
+
 	@Override
-	public void serve(final IServiceContext ctx, final IInputData payload)
-			throws Exception {
+	public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 		final String listName = payload.getString(INPUT_LIST);
 		if (listName == null || listName.isEmpty()) {
-			reportError(ctx, "list is required for listService");
+			reportError(ctx, Conventions.MessageId.LIST_NAME_REQUIRED);
 			return;
 		}
 
-		final IValueList list = AppManager.getApp().getCompProvider()
-				.getValueList(listName);
+		final IValueList list = AppManager.getApp().getCompProvider().getValueList(listName);
 		if (list == null) {
-			reportError(ctx, "list " + listName + " is not configured");
+			reportError(ctx, Conventions.MessageId.LIST_NOT_CONFIGURED);
 			return;
 		}
 
 		if (list.authenticationRequired()) {
 			Object uid = ctx.getUserId();
 			if (uid == null || uid.toString().isEmpty()) {
-				reportError(ctx, "list " + listName + " is not configured");
+				reportError(ctx, Conventions.MessageId.NOT_AUTHORIZED);
 				return;
 			}
 		}
@@ -103,29 +101,24 @@ public class ListService extends AbstractService {
 
 			key = payload.getString(INPUT_KEY);
 			if (key == null || key.isEmpty()) {
-				reportError(ctx, "list " + listName
-						+ " requires value for key. But it is missing in the request");
+				reportError(ctx, Conventions.MessageId.LIST_KEY_REQUIRED);
 				return;
 			}
 		}
 
 		Object[][] result = list.getList(key, ctx);
 		if (result == null) {
-			reportError(ctx, "Error while getting values for list " + listName
-					+ " for key " + key);
+			reportError(ctx, Conventions.MessageId.INTERNAL_ERROR);
 			result = new Object[0][];
 		} else if (result.length == 0) {
-			logger.warn(
-					"List {} has no values for key {}. sending an empty response",
-					listName, key);
+			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
 		IOutputData data = ctx.getOutputData();
 		data.addName(OUTPUT_LIST);
 		emitRows(data, result);
 	}
 
-	private static void writeOut(IOutputData data,
-			Map<String, Object[][]> allLists) {
+	private static void writeOut(IOutputData data, Map<String, Object[][]> allLists) {
 		data.addName(OUTPUT_LISTS);
 		data.beginObject();
 		if (allLists != null) {
@@ -137,8 +130,7 @@ public class ListService extends AbstractService {
 		data.endObject();
 	}
 
-	private static void emitRows(final IOutputData data,
-			final Object[][] rows) {
+	private static void emitRows(final IOutputData data, final Object[][] rows) {
 		data.beginArray();
 		for (final Object[] row : rows) {
 			data.beginObject();

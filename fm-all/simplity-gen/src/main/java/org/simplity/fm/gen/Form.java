@@ -54,7 +54,7 @@ public class Form {
 	}
 
 	String name;
-	String recordName;
+	String mainRecordName;
 	boolean serveGuests;
 	String[] operations;
 	ChildForm[] childForms;
@@ -69,7 +69,7 @@ public class Form {
 	void initialize(final Record rec) {
 		this.record = rec;
 		this.gotErrors = rec.gotErrors;
-		this.recordName = rec.name;
+		this.mainRecordName = rec.name;
 
 		if (this.operations == null) {
 			this.operations = rec.operations;
@@ -95,7 +95,7 @@ public class Form {
 
 	boolean generateJava(final String folderName, final String packageName) {
 		if (this.gotErrors) {
-			logger.error("Record {} is in error. Java Code for Form {} NOT generated", this.recordName, this.name);
+			logger.error("Record {} is in error. Java Code for Form {} NOT generated", this.mainRecordName, this.name);
 			return false;
 		}
 		final StringBuilder sbf = new StringBuilder();
@@ -114,7 +114,7 @@ public class Form {
 		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.ChildForm.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.ChildMetaData.class);
-		final String recordClass = Util.toClassName(this.recordName) + "Record";
+		final String recordClass = Util.toClassName(this.mainRecordName) + "Record";
 		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordClass).append(';');
 
 		final String cls = Util.toClassName(this.name) + "Form";
@@ -134,7 +134,7 @@ public class Form {
 		 * protected static final String RECORD = "....";
 		 */
 		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
-		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.recordName).append("\");");
+		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.mainRecordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};
@@ -225,19 +225,19 @@ public class Form {
 
 	boolean generateTs(String folderName) {
 		if (this.gotErrors) {
-			logger.error("Record {} is in error. TS code for form {} not generated", this.recordName, this.name);
+			logger.error("Record {} is in error. TS code for form {} not generated", this.mainRecordName, this.name);
 			return false;
 		}
 
 		logger.info("TS for form {} being generated into folder {}", this.name, folderName);
 		final StringBuilder sbf = new StringBuilder();
 		sbf.append("export const ").append(this.name).append(" = {");
-		sbf.append("\n\t\"name\": \"").append(this.recordName).append("\",");
+		sbf.append("\n\t\"name\": \"").append(this.mainRecordName).append("\",");
 		sbf.append("\n\t\"operations\": {");
 		if (this.operations == null || this.operations.length == 0) {
 			logger.warn(
 					"No operations are allowed for record {}. Client app will not be able to use auto-service for this record",
-					this.recordName);
+					this.mainRecordName);
 		} else {
 			for (final String oper : this.operations) {
 				if (oper == null) {

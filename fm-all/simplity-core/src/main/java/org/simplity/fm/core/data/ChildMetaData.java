@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
@@ -42,8 +43,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ChildMetaData {
-	private static final Logger logger = LoggerFactory
-			.getLogger(ChildMetaData.class);
+	private static final Logger logger = LoggerFactory.getLogger(ChildMetaData.class);
 	/**
 	 * non-null unique across all fields of the form
 	 */
@@ -67,13 +67,12 @@ public class ChildMetaData {
 	 */
 	private final String[] parentLinkNames;
 	/**
-	 * field names from the child form that form the parent-key for the child
-	 * form
+	 * field names from the child form that form the parent-key for the child form
 	 */
 	private final String[] childLinkNames;
 	/**
-	 * in case min/max rows violated, what is the error message to be used to
-	 * report this problem
+	 * in case min/max rows violated, what is the error message to be used to report
+	 * this problem
 	 */
 	@SuppressWarnings("unused")
 	private final String errorMessageId;
@@ -91,15 +90,15 @@ public class ChildMetaData {
 	 */
 	private boolean isDbLink;
 	/**
-	 * in case the records are to be linked, then we need the where clause where
-	 * the column names come from the linked record, while the values for them
-	 * come from the parent record e.g. childCol1=? and childCll2=?
+	 * in case the records are to be linked, then we need the where clause where the
+	 * column names come from the linked record, while the values for them come from
+	 * the parent record e.g. childCol1=? and childCll2=?
 	 */
 	private String linkWhereClause;
 
 	/**
-	 * has the details to set params values for a prepared statement from a
-	 * parent data row
+	 * has the details to set params values for a prepared statement from a parent
+	 * data row
 	 */
 	private FieldMetaData[] linkWhereParams;
 	/**
@@ -114,13 +113,12 @@ public class ChildMetaData {
 	private int[] childIndexes;
 
 	/**
-	 * used by generated code, and hence we are ok with large number of
-	 * parameters
+	 * used by generated code, and hence we are ok with large number of parameters
 	 *
-	 * @param childName
-	 *            this is different from the child form name. childName has to
-	 *            be unique across all field names used by the parent. It is the
-	 *            name used in this context of the parent-child relationship
+	 * @param childName       this is different from the child form name. childName
+	 *                        has to be unique across all field names used by the
+	 *                        parent. It is the name used in this context of the
+	 *                        parent-child relationship
 	 * @param childFormName
 	 * @param minRows
 	 * @param maxRows
@@ -129,9 +127,8 @@ public class ChildMetaData {
 	 * @param childLinkNames
 	 * @param isTable
 	 */
-	public ChildMetaData(final String childName, final String childFormName,
-			final int minRows, final int maxRows, final String errorMessageId,
-			final String[] parentLinkNames, final String[] childLinkNames,
+	public ChildMetaData(final String childName, final String childFormName, final int minRows, final int maxRows,
+			final String errorMessageId, final String[] parentLinkNames, final String[] childLinkNames,
 			final boolean isTable) {
 		this.childName = childName;
 		this.childFormName = childFormName;
@@ -157,14 +154,11 @@ public class ChildMetaData {
 	 */
 	void init(final Record parentRec, final Record childRec) {
 		if (this.parentLinkNames == null || this.childLinkNames == null) {
-			logger.info(
-					"Linked form has no deign-time link parameters. No auto operations possible..");
+			logger.info("Linked form has no deign-time link parameters. No auto operations possible..");
 			return;
 		}
-		if (parentRec instanceof DbRecord == false
-				|| childRec instanceof DbRecord == false) {
-			logger.warn(
-					"Linked form defined for non-db record. No auto operations possible..");
+		if (parentRec instanceof DbRecord == false || childRec instanceof DbRecord == false) {
+			logger.warn("Linked form defined for non-db record. No auto operations possible..");
 			return;
 		}
 
@@ -178,14 +172,12 @@ public class ChildMetaData {
 		this.linkWhereParams = new FieldMetaData[nbr];
 
 		for (int i = 0; i < nbr; i++) {
-			final DbField parentField = parentRecord
-					.fetchField(this.parentLinkNames[i]);
+			final DbField parentField = parentRecord.fetchField(this.parentLinkNames[i]);
 			/*
-			 * child field name is not verified during generation... we may get
-			 * run-time exception
+			 * child field name is not verified during generation... we may get run-time
+			 * exception
 			 */
-			final DbField childField = childRecord
-					.fetchField(this.childLinkNames[i]);
+			final DbField childField = childRecord.fetchField(this.childLinkNames[i]);
 			if (childField == null) {
 				throw new RuntimeException("Field " + this.childLinkNames[i]
 						+ " is defined as childLinkName, but is not defined as a field in the linked form "
@@ -201,20 +193,18 @@ public class ChildMetaData {
 		}
 
 		this.linkWhereClause = sbf.toString();
-		this.deleteSql = "delete from " + childRecord.dba.getNameInDb()
-				+ this.linkWhereClause;
+		this.deleteSql = "delete from " + childRecord.dba.getNameInDb() + this.linkWhereClause;
 		this.isDbLink = true;
 	}
 
 	private void noDb() {
-		logger.error(
-				"Link is not designed for db operation on form {}. Database operation not done",
+		logger.error("Link is not designed for db operation on form {}. Database operation not done",
 				this.childFormName);
 	}
+
 	/**
-	 * read rows from the child-table for the keys in the parent record. the
-	 * rows are directly written to the output stream to avoid repeated copying
-	 * of data
+	 * read rows from the child-table for the keys in the parent record. the rows
+	 * are directly written to the output stream to avoid repeated copying of data
 	 *
 	 * @param parentRec
 	 * @param form
@@ -223,9 +213,8 @@ public class ChildMetaData {
 	 * @return true if read was ok. false in in case of any validation error
 	 * @throws SQLException
 	 */
-	public boolean read(final DbRecord parentRec, final Form<?> form,
-			final IOutputData outData, final IReadonlyHandle handle)
-			throws SQLException {
+	public boolean read(final DbRecord parentRec, final Form<?> form, final IOutputData outData,
+			final IReadonlyHandle handle) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;
@@ -239,21 +228,19 @@ public class ChildMetaData {
 		final ValueType[] outputTypes = thisRecord.fetchValueTypes();
 		if (this.isTable) {
 			outData.beginArray();
-			handle.readWithRowProcessor(this.linkWhereClause, vt.values, vt.types,
-					outputTypes, row -> {
-						outData.beginObject();
-						outData.addFields(fields, row);
-						form.readChildForms(row, outData, handle);
-						outData.endObject();
-						return true;
-					});
+			handle.readWithRowProcessor(this.linkWhereClause, vt.values, vt.types, outputTypes, row -> {
+				outData.beginObject();
+				outData.addFields(fields, row);
+				form.readChildForms(row, outData, handle);
+				outData.endObject();
+				return true;
+			});
 			outData.endArray();
 			return true;
 		}
 
 		outData.beginObject();
-		final Object[] row = handle.read(this.linkWhereClause, vt.values,
-				vt.types, outputTypes);
+		final Object[] row = handle.read(this.linkWhereClause, vt.values, vt.types, outputTypes);
 		if (row != null) {
 			outData.addFields(fields, row);
 		}
@@ -275,11 +262,9 @@ public class ChildMetaData {
 		return new ValuesAndTypes(values, types);
 	}
 
-	private void copyParentKeys(final Record parentRec,
-			final Record thisRecord) {
+	private void copyParentKeys(final Record parentRec, final Record thisRecord) {
 		for (int i = 0; i < this.childIndexes.length; i++) {
-			thisRecord.assignValue(this.childIndexes[i],
-					parentRec.fetchValue(this.parentIndexes[i]));
+			thisRecord.assignValue(this.childIndexes[i], parentRec.fetchValue(this.parentIndexes[i]));
 		}
 	}
 
@@ -293,9 +278,8 @@ public class ChildMetaData {
 	 *         case, the transaction is to be rolled back;
 	 * @throws SQLException
 	 */
-	public boolean save(final DbRecord parentRec, final Form<?> form,
-			final IInputData inputObject, final IReadWriteHandle handle,
-			final IServiceContext ctx) throws SQLException {
+	public boolean save(final DbRecord parentRec, final Form<?> form, final IInputData inputObject,
+			final IReadWriteHandle handle, final IServiceContext ctx) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;
@@ -306,29 +290,23 @@ public class ChildMetaData {
 			final IInputArray arr = inputObject.getArray(this.childName);
 			if (arr == null) {
 				if (this.minRows == 0) {
-					logger.info(
-							"Input not received, but it is optional. No data saved for linked form.");
+					logger.info("Input not received, but it is optional. No data saved for linked form.");
 					return true;
 				}
-				ctx.addMessage(Message.newFieldError(this.childName,
-						Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(this.childName, Conventions.MessageId.VALUE_REQUIRED, ""));
 				return false;
 			}
 
 			final int nbr = arr.length();
-			if (nbr < this.minRows
-					|| (this.maxRows > 0 && nbr > this.maxRows)) {
+			if (nbr < this.minRows || (this.maxRows > 0 && nbr > this.maxRows)) {
 				ctx.addMessage(Message.newFieldError(this.childName,
-						"a min of " + this.minRows + " and a max of "
-								+ this.maxRows + " rows expected",
-						""));
+						"a min of " + this.minRows + " and a max of " + this.maxRows + " rows expected", ""));
 				return false;
 			}
 
 			IInputData[] childRecs = arr.toDataArray();
 			for (int idx = 0; idx < childRecs.length; idx++) {
-				if (!thisRecord.parse(childRecs[idx], true, ctx,
-						this.childFormName, idx)) {
+				if (!thisRecord.parse(childRecs[idx], true, ctx, this.childFormName, idx)) {
 					return false;
 				}
 				this.copyParentKeys(parentRec, thisRecord);
@@ -341,18 +319,15 @@ public class ChildMetaData {
 		final IInputData obj = inputObject.getData(this.childName);
 		if (obj == null) {
 			if (this.minRows > 0) {
-				ctx.addMessage(Message.newFieldError(this.childName,
-						Message.FIELD_REQUIRED, ""));
+				ctx.addMessage(Message.newFieldError(this.childName, Conventions.MessageId.VALUE_REQUIRED, ""));
 				return false;
 			}
-			logger.info(
-					"Input not received, but it is optional. No data saved for linked form.");
+			logger.info("Input not received, but it is optional. No data saved for linked form.");
 			return true;
 		}
 
 		if (!thisRecord.parse(obj, true, ctx, this.childName, 0)) {
-			logger.error("INput data had errors for linked form {}",
-					this.childName);
+			logger.error("INput data had errors for linked form {}", this.childName);
 			return false;
 		}
 
@@ -368,8 +343,8 @@ public class ChildMetaData {
 	 * @return true if all OK.
 	 * @throws SQLException
 	 */
-	public boolean delete(final IReadWriteHandle handle,
-			final DbRecord parentRec, final Form<?> form) throws SQLException {
+	public boolean delete(final IReadWriteHandle handle, final DbRecord parentRec, final Form<?> form)
+			throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;
@@ -389,6 +364,7 @@ public class ChildMetaData {
 	class ValuesAndTypes {
 		final Object[] values;
 		final ValueType[] types;
+
 		ValuesAndTypes(final Object[] values, final ValueType[] types) {
 			this.values = values;
 			this.types = types;

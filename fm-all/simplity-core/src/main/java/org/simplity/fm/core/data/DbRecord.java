@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.db.IReadWriteHandle;
@@ -309,7 +310,7 @@ public abstract class DbRecord extends Record {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
-					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 				}
 			});
 
@@ -340,7 +341,7 @@ public abstract class DbRecord extends Record {
 				}
 
 				logger.error("Insert operation failed silently");
-				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 				return false;
 			});
 		}
@@ -366,7 +367,7 @@ public abstract class DbRecord extends Record {
 				}
 
 				logger.error("Update operation failed silently");
-				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 				return false;
 			});
 		}
@@ -392,7 +393,7 @@ public abstract class DbRecord extends Record {
 				}
 
 				logger.error("Delete operation failed silently");
-				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 				return false;
 			});
 

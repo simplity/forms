@@ -222,7 +222,7 @@ public abstract class Form<T extends Record> {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
-					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 					return;
 				}
 				/*
@@ -257,13 +257,13 @@ public abstract class Form<T extends Record> {
 			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.insert(handle)) {
 					logger.error("Insert operation failed silently");
-					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 					return false;
 				}
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.insert(rec, payload, handle, ctx)) {
 						logger.error("Insert operation failed for a child form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 						return false;
 					}
 				}
@@ -289,13 +289,13 @@ public abstract class Form<T extends Record> {
 			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.update(handle)) {
 					logger.error("update operation failed silently");
-					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 					return false;
 				}
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.update(rec, payload, handle, ctx)) {
 						logger.error("Update operation failed for a child form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 						return false;
 
 					}
@@ -322,14 +322,14 @@ public abstract class Form<T extends Record> {
 			AppManager.getApp().getDbDriver().doReadWriteOperations(handle -> {
 				if (!rec.delete(handle)) {
 					logger.error("Delete operation failed silently");
-					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 					return false;
 				}
 
 				for (final ChildForm<?> lf : Form.this.childForms) {
 					if (!lf.delete(rec, handle, ctx)) {
 						logger.error("Insert operation failed for a child form");
-						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 						return false;
 					}
 				}

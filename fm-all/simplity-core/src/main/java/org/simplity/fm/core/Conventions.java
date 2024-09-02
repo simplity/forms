@@ -29,6 +29,54 @@ package org.simplity.fm.core;
  *
  */
 public class Conventions {
+
+	public static class MessageId {
+
+		/**
+		 * server encountered an error. Server side error handling has reported it, but
+		 * the client needs to be informed.
+		 */
+		public static final String INTERNAL_ERROR = "_internalError";
+		/**
+		 * message to be used if the user is not authorized for this specific form
+		 * instance
+		 */
+		public static final String NOT_AUTHORIZED = "_notAuthorized";
+
+		/**
+		 * client has requested an update on an entity, but the entity got updated in
+		 * the meanwhile. this is detected through time-stamp check
+		 */
+		public static final String CONCURRENT_UPDATE = "_concurrentUpdate";
+		/**
+		 * input data for a service is not in the right format.
+		 */
+		public static final String INVALID_DATA = "_invalidData";
+		/**
+		 * a value is required for a field
+		 */
+		public static final String VALUE_REQUIRED = "_valueRequired";
+
+		/**
+		 * list name is required to invoke a list service
+		 */
+		public static final String LIST_NAME_REQUIRED = "_listNameRequired";
+		/**
+		 * list name is required to invoke a list service
+		 */
+		public static final String LIST_NOT_CONFIGURED = "_listNotConfigured";
+		/**
+		 * list name is required to invoke a list service
+		 */
+		public static final String LIST_KEY_REQUIRED = "_listKeyRequired";
+
+		/**
+		 * A data base command for update/insert returned with no errors, but no
+		 * modification done
+		 */
+		public static final String DB_OPERATION_NO_SUCCESS = "_dbOperationNoSuccess";
+	}
+
 	/**
 	 * HTTP related
 	 */
@@ -236,7 +284,7 @@ public class Conventions {
 		 */
 		public static final String LISTS_FILE = "valueLists.json";
 		/**
-		 * file that has the actual text for message ids
+		 * file that has the value schema definitions
 		 */
 		public static final String VALUE_SCHEMAS_FILE = "valueSchemas.json";
 		/**
