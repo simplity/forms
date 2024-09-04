@@ -150,7 +150,7 @@ public class ValueSchemaMap {
 	public boolean generateTs(final String folder) {
 		logger.info("Generating TS code for value schemas ...");
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("\nexport const allValueSchemas = {");
+		sbf.append("\nexport const valueSchemas = {");
 
 		for (ValueSchema vs : this.valueSchemas.values()) {
 			vs.emitTs(sbf);
@@ -159,7 +159,7 @@ public class ValueSchemaMap {
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n}\n");
 
-		String fn = folder + "allValueSchemas.ts";
+		String fn = folder + "valueSchemas.ts";
 		Util.writeOut(fn, sbf.toString());
 		logger.info("File {} generated", fn);
 		return true;

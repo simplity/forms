@@ -44,14 +44,10 @@ public class Generator {
 	/*
 	 * this constant is pasted from index.ts.txt file
 	 */
-	private static final String GEN_FILE = "import { allListSources } from './allListSources';\n"
-			+ "import { allMessages } from './allMessages';\n"
-			+ "import { allValueSchemas } from './allValueSchemas';\n" + "import { allForms } from './allForms';\n"
-			+ "\n" + "export type ListSourceName = keyof typeof allListSources;\n"
-			+ "export type MessageName = keyof typeof allMessages;\n"
-			+ "export type ValueSchemaName = keyof typeof allValueSchemas;\n"
-			+ "export type FormName = keyof typeof allForms;\n" + "\n" + "export const generatedArtifacts = {\n"
-			+ "  allListSources,\n" + "  allMessages,\n" + "  allValueSchemas,\n" + "  allForms,\n" + "};";
+	private static final String GEN_FILE = "import { listSources } from './listSources';\n"
+			+ "import { messages } from './messages';\n" + "import { valueSchemas } from './valueSchemas';\n"
+			+ "import { forms } from './forms';\n" + "\n\nexport const generatedArtifacts = {\n" + "  listSources,\n"
+			+ "  messages,\n" + "  valueSchemas,\n" + "  forms,\n" + "};";
 
 	/**
 	 * folders to be created/ensured for java sources
@@ -274,17 +270,17 @@ public class Generator {
 		// exports and import are built to write into gen.ts
 		StringBuilder imports = new StringBuilder();
 		StringBuilder exports = new StringBuilder(
-				"\n\nexport type FormName = keyof typeof allForms;\nexport const allForms = {" + "");
+				"\n\nexport type FormName = keyof typeof forms;\nexport const forms = {" + "");
 
 		this.generateRecords(exports, imports);
 		this.generateForms(exports, imports);
 
 		if (this.toGenerateTs) {
 			exports.setLength(exports.length() - 1); // remove the last comma
-			exports.append("\n}\n");
+			exports.append("\n} as const;\n");
 			imports.append(exports);
 
-			Util.writeOut(this.tsLibFolder + "allForms.ts", imports.toString());
+			Util.writeOut(this.tsLibFolder + "forms.ts", imports.toString());
 			Util.writeOut(this.tsLibFolder + "gen.ts", GEN_FILE);
 		}
 

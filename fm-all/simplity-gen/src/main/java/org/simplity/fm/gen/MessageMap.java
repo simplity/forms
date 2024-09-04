@@ -39,7 +39,7 @@ public class MessageMap {
 	 */
 	public boolean generateTs(final String folder) {
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("export const allMessages = {");
+		sbf.append("export const messages = {");
 		int n = 0;
 		if (this.messages != null) {
 			for (final Map.Entry<String, String> entry : this.messages.entrySet()) {
@@ -52,7 +52,7 @@ public class MessageMap {
 			sbf.setLength(sbf.length() - 1);
 		}
 		sbf.append("\n}\n");
-		Util.writeOut(folder + "allMessages.ts", sbf.toString());
+		Util.writeOut(folder + "messages.ts", sbf.toString());
 		return true;
 
 	}

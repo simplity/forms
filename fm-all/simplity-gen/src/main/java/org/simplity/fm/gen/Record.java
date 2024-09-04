@@ -84,6 +84,7 @@ class Record {
 	 */
 	String mainRecordName;
 	String[] fieldNames;
+	Field[] additionalFields;
 
 	/*
 	 * derived fields required for generating java/ts
@@ -130,22 +131,27 @@ class Record {
 			}
 		}
 
-		int nbrNewFields = this.fields == null ? 0 : this.fields.length;
-		int totalFields = this.fieldNames.length + nbrNewFields;
+		final boolean allFields = this.fieldNames.length == 1 && this.fieldNames[0].equals("*");
+		int nbrNewFields = this.additionalFields == null ? 0 : this.additionalFields.length;
+		int totalFields = (allFields ? mainRecord.fields.length : this.fieldNames.length) + nbrNewFields;
 
-		/*
-		 * copy fields from the main record
-		 */
-		Field[] flds = new Field[totalFields];
-		for (int i = 0; i < this.fieldNames.length; i++) {
-			String fn = this.fieldNames[i];
-			Field field = mainRecord.fieldsMap.get(fn);
-			if (field == null) {
-				logger.error("Extended record {} specifies a field {}  but it is not found in the main record {}",
-						this.name, fn, this.mainRecordName);
-				this.gotErrors = true;
-			} else {
-				flds[i] = field.makeACopy(i);
+		this.fields = new Field[totalFields];
+		if (allFields) {
+			final Field[] flds = mainRecord.fields;
+			for (int i = 0; i < mainRecord.fields.length; i++) {
+				this.fields[i] = flds[i].makeACopy(i);
+			}
+		} else {
+			for (int i = 0; i < this.fieldNames.length; i++) {
+				String fn = this.fieldNames[i];
+				Field field = mainRecord.fieldsMap.get(fn);
+				if (field == null) {
+					logger.error("Extended record {} specifies a field {}  but it is not found in the main record {}",
+							this.name, fn, this.mainRecordName);
+					this.gotErrors = true;
+				} else {
+					this.fields[i] = field.makeACopy(i);
+				}
 			}
 		}
 
@@ -155,10 +161,10 @@ class Record {
 		if (nbrNewFields > 0) {
 			int j = this.fieldNames.length;
 			for (int i = 0; i < nbrNewFields; i++, j++) {
-				flds[j] = this.fields[i];
+				this.fields[j] = this.additionalFields[i];
 			}
 		}
-		this.fields = flds;
+
 		this.init(schemas);
 	}
 

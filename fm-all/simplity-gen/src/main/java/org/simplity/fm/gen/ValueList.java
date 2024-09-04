@@ -317,7 +317,7 @@ public class ValueList implements IInitializer {
 			} else {
 				sbf.append(p.value);
 			}
-			sbf.append(',').append(indent).append("\t\"text\":").append(Util.quotedString(p.label));
+			sbf.append(',').append(indent).append("\t\"label\":").append(Util.quotedString(p.label));
 			sbf.append(indent).append("},");
 		}
 		sbf.setLength(sbf.length() - 1);
