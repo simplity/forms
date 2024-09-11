@@ -42,10 +42,8 @@ import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
-import org.simplity.fm.core.validn.ExclusiveValidation;
-import org.simplity.fm.core.validn.FromToValidation;
 import org.simplity.fm.core.validn.IValidation;
-import org.simplity.fm.core.validn.InclusiveValidation;
+import org.simplity.fm.core.validn.InterFieldValidationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,9 +73,7 @@ class Record {
 	// String customValidation;
 	String[] operations;
 	Field[] fields;
-	FromToPair[] fromToPairs;
-	ExclusivePair[] exclusivePairs;
-	InclusivePair[] inclusivePairs;
+	InterFieldValidation[] interFieldValidations;
 
 	/*
 	 * for sub-record
@@ -124,10 +120,10 @@ class Record {
 		 */
 		if (this.nameInDb != null) {
 			if (this.nameInDb.equals(mainRecord.nameInDb) == false) {
-				logger.error(
+				this.addError(
 						"nameInDb is to be specified if this sub-record is to be used for db-operations. However, it can not be different from the one specified in the main record. Sub record {} uses {} as nameInDb while its main record {} uses {} as nameInDb.",
 						this.name, this.nameInDb, this.mainRecordName, mainRecord.nameInDb);
-				this.gotErrors = true;
+
 			}
 		}
 
@@ -146,9 +142,9 @@ class Record {
 				String fn = this.fieldNames[i];
 				Field field = mainRecord.fieldsMap.get(fn);
 				if (field == null) {
-					logger.error("Extended record {} specifies a field {}  but it is not found in the main record {}",
+					this.addError("Extended record {} specifies a field {}  but it is not found in the main record {}",
 							this.name, fn, this.mainRecordName);
-					this.gotErrors = true;
+
 				} else {
 					this.fields[i] = field.makeACopy(i);
 				}
@@ -190,8 +186,8 @@ class Record {
 			field.init(idx, schemas);
 			Field existing = this.fieldsMap.put(field.name, field);
 			if (existing != null) {
-				logger.error("Field {} is a duplicate in record {}", field.name, this.name);
-				this.gotErrors = true;
+				this.addError("Field {} is a duplicate in record {}", field.name, this.name);
+
 				;
 			}
 
@@ -205,19 +201,19 @@ class Record {
 					logger.warn("{} is not linked to a db-column. No I/O happens on this field.", field.name);
 					continue;
 				}
-				logger.error("{} is linked to a db-column {} but does not specify a fieldType.", field.name,
+				this.addError("{} is linked to a db-column {} but does not specify a fieldType.", field.name,
 						field.nameInDb);
 				ft = FieldType.OptionalData;
-				this.gotErrors = true;
+
 				;
 			}
 
 			switch (ft) {
 			case PrimaryKey:
 				if (this.generatedKeyField != null) {
-					logger.error("{} is defined as a generated primary key, but {} is also defined as a primary key.",
+					this.addError("{} is defined as a generated primary key, but {} is also defined as a primary key.",
 							keyList.get(0).name, field.name);
-					this.gotErrors = true;
+
 					;
 				} else {
 					keyList.add(field);
@@ -226,16 +222,16 @@ class Record {
 
 			case GeneratedPrimaryKey:
 				if (this.generatedKeyField != null) {
-					logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
+					this.addError("Only one generated key please. Found {} as well as {} as generated primary keys.",
 							field.name, keyList.get(0).name);
-					this.gotErrors = true;
+
 					;
 				} else {
 					if (keyList.size() > 0) {
-						logger.error(
+						this.addError(
 								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
 								field.name, keyList.get(0).name);
-						this.gotErrors = true;
+
 						;
 						keyList.clear();
 					}
@@ -246,18 +242,18 @@ class Record {
 
 			case TenantKey:
 				if (field.valueSchema.equals("tenantKey") == false) {
-					logger.error(
+					this.addError(
 							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
 							field.name, field.valueSchema);
-					this.gotErrors = true;
+
 					;
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
 				} else {
-					logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
+					this.addError("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
 							this.tenantField.name);
-					this.gotErrors = true;
+
 					;
 				}
 				break;
@@ -266,9 +262,9 @@ class Record {
 				if (createdAt == null) {
 					createdAt = field;
 				} else {
-					logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
+					this.addError("Only one field to be used as createdAt but {} and {} are marked", field.name,
 							createdAt.name);
-					this.gotErrors = true;
+
 					;
 				}
 				break;
@@ -277,9 +273,9 @@ class Record {
 				if (createdBy == null) {
 					createdBy = field;
 				} else {
-					logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
+					this.addError("Only one field to be used as createdBy but {} and {} are marked", field.name,
 							createdBy.name);
-					this.gotErrors = true;
+
 					;
 				}
 				break;
@@ -291,9 +287,9 @@ class Record {
 						this.timestampField = field;
 					}
 				} else {
-					logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
+					this.addError("{} and {} are both defined as lastModifiedAt!!", field.name,
 							this.timestampField.name);
-					this.gotErrors = true;
+
 					;
 				}
 				break;
@@ -302,9 +298,9 @@ class Record {
 				if (modifiedBy == null) {
 					modifiedBy = field;
 				} else {
-					logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
+					this.addError("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
 							modifiedBy.name);
-					this.gotErrors = true;
+
 					;
 				}
 				break;
@@ -323,25 +319,36 @@ class Record {
 		}
 
 		if (this.useTimestampCheck && this.timestampField == null) {
-			logger.error(
+			this.addError(
 					"Table is designed to use time-stamp for concurrency, but no field with columnType=modifiedAt");
 			this.useTimestampCheck = false;
-			this.gotErrors = true;
+
 		}
 
 		if (this.operations != null && this.operations.length != 0) {
 			if (this.nameInDb != null) {
 				this.checkDbOperations();
 			} else {
-				logger.error(
+				this.addError(
 						"One or more operations are specified, but nameInDb is not specified. db-operations can be performed only if the nameInDb is specified");
-				this.gotErrors = true;
+
 			}
 		} else if (this.nameInDb != null) {
-			logger.error(
+			this.addError(
 					"nameInDb is specified as {} but no operations are specified. You must specify the operations that can be performed using this record.");
-			this.gotErrors = true;
+
 		}
+
+		if (this.interFieldValidations != null) {
+			for (InterFieldValidation f : this.interFieldValidations) {
+				f.init(this);
+			}
+		}
+	}
+
+	void addError(String error, Object... params) {
+		logger.error(error, params);
+		this.gotErrors = true;
 	}
 
 	private void checkDbOperations() {
@@ -362,8 +369,8 @@ class Record {
 					IoType typ = IoType.valueOf(s);
 					this.allowedIos.add(typ);
 				} catch (IllegalArgumentException e) {
-					logger.error("{} is not a valid db operation. Please correct operations array.", s);
-					this.gotErrors = true;
+					this.addError("{} is not a valid db operation. Please correct operations array.", s);
+
 					return;
 				}
 			}
@@ -372,8 +379,8 @@ class Record {
 		if (this.keyFields == null) {
 			if (this.allowedIos.contains(IoType.Get) || this.allowedIos.contains(IoType.Delete)
 					|| this.allowedIos.contains(IoType.Update)) {
-				logger.error("Key field/s are required for read/get, crate/insert or delete operations");
-				this.gotErrors = true;
+				this.addError("Key field/s are required for read/get, crate/insert or delete operations");
+
 			}
 		}
 	}
@@ -422,14 +429,9 @@ class Record {
 		/*
 		 * validation imports on need basis
 		 */
-		if (this.fromToPairs != null) {
-			Util.emitImport(sbf, FromToValidation.class);
-		}
-		if (this.exclusivePairs != null) {
-			Util.emitImport(sbf, ExclusiveValidation.class);
-		}
-		if (this.inclusivePairs != null) {
-			Util.emitImport(sbf, InclusiveValidation.class);
+		if (this.interFieldValidations != null) {
+			Util.emitImport(sbf, org.simplity.fm.core.validn.InterFieldValidation.class);
+			Util.emitImport(sbf, InterFieldValidationType.class);
 		}
 		Util.emitImport(sbf, DependentListValidation.class);
 		/*
@@ -578,23 +580,9 @@ class Record {
 		sbf.append("\n\tprivate static final IValidation[] VALIDS = {");
 		final int n = sbf.length();
 		final String sufix = ",\n\t\t";
-		if (this.fromToPairs != null) {
-			for (final FromToPair pair : this.fromToPairs) {
-				pair.emitJavaCode(sbf);
-				sbf.append(sufix);
-			}
-		}
-
-		if (this.exclusivePairs != null) {
-			for (final ExclusivePair pair : this.exclusivePairs) {
-				pair.emitJavaCode(sbf);
-				sbf.append(sufix);
-			}
-		}
-
-		if (this.inclusivePairs != null) {
-			for (final InclusivePair pair : this.inclusivePairs) {
-				pair.emitJavaCode(sbf);
+		if (this.interFieldValidations != null) {
+			for (final InterFieldValidation v : this.interFieldValidations) {
+				v.emitJavaCode(sbf);
 				sbf.append(sufix);
 			}
 		}
@@ -609,7 +597,7 @@ class Record {
 				}
 				final Field f = this.fieldsMap.get(field.listKey);
 				if (f == null) {
-					logger.error("DbField {} specifies {} as listKey, but that field is not defined", field.name,
+					this.addError("DbField {} specifies {} as listKey, but that field is not defined", field.name,
 							field.listKey);
 					continue;
 				}

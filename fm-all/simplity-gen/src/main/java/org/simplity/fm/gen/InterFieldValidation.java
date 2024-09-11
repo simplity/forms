@@ -28,23 +28,47 @@ package org.simplity.fm.gen;
  * @author simplity.org
  *
  */
-class FromToPair {
+class InterFieldValidation {
 	private static final String C = ", ";
 
 	String field1;
 	String field2;
+	String validationType;
+	String onlyIfFieldValueEquals;
+	String messageId;
+
+	// calculated fields
 	int index1;
 	int index2;
-	boolean equalOk;
 	String fieldName;
-	String errorId;
+
+	/**
+	 * called from record.init();
+	 * 
+	 * @param record
+	 */
+	void init(Record record) {
+		this.fieldName = this.field1;
+		this.index1 = checkField(this.field1, record);
+		this.index2 = checkField(this.field2, record);
+	}
+
+	private int checkField(String name, Record record) {
+		Field f = record.fieldsMap.get(this.field1);
+		if (f == null) {
+			record.addError("Inter-field validation refers to field {} but that field is not defined", name);
+			return -1;
+		}
+		return f.index;
+	}
 
 	void emitJavaCode(StringBuilder sbf) {
-		sbf.append("new FromToValidation(").append(this.index1);
+		sbf.append("new InterFieldValidation(").append(this.index1);
 		sbf.append(C).append(this.index2);
-		sbf.append(C).append(this.equalOk);
 		sbf.append(C).append(Util.quotedString(this.fieldName));
-		sbf.append(C).append(Util.quotedString(this.errorId));
+		sbf.append(C).append(Util.quotedString(this.messageId));
+		sbf.append(C).append(Util.quotedString(this.onlyIfFieldValueEquals));
+		sbf.append(C).append("InterFieldValidationType." + Util.toClassName(this.validationType));
 		sbf.append(")");
 	}
 
@@ -52,8 +76,13 @@ class FromToPair {
 	 * @param sbf
 	 */
 	public void emitTs(StringBuilder sbf) {
-		sbf.append("{type: 'range', errorId: '").append(this.errorId).append("', f1: '").append(this.field1);
-		sbf.append("', f2: '").append(this.field2).append("', equalOk: ").append(this.equalOk).append("}");
+		sbf.append("{type: '").append(this.validationType).append("', field1: '").append(this.field1)
+				.append("', field2: '").append(this.field2);
+		sbf.append("', messageId: '").append(this.messageId).append("', f1: '").append(this.field1);
+		sbf.append("', f2: '").append(this.field2).append("'");
+		if (this.onlyIfFieldValueEquals != null) {
+			sbf.append(", onlyIfFieldValueEquals: ").append(Util.quotedString(this.onlyIfFieldValueEquals));
+		}
+		sbf.append("}");
 	}
 }
-
