@@ -47,12 +47,4 @@ class ExclusivePair {
 		sbf.append(C).append(Util.quotedString(this.errorId));
 		sbf.append(")");
 	}
-	/**
-	 * @param sbf
-	 */
-	public void emitTs(StringBuilder sbf) {
-		sbf.append("{type: 'excl', errorId: '").append(this.errorId).append("', f1: '").append(this.field1);
-		sbf.append("', f2: '").append(this.field2).append("', atLeastOne: ").append(this.isRequired).append("}");
-	}
 }
-

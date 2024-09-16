@@ -38,27 +38,11 @@ public class Generator {
 
 	private static final String FOLDER = "/";
 
-	private static final String TS_FOLDER_FORM = "lib/form/";
-	private static final String TS_FOLDER_LIB = "lib/";
-
-	/*
-	 * this constant is pasted from index.ts.txt file
-	 */
-	private static final String GEN_FILE = "import { listSources } from './listSources';\n"
-			+ "import { messages } from './messages';\n" + "import { valueSchemas } from './valueSchemas';\n"
-			+ "import { forms } from './forms';\n" + "\n\nexport const generatedArtifacts = {\n" + "  listSources,\n"
-			+ "  messages,\n" + "  valueSchemas,\n" + "  forms,\n" + "};";
-
 	/**
 	 * folders to be created/ensured for java sources
 	 */
 	private static final String[] JAVA_FOLDERS = { Conventions.App.FOLDER_NAME_RECORD, Conventions.App.FOLDER_NAME_FORM,
 			Conventions.App.FOLDER_NAME_LIST, Conventions.App.FOLDER_NAME_SQL };
-
-	/**
-	 * folders to be created/ensured for ts
-	 */
-	private static final String[] TS_FOLDERS = { TS_FOLDER_FORM };
 
 	private static final String CREATE_SQL_COMMENT = "-- This file has the sql to create tables. It includes command to create primary keys.\n"
 			+ "-- It is intended to be included in a sql after the script that would delete tables.";
@@ -69,15 +53,12 @@ public class Generator {
 	private static final String INPUT_ROOT = "c:/gitHub/wip/trm/trm-meta/meta/json/";
 	private static final String JAVA_ROOT = "c:/gitHub/wip/trm/trm-meta/trm-server-gen/src/main/java/";
 	private static final String PACKAGE_NAME = "in.nsoft.trm.gen";
-	private static final String TS_ROOT = "c:/gitHub/wip/trm/trm-meta/trm-client-gen/src/";
 
 	// private static final String INPUT_ROOT =
 	// "c:/bitBucket/simeta/simeta-meta/meta/";
 	// private static final String JAVA_ROOT =
 	// "c:/bitBucket/simeta/simeta-meta/simeta-server-gen/src/main/java/";
 	// private static final String PACKAGE_NAME = "org.simplity.simeta.gen";
-	// private static final String TS_ROOT =
-	// "c:/bitBucket/simeta/simeta-meta/simeta-client-gen/src/";
 
 	/**
 	 *
@@ -85,11 +66,11 @@ public class Generator {
 	 * @throws Exception
 	 */
 	public static void main(final String[] args) throws Exception {
-		if (args.length == 4) {
-			generate(args[0], args[1], args[2], args[3]);
+		if (args.length == 3) {
+			generate(args[0], args[1], args[2]);
 			return;
 		}
-		generate(INPUT_ROOT, JAVA_ROOT, PACKAGE_NAME, TS_ROOT);
+		generate(INPUT_ROOT, JAVA_ROOT, PACKAGE_NAME);
 		// System.err.println(
 		// "Usage : java Generator.class resourceRootFolder tsFormFolder\n or
 		// \n"
@@ -128,40 +109,23 @@ public class Generator {
 	/**
 	 *
 	 * @param inputRootFolder folder where application.xlsx file, and spec folder
-	 *                        are located. e.g.
+	 *                        are located.
 	 * @param javaRootFolder  java source folder where the sources are to be
-	 *                        generated. null if java is not to be generated
+	 *                        generated.
 	 * @param javaRootPackage root
-	 * @param tsRootFolder    folder where generated ts files are to be saved. null
-	 *                        to not generate TS code.
 	 * @return true if all OK. false in case of any error.
 	 */
 	public static boolean generate(final String inputRootFolder, final String javaRootFolder,
-			final String javaRootPackage, final String tsRootFolder) {
-
-		if (javaRootFolder == null && tsRootFolder == null) {
-			logger.error("Neither javaRootFolder nor tsRootFolder is specified for generation. Nothing to generate");
-			return false;
-		}
+			final String javaRootPackage) {
 
 		/**
 		 * we need the folder to end with '/'
 		 */
 		String inputRoot = inputRootFolder.endsWith(FOLDER) ? inputRootFolder : inputRootFolder + FOLDER;
 
-		String javaRoot = null;
-		if (javaRootFolder != null) {
-			javaRoot = javaRootFolder.endsWith(FOLDER) ? javaRootFolder : javaRootFolder + FOLDER;
-			javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
-		}
-		String tsRoot = null;
-		if (tsRootFolder != null) {
-			tsRoot = tsRootFolder.endsWith(FOLDER)
-
-					? tsRootFolder
-					: tsRootFolder + FOLDER;
-		}
-		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage, tsRoot);
+		String javaRoot = javaRootFolder.endsWith(FOLDER) ? javaRootFolder : javaRootFolder + FOLDER;
+		javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
+		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage);
 		return gen.go();
 
 	}
@@ -174,12 +138,7 @@ public class Generator {
 	private final String inputRoot;
 	private final String javaOutputRoot;
 	private final String packageName;
-	private final String tsSrcFolder;
-	private final String tsLibFolder;
-	private final String tsFormFolder;
 	private final String sqlOutputRoot;
-	private final boolean toGenerateJava;
-	private final boolean toGenerateTs;
 
 	private boolean allOk = true;
 
@@ -189,23 +148,11 @@ public class Generator {
 	private ValueListMap valueLists;
 	private ValueSchemaMap valueSchemas;
 
-	private Generator(String inputRoot, String javaOutputRoot, String packageName, String tsSourceRoot) {
+	private Generator(String inputRoot, String javaOutputRoot, String packageName) {
 		this.inputRoot = inputRoot;
 		this.sqlOutputRoot = inputRoot + "dbSqls/";
 		this.javaOutputRoot = javaOutputRoot;
 		this.packageName = packageName;
-		this.toGenerateJava = javaOutputRoot != null;
-		if (tsSourceRoot == null) {
-			this.toGenerateTs = false;
-			this.tsSrcFolder = null;
-			this.tsLibFolder = null;
-			this.tsFormFolder = null;
-		} else {
-			this.toGenerateTs = true;
-			this.tsSrcFolder = tsSourceRoot;
-			this.tsLibFolder = tsSourceRoot + TS_FOLDER_LIB;
-			this.tsFormFolder = tsSourceRoot + TS_FOLDER_FORM;
-		}
 	}
 
 	private boolean go() {
@@ -253,41 +200,16 @@ public class Generator {
 			this.valueLists.init();
 		}
 
-		if (this.toGenerateTs) {
-			writeIndexTs();
-			this.accumulate(this.messages.generateTs(this.tsLibFolder));
-			this.accumulate(this.valueLists.generateTs(this.tsLibFolder));
-			this.accumulate(this.valueSchemas.generateTs(this.tsLibFolder));
-		}
+		// no java for messages
+		this.accumulate(this.messages.generateJava(this.javaOutputRoot, this.packageName));
+		this.accumulate(this.valueLists.generateJava(this.javaOutputRoot, this.packageName));
+		this.accumulate(this.valueSchemas.generateJava(this.javaOutputRoot, this.packageName));
 
-		if (this.toGenerateJava) {
-			// no java for messages
-			this.accumulate(this.messages.generateJava(this.javaOutputRoot, this.packageName));
-			this.accumulate(this.valueLists.generateJava(this.javaOutputRoot, this.packageName));
-			this.accumulate(this.valueSchemas.generateJava(this.javaOutputRoot, this.packageName));
-		}
+		this.generateRecords();
+		this.generateForms();
 
-		// exports and import are built to write into gen.ts
-		StringBuilder imports = new StringBuilder();
-		StringBuilder exports = new StringBuilder(
-				"\n\nexport type FormName = keyof typeof forms;\nexport const forms = {" + "");
-
-		this.generateRecords(exports, imports);
-		this.generateForms(exports, imports);
-
-		if (this.toGenerateTs) {
-			exports.setLength(exports.length() - 1); // remove the last comma
-			exports.append("\n} as const;\n");
-			imports.append(exports);
-
-			Util.writeOut(this.tsLibFolder + "forms.ts", imports.toString());
-			Util.writeOut(this.tsLibFolder + "gen.ts", GEN_FILE);
-		}
-
-		if (this.toGenerateJava) {
-			// this is generated at the end to ensure that the required Records are loaded..
-			this.accumulate(this.generateSqls());
-		}
+		// this is generated at the end to ensure that the required Records are loaded..
+		this.accumulate(this.generateSqls());
 		return this.allOk;
 	}
 
@@ -296,28 +218,18 @@ public class Generator {
 	}
 
 	private void createOutputFolders() {
-		if (this.toGenerateJava) {
-			for (final String folder : JAVA_FOLDERS) {
-				if (!ensureFolder(new File(this.javaOutputRoot + folder))) {
-					this.allOk = false;
-				}
-			}
-			if (!ensureFolder(new File(this.sqlOutputRoot))) {
+		for (final String folder : JAVA_FOLDERS) {
+			if (!ensureFolder(new File(this.javaOutputRoot + folder))) {
 				this.allOk = false;
 			}
-
 		}
-		if (this.toGenerateTs) {
-
-			for (final String folder : TS_FOLDERS) {
-				if (!ensureFolder(new File(this.tsSrcFolder + folder))) {
-					this.allOk = false;
-				}
-			}
+		if (!ensureFolder(new File(this.sqlOutputRoot))) {
+			this.allOk = false;
 		}
+
 	}
 
-	private void generateForms(StringBuilder exports, StringBuilder imports) {
+	private void generateForms() {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_FORM;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
@@ -362,19 +274,11 @@ public class Generator {
 			}
 
 			form.initialize(record);
-			if (this.toGenerateJava) {
-				form.generateJava(javaFolder, this.packageName);
-			}
-			if (this.toGenerateTs) {
-				boolean done = form.generateTs(this.tsFormFolder);
-				if (done) {
-					emitCommonFormTs(exports, imports, fn);
-				}
-			}
+			form.generateJava(javaFolder, this.packageName);
 		}
 	}
 
-	private void generateRecords(StringBuilder exports, StringBuilder imports) {
+	private void generateRecords() {
 		String folderName = this.inputRoot + Conventions.App.FOLDER_NAME_RECORD;
 		File folder = new File(folderName);
 		if (folder.exists() == false) {
@@ -389,9 +293,7 @@ public class Generator {
 		StringBuilder createSqls = new StringBuilder(CREATE_SQL_COMMENT);
 		StringBuilder dataSqls = new StringBuilder(DATA_SQL_COMMENT);
 
-		if (this.toGenerateJava) {
-			javaFolder = this.javaOutputRoot + Conventions.App.FOLDER_NAME_RECORD + '/';
-		}
+		javaFolder = this.javaOutputRoot + Conventions.App.FOLDER_NAME_RECORD + '/';
 
 		final Map<String, Record> subRecords = new HashMap<>();
 		final Map<String, ValueSchema> schemas = this.valueSchemas.getSchemas();
@@ -447,31 +349,9 @@ public class Generator {
 		}
 
 		for (Record record : this.records.values()) {
-			if (this.toGenerateJava) {
-				record.generateJava(javaFolder, this.packageName);
-				record.emitSql(createSqls, dataSqls);
-			}
-
-			if (this.toGenerateTs && record.isVisibleToClient) {
-				Form form = Form.fromRecord(record);
-				final boolean done = form.generateTs(this.tsFormFolder);
-				if (done) {
-					emitCommonFormTs(exports, imports, record.name);
-				}
-			}
+			record.generateJava(javaFolder, this.packageName);
+			record.emitSql(createSqls, dataSqls);
 		}
-		if (this.toGenerateJava) {
-			Util.writeOut(this.sqlOutputRoot + "createTables.sql", createSqls.toString());
-			Util.writeOut(this.sqlOutputRoot + "addData.sql", dataSqls.toString());
-		}
-	}
-
-	static private void emitCommonFormTs(StringBuilder exports, StringBuilder imports, String formName) {
-		// variable name is prefixed with _ to avoid clash with
-		// reserved words
-		imports.append("import { ").append(formName).append(" } from './form/").append(formName).append(".form';\n");
-
-		exports.append(formName).append(',');
 	}
 
 	private boolean generateSqls() {
@@ -512,18 +392,6 @@ public class Generator {
 
 		}
 		return true;
-	}
-
-	private static final String INDEX_TS = "export * from './lib/gen';";
-	private static final String INDEX_NAME = "index.ts";
-
-	private void writeIndexTs() {
-		/**
-		 * index in the root folder
-		 */
-		String f = this.tsSrcFolder + INDEX_NAME;
-		Util.writeOut(f, INDEX_TS);
-		logger.info("File {} generated", f);
 	}
 
 }

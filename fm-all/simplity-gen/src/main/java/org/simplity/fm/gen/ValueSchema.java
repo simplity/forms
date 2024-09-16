@@ -113,39 +113,6 @@ public class ValueSchema implements Util.IInitializer {
 		sbf.append(");");
 	}
 
-	private static final String BEG = "\n\t\t";
-	private static final char END = ',';
-
-	void emitTs(StringBuilder sbf) {
-		sbf.append("\n\t\"").append(this.name).append("\": {");
-
-		Util.addAttr(sbf, BEG, "name", this.name);
-		Util.addAttr(sbf, BEG, "valueType", this.valueType);
-		if (this.errorId != null && this.errorId.isEmpty() == false) {
-			Util.addAttr(sbf, BEG, "errorId", this.errorId);
-		}
-		if (this.regex != null && this.regex.isEmpty() == false) {
-			Util.addAttr(sbf, BEG, "regex", this.regex);
-		}
-		if (this.maxLength != 0) {
-			sbf.append(BEG).append("\"maxLength\": ").append(this.maxLength).append(END);
-		}
-		if (this.minLength != 0) {
-			sbf.append(BEG).append("\"minLength\": ").append(this.minLength).append(END);
-		}
-		if (this.maxValue != 0) {
-			sbf.append(BEG).append("\"maxValue\": ").append(this.maxValue).append(END);
-		}
-		if (this.minValue != 0) {
-			sbf.append(BEG).append("\"minValue\": ").append(this.minValue).append(END);
-		}
-		if (this.nbrDecimalPlaces != 0) {
-			sbf.append(BEG).append("\"nbrFractions\": ").append(this.nbrDecimalPlaces).append(END);
-		}
-		sbf.setLength(sbf.length() - 1);
-		sbf.append("\n\t}");
-	}
-
 	/**
 	 *
 	 * @return value-type as string

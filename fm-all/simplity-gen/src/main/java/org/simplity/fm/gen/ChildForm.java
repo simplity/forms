@@ -47,10 +47,8 @@ class ChildForm {
 	boolean isTable;
 	int index;
 
-	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields,
-			final int idx) {
-		sbf.append(P).append("ChildMetaData L").append(idx)
-				.append(" = new ChildMetaData(");
+	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final int idx) {
+		sbf.append(P).append("ChildMetaData L").append(idx).append(" = new ChildMetaData(");
 
 		sbf.append(Util.quotedString(this.linkName));
 		sbf.append(C).append(Util.quotedString(this.childFormName));
@@ -61,13 +59,11 @@ class ChildForm {
 		boolean linkExists = false;
 		if (this.parentLinkFields == null) {
 			if (this.childLinkFields != null) {
-				Form.logger.error(
-						"childLinkFields ignored as parentLinkFields not specified");
+				Form.logger.error("childLinkFields ignored as parentLinkFields not specified");
 			}
 		} else {
 			if (this.childLinkFields == null) {
-				Form.logger.error(
-						"parentLinkFields ignored as childLinkFieldsnot specified");
+				Form.logger.error("parentLinkFields ignored as childLinkFieldsnot specified");
 			} else {
 				linkExists = true;
 			}
@@ -106,43 +102,18 @@ class ChildForm {
 		return this.childFormName;
 	}
 
-	void emitTs(final StringBuilder sbf, String tabs) {
-		sbf.append(tabs).append("\"name\": ")
-				.append(Util.quotedString(this.linkName));
-		final String prefix = ',' + tabs;
-		sbf.append(prefix).append("\"formName\": ")
-				.append(Util.quotedString(this.childFormName));
-		sbf.append(prefix).append("\"isEditable\": ").append(this.isEditable);
-		sbf.append(prefix).append("\"isTable\": ").append(this.isTable);
-		sbf.append(prefix).append("\"label\":").append(
-				this.label == null ? "\"\"" : Util.quotedString(this.label));
-		sbf.append(prefix).append("\"minRows\": ").append(this.minRows);
-		sbf.append(prefix).append("\"maxRows\": ").append(this.maxRows);
-		if (this.errorId != null) {
-			sbf.append(prefix).append("\"errorId\": ")
-					.append(Util.quotedString(this.errorId));
-		}
-
-	}
-
 	/**
 	 * @param sbf
 	 */
 	void emitJavaGetSetter(final StringBuilder sbf) {
 		final String c = Util.toClassName(this.childFormName);
-		sbf.append("\n\n\t/** get form table for this linked form ").append(c)
-				.append(" **/");
-		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c)
-				.append("Fdt() {");
-		sbf.append("\n\t\treturn (").append(c).append("Fdt)this.linkedData[")
-				.append(this.index).append("];\n\t}");
+		sbf.append("\n\n\t/** get form table for this linked form ").append(c).append(" **/");
+		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c).append("Fdt() {");
+		sbf.append("\n\t\treturn (").append(c).append("Fdt)this.linkedData[").append(this.index).append("];\n\t}");
 
-		sbf.append("\n\n\t/** set form table for this linked form ").append(c)
-				.append(" **/");
-		sbf.append("\n\tpublic void set").append(c).append("Fdt(").append(c)
-				.append("Fdt fdt) {");
-		sbf.append("\n\t\t this.linkedData[").append(this.index).append("] = (")
-				.append(c).append("Fdt) fdt;\n\t}");
+		sbf.append("\n\n\t/** set form table for this linked form ").append(c).append(" **/");
+		sbf.append("\n\tpublic void set").append(c).append("Fdt(").append(c).append("Fdt fdt) {");
+		sbf.append("\n\t\t this.linkedData[").append(this.index).append("] = (").append(c).append("Fdt) fdt;\n\t}");
 
 	}
 }

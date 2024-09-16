@@ -71,18 +71,4 @@ class InterFieldValidation {
 		sbf.append(C).append("InterFieldValidationType." + Util.toClassName(this.validationType));
 		sbf.append(")");
 	}
-
-	/**
-	 * @param sbf
-	 */
-	public void emitTs(StringBuilder sbf) {
-		sbf.append("{type: '").append(this.validationType).append("', field1: '").append(this.field1)
-				.append("', field2: '").append(this.field2);
-		sbf.append("', messageId: '").append(this.messageId).append("', f1: '").append(this.field1);
-		sbf.append("', f2: '").append(this.field2).append("'");
-		if (this.onlyIfFieldValueEquals != null) {
-			sbf.append(", onlyIfFieldValueEquals: ").append(Util.quotedString(this.onlyIfFieldValueEquals));
-		}
-		sbf.append("}");
-	}
 }

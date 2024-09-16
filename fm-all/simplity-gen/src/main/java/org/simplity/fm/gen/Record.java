@@ -68,6 +68,7 @@ class Record {
 	 */
 	String name;
 	String nameInDb;
+	String validationFn;
 	boolean useTimestampCheck;
 	boolean isVisibleToClient;
 	// String customValidation;

@@ -48,17 +48,4 @@ class InclusivePair {
 		sbf.append(C).append(Util.quotedString(this.errorId));
 		sbf.append(")");
 	}
-
-	/**
-	 * @param sbf
-	 */
-	public void emitTs(final StringBuilder sbf) {
-		sbf.append("{\"type\": \"incl\", \"errorId\": \"").append(this.errorId)
-				.append("\", \"f1\": \"").append(this.field1);
-		sbf.append("\", \"f2\": \"").append(this.field2).append('"');
-		if (this.value1 != null && this.value1.isEmpty() == false) {
-			sbf.append(", \"value\":").append(Util.quotedString(this.value1));
-		}
-		sbf.append("}");
-	}
 }

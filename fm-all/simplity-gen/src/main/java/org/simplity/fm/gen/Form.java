@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,10 +76,7 @@ public class Form {
 
 		if (rec.keyFields != null) {
 			for (final Field f : rec.keyFields) {
-				final FieldType ct = f.fieldTypeEnum;
-				if (ct == FieldType.PrimaryKey || ct == FieldType.GeneratedPrimaryKey) {
-					this.keyFieldNames.add(f.name);
-				}
+				this.keyFieldNames.add(f.name);
 			}
 		}
 
@@ -134,7 +130,8 @@ public class Form {
 		 * protected static final String RECORD = "....";
 		 */
 		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
-		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.mainRecordName).append("\");");
+		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.mainRecordName)
+				.append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};
@@ -220,76 +217,4 @@ public class Form {
 		}
 		return indexes;
 	}
-
-	private static final char Q = '"';
-
-	boolean generateTs(String folderName) {
-		if (this.gotErrors) {
-			logger.error("Record {} is in error. TS code for form {} not generated", this.mainRecordName, this.name);
-			return false;
-		}
-
-		logger.info("TS for form {} being generated into folder {}", this.name, folderName);
-		final StringBuilder sbf = new StringBuilder();
-		sbf.append("export const ").append(this.name).append(" = {");
-		sbf.append("\n\t\"name\": \"").append(this.mainRecordName).append("\",");
-		sbf.append("\n\t\"operations\": {");
-		if (this.operations == null || this.operations.length == 0) {
-			logger.warn(
-					"No operations are allowed for record {}. Client app will not be able to use auto-service for this record",
-					this.mainRecordName);
-		} else {
-			for (final String oper : this.operations) {
-				if (oper == null) {
-					logger.error("{} is not a valid form operation. skipped", oper);
-				} else {
-					sbf.append("\n\t\t\"").append(oper).append("\": true,");
-				}
-			}
-			sbf.setLength(sbf.length() - 1); // removing the last comma
-		}
-		sbf.append("\n\t},");
-
-		sbf.append("\n\t\"fields\": {");
-		final StringBuilder names = new StringBuilder();
-		for (final Field field : this.record.fields) {
-			field.emitFormTs(sbf);
-			sbf.append(',');
-			names.append(Q).append(field.name).append(Q).append(',');
-		}
-		sbf.setLength(sbf.length() - 1);
-		names.setLength((names.length() - 1));
-		sbf.append("\n\t},");
-
-		sbf.append("\n\t\"fieldNames\": [").append(names.toString()).append("]");
-
-		Field[] keys = this.record.keyFields;
-		if (keys != null && (keys.length > 0)) {
-			// we generally have only one key field
-			sbf.append(",\n\t\"keyFields\": [\"").append(keys[0].name).append(Q);
-			for (int i = 1; i < keys.length; i++) {
-				sbf.append(",\"").append(keys[i].name).append(Q);
-			}
-			sbf.append("]");
-		}
-
-		if (this.childForms != null) {
-			sbf.append(",\n\t\"childForms\": {");
-			for (ChildForm cf : this.childForms) {
-				sbf.append("\n\t\t\"").append(cf.linkName).append("\": {");
-				cf.emitTs(sbf, "\n\t\t\t");
-				sbf.append("\n\t\t},");
-			}
-			sbf.setLength(sbf.length() - 1);
-			sbf.append("\n\t}");
-		}
-
-		sbf.append("\n}\n");
-
-		Util.writeOut(folderName + this.name + ".form.ts", sbf.toString());
-
-		return true;
-
-	}
-
 }

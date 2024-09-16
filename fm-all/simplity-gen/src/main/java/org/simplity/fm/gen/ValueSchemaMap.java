@@ -143,29 +143,6 @@ public class ValueSchemaMap {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @param folder
-	 */
-	public boolean generateTs(final String folder) {
-		logger.info("Generating TS code for value schemas ...");
-		final StringBuilder sbf = new StringBuilder();
-		sbf.append("\nexport const valueSchemas = {");
-
-		for (ValueSchema vs : this.valueSchemas.values()) {
-			vs.emitTs(sbf);
-			sbf.append(',');
-		}
-		sbf.setLength(sbf.length() - 1);
-		sbf.append("\n}\n");
-
-		String fn = folder + "valueSchemas.ts";
-		Util.writeOut(fn, sbf.toString());
-		logger.info("File {} generated", fn);
-		return true;
-
-	}
-
 	public void init() {
 		if (this.valueSchemas.size() == 0) {
 			logger.warn("No Value Schemas are defined for this project");

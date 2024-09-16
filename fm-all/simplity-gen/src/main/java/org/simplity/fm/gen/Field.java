@@ -153,18 +153,6 @@ class Field implements Cloneable {
 		sbf.append(')');
 	}
 
-	public void emitTs(final StringBuilder def, final String indent) {
-
-		if (this.isRequired) {
-			def.append(indent).append("\"isRequired\": true,");
-		}
-
-		if (this.listName != null) {
-			def.append(indent).append("\"listName\": ").append(Util.quotedString(this.listName)).append(COMA);
-		}
-
-	}
-
 	/**
 	 * @return
 	 */
@@ -179,53 +167,6 @@ class Field implements Cloneable {
 	static final String BEGIN = "\n\t\t\t";
 	static final String END = "\",";
 	static final char COMA = ',';
-
-	/**
-	 * @param sbf
-	 */
-	public void emitFormTs(final StringBuilder sbf) {
-		sbf.append("\n\t\t\"").append(this.name).append("\": {");
-		sbf.append(BEGIN).append("\"name\": \"").append(this.name).append(END);
-		sbf.append(BEGIN).append("\"valueSchema\": \"").append(this.valueSchema).append(END);
-		sbf.append(BEGIN).append("\"valueType\": \"").append(this.schemaInstance.getValueType()).append(END);
-		sbf.append(BEGIN).append("\"isRequired\": ").append(this.isRequired).append(COMA);
-		String lbl = this.label;
-		if (lbl == null || lbl.isEmpty()) {
-			lbl = Util.toLabel(this.name);
-		}
-		sbf.append(BEGIN).append("\"compType\":\"field\",");
-		Util.addAttr(sbf, BEGIN, "label", lbl);
-		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);
-		Util.addAttr(sbf, BEGIN, "icon", this.icon);
-		Util.addAttr(sbf, BEGIN, "suffix", this.fieldSuffix);
-		Util.addAttr(sbf, BEGIN, "prefix", this.fieldPrefix);
-		Util.addAttr(sbf, BEGIN, "placeHolder", this.placeHolder);
-		Util.addAttr(sbf, BEGIN, "hint", this.description);
-		Util.addAttr(sbf, BEGIN, "messageId", this.messageId);
-		Util.addAttr(sbf, BEGIN, "listName", this.listName);
-		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
-		if (this.visibleInList) {
-			sbf.append(BEGIN).append("\"visibleInList\" : true,");
-		}
-		if (this.visibleInSave) {
-			sbf.append(BEGIN).append("\"visibleInSave\" : true,");
-		}
-		String renderingType = "hidden";
-		if (this.fieldTypeEnum == FieldType.PrimaryKey || this.fieldTypeEnum == FieldType.OptionalData
-				|| this.fieldTypeEnum == FieldType.RequiredData) {
-			if (this.listName != null) {
-				renderingType = "select";
-			} else if (this.renderAs != null) {
-				renderingType = this.renderAs;
-			} else {
-				renderingType = this.schemaInstance.getRenderType();
-			}
-		}
-		Util.addAttr(sbf, BEGIN, "renderAs", renderingType);
-
-		sbf.setLength(sbf.length() - 1);
-		sbf.append("\n\t\t}");
-	}
 
 	/**
 	 * not all fields are used for data-sql. caller may use the returned value to

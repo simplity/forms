@@ -14,14 +14,12 @@ import org.simplity.fm.gen.Util.IInitializer;
 public class ValueList implements IInitializer {
 	private static final String LIST_SIMPLE = "simple";
 	private static final String LIST_KEYED = "keyed";
-	private static final String LIST_RUN_TIME = "runtime";
 	private static final String C = ", ";
 	private static final String WHERE = " WHERE ";
 	private static final String AND = " AND ";
 
 	private String name;
 	private String listType; // simple, keyed or runtime
-	private boolean okToCache;
 	private Pair[] list; // in case it is a simple list
 	private Map<String, Pair[]> keys; // in case this is a keyed-list
 
@@ -43,21 +41,9 @@ public class ValueList implements IInitializer {
 	private String parentIdColumnName;
 	private String parentNameColumnName;
 
-	/**
-	 * synthetic
-	 */
-	private boolean isKeyed = false;
-	private boolean isRuntime = false;
-
 	@Override
 	public void initialize(String nam, int idx) {
 		this.name = nam;
-		if (this.listType.equals(LIST_KEYED) || this.keyColumn != null) {
-			this.isKeyed = true;
-		}
-		if (this.listType.equals(LIST_RUN_TIME)) {
-			this.isRuntime = true;
-		}
 	}
 
 	/**
@@ -266,60 +252,5 @@ public class ValueList implements IInitializer {
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
-	}
-
-	private static final String T1 = "\n\t";
-	private static final String T2 = "\n\t\t";
-	private static final String T3 = "\n\t\t\t";
-	private static final String T4 = "\n\t\t\t\t";
-
-	/**
-	 * emit TS code for this list
-	 *
-	 * @param sbf
-	 * @return true if TS is emitted. False otherwise
-	 */
-	public boolean emitTs(StringBuilder sbf) {
-		sbf.append(T1).append('"').append(this.name).append("\": {");
-		sbf.append(T2).append("\"name\": \"").append(this.name).append("\",");
-		sbf.append(T2).append("\"isKeyed\": ").append(this.isKeyed).append(",");
-		sbf.append(T2).append("\"isRuntime\": ").append(this.isRuntime).append(",");
-		sbf.append(T2).append("\"okToCache\": ").append(this.okToCache).append(",");
-
-		if (this.listType.equals(LIST_SIMPLE)) {
-			sbf.append(T2).append("\"list\": [");
-			emitTsPairs(sbf, this.list, T3);
-			sbf.append(T2).append("]");
-		} else if (this.listType.equals(LIST_KEYED)) {
-			sbf.append(T2).append("\"keyedLists\": {");
-
-			for (final Map.Entry<String, Pair[]> entry : this.keys.entrySet()) {
-				sbf.append(T3).append('"').append(entry.getKey()).append("\": [");
-				emitTsPairs(sbf, entry.getValue(), T4);
-				sbf.append(T3).append("],");
-			}
-			sbf.setLength(sbf.length() - 1);
-			sbf.append(T2).append("}");
-		} else {
-			// nothing more for runtime list
-		}
-
-		sbf.append(T1).append("}");
-		return true;
-	}
-
-	private static void emitTsPairs(StringBuilder sbf, Pair[] pairs, String indent) {
-		for (final Pair p : pairs) {
-			sbf.append(indent).append('{');
-			sbf.append(indent).append("\t\"value\":");
-			if (p.value instanceof String) {
-				sbf.append(Util.escapeTs(p.value));
-			} else {
-				sbf.append(p.value);
-			}
-			sbf.append(',').append(indent).append("\t\"label\":").append(Util.quotedString(p.label));
-			sbf.append(indent).append("},");
-		}
-		sbf.setLength(sbf.length() - 1);
 	}
 }
