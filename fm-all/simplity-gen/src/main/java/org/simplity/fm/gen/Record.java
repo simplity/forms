@@ -128,7 +128,8 @@ class Record {
 			}
 		}
 
-		final boolean allFields = this.fieldNames.length == 1 && this.fieldNames[0].equals("*");
+		final boolean allFields = this.fieldNames == null
+				|| (this.fieldNames.length == 1 && this.fieldNames[0].equals("*"));
 		int nbrNewFields = this.additionalFields == null ? 0 : this.additionalFields.length;
 		int totalFields = (allFields ? mainRecord.fields.length : this.fieldNames.length) + nbrNewFields;
 
