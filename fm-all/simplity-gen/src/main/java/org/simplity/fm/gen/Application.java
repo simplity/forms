@@ -53,6 +53,7 @@ public class Application {
 	int maxLengthForTextField = TEXT_AREA_CUTOFF;
 	String tenantFieldName;
 	String tenantNameInDb;
+	DbTypes dbTypes;
 
 	/**
 	 * to be called after loading it, before using it

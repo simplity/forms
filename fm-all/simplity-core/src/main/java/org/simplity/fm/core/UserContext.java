@@ -40,11 +40,10 @@ import org.simplity.fm.core.data.RecordOverride;
 public class UserContext {
 
 	/**
-	 * userId for whom this context is created. not-null non-empty. If this is
-	 * for a guest, the proposed design is that the app has the concept of a
-	 * guest
+	 * userId for whom this context is created. not-null non-empty. If this is for a
+	 * guest, the proposed design is that the app has the concept of a guest.
 	 */
-	protected final String userId;
+	protected final long userId;
 
 	/**
 	 * tenant id, if the app has such a concept
@@ -72,7 +71,7 @@ public class UserContext {
 	 *
 	 * @param userId
 	 */
-	public UserContext(final String userId) {
+	public UserContext(final long userId) {
 		this.userId = userId;
 	}
 
@@ -80,7 +79,7 @@ public class UserContext {
 	 *
 	 * @return the ID of the user to whom this session belongs to
 	 */
-	public String getUserId() {
+	public long getUserId() {
 		return this.userId;
 	}
 
@@ -94,12 +93,12 @@ public class UserContext {
 
 	/**
 	 *
-	 * @param id
-	 *            non-null, the right type, typically long
+	 * @param id non-null, the right type, typically long
 	 */
 	public void setTenantId(Object id) {
 		this.tenantId = id;
 	}
+
 	/**
 	 * to be invoked by the extended class to cache the form/record overrides
 	 */
@@ -124,13 +123,12 @@ public class UserContext {
 	/**
 	 *
 	 * @param recordName
-	 * @return null if this is not if overridden in the current context.
-	 *         overrideId if present.
+	 * @return null if this is not if overridden in the current context. overrideId
+	 *         if present.
 	 *
 	 */
 	public String getRecordOverrideId(final String recordName) {
-		if (this.recordOverrides != null
-				&& this.recordOverrides.contains(recordName)) {
+		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
 			return this.overrideId;
 		}
 		return null;
@@ -139,12 +137,10 @@ public class UserContext {
 	/**
 	 *
 	 * @param formName
-	 * @return id with which this form is overridden. null if it is not
-	 *         overridden.
+	 * @return id with which this form is overridden. null if it is not overridden.
 	 */
 	public String getFormOverrideId(final String formName) {
-		if (this.formOverrides != null
-				&& this.formOverrides.contains(formName)) {
+		if (this.formOverrides != null && this.formOverrides.contains(formName)) {
 			return this.overrideId;
 		}
 		return null;
@@ -159,11 +155,11 @@ public class UserContext {
 	public RecordOverride getRecordOverride(final String recordName) {
 		return OverrideUtil.getRecord(this.overrideId, recordName);
 	}
+
 	/**
 	 * save a jobId in the context
 	 *
-	 * @param jobId
-	 *            must be a valid jobId returned by the JobManager
+	 * @param jobId must be a valid jobId returned by the JobManager
 	 */
 	public void addJob(final String jobId) {
 		if (this.jobs == null) {

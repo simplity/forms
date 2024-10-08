@@ -352,6 +352,12 @@ public class Generator {
 			record.generateJava(javaFolder, this.packageName);
 			record.emitSql(createSqls, dataSqls);
 		}
+
+		/*
+		 * write create and data sqls
+		 */
+		Util.writeOut(this.sqlOutputRoot + "createTables.sql", createSqls.toString());
+		Util.writeOut(this.sqlOutputRoot + "dataTemplate.sql", dataSqls.toString());
 	}
 
 	private boolean generateSqls() {

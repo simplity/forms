@@ -227,7 +227,7 @@ class App implements IApp {
 		try {
 
 			UserContext utx = null;
-			String userId = null;
+			long userId = 0;
 			String sessionId = inData.getString(TAG_SESSION_ID);
 			if (sessionId != null && sessionId.isEmpty()) {
 				sessionId = null;
@@ -241,7 +241,7 @@ class App implements IApp {
 			if (sessionId != null) {
 				utx = this.cache.get(sessionId);
 				if (utx == null) {
-					logger.info("SessionId {} not found in cache. May be time-out", sessionId);
+					logger.info("SessionId {} not found in cache. May be timed-out", sessionId);
 					sessionId = null;
 				}
 			}
@@ -251,6 +251,7 @@ class App implements IApp {
 			} else {
 				userId = utx.getUserId();
 				ctx = this.contextFactory.newContext(utx, outData);
+				logger.info("Session for user-id {} retrieved", userId);
 			}
 
 			IService service = this.compProvider.getService(serviceName, ctx);
@@ -259,7 +260,7 @@ class App implements IApp {
 				return writeErrorResponse(RequestStatus.NoSuchService, writer);
 			}
 
-			if (service.serveGuests() == false && userId == null) {
+			if (service.serveGuests() == false && userId == 0) {
 				return writeErrorResponse(RequestStatus.SessionRequired, writer);
 			}
 
@@ -279,7 +280,7 @@ class App implements IApp {
 			ctx.setValue(Conventions.Http.CLIENT_IP_FIELD_NAME, ip);
 			ctx.setValue(Conventions.Http.SESSION_ID_FIELD_NAME, sessionId);
 
-			this.reqLogger.log(userId, serviceName, ip, inData.toString());
+			this.reqLogger.log("" + userId, serviceName, ip, inData.toString());
 
 			outData.addName(TAG_DATA).beginObject();
 			service.serve(ctx, data);
@@ -297,9 +298,10 @@ class App implements IApp {
 				if (sessionId != null) {
 					this.cache.remove(sessionId);
 				}
-				String token = UUID.randomUUID().toString();
-				this.cache.put(token, newCtx);
-				outData.addName(TAG_SESSION_ID).addValue(token);
+				sessionId = UUID.randomUUID().toString();
+				this.cache.put(sessionId, newCtx);
+				outData.addName(TAG_SESSION_ID).addValue(sessionId);
+				logger.info("Session created for user {}", newCtx.getUserId());
 			}
 
 			Message[] messages = ctx.getMessages();

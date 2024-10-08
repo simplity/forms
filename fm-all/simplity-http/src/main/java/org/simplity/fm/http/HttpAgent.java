@@ -161,7 +161,14 @@ class HttpAgent {
 	private static int toHttpStatus(RequestStatus status) {
 		switch (status) {
 		case CompletedWithErrors:
-			return Conventions.Http.STATUS_SERVICE_FAILED;
+			/*
+			 * After much debate, we decided to use 200/allOk That is because this status is
+			 * at the protocol level. As far as the protocol us concerned, the communication
+			 * was a success. It is a matter between the two Apps that the service execution
+			 * indicated an error for the client-app
+			 */
+			// return Conventions.Http.STATUS_SERVICE_FAILED;
+			return Conventions.Http.STATUS_ALL_OK;
 		case ServiceNameRequired:
 			return Conventions.Http.STATUS_INVALID_DATA;
 		case InvalidDataFormat:

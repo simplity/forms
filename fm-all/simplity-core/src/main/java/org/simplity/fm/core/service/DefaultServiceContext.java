@@ -91,13 +91,15 @@ public class DefaultServiceContext implements IServiceContext {
 
 	@Override
 	public Object getUserId() {
-		checkCtx();
+		this.checkCtx();
 		return this.userId;
 	}
 
-	private static void checkCtx() {
-		throw new ApplicationError(
-				"Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
+	private void checkCtx() {
+		if (this.currentUtx == null) {
+			throw new ApplicationError(
+					"Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
+		}
 	}
 
 	@Override
@@ -263,7 +265,7 @@ public class DefaultServiceContext implements IServiceContext {
 
 	@Override
 	public UserContext getCurrentUserContext() {
-		checkCtx();
+		this.checkCtx();
 		return this.currentUtx;
 	}
 
