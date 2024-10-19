@@ -411,7 +411,7 @@ public abstract class DbRecord extends Record {
 			final DbRecord rec = DbRecord.this.newInstance();
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
-				logger.error("Error while parsing filter conditions from th einput payload");
+				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
 			final Object[][][] result = new Object[1][][];

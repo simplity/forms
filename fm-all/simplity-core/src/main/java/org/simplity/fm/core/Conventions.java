@@ -204,19 +204,24 @@ public class Conventions {
 		 * number of rows of data (expected or delivered)
 		 */
 		public static final String TAG_MAX_ROWS = "maxRows";
-		/**
-		 * filter conditions
-		 */
-		public static final String TAG_CONDITIONS = "conditions";
 
 		/**
-		 * filter sort order. "sort" : {"field1":"asc/desc", "field2"...}
+		 * request object may contain an array of filter conditions with tag filterBy
+		 * e.g. "filterBy":[{"field": "field1"....}
 		 */
-		public static final String TAG_SORT = "sort";
+		public static final String TAG_FILTERS = "filters";
+
+		/**
+		 * filter sort order. "sortBy" : [{"field":"field1", "descending": true...}
+		 */
+		public static final String TAG_SORT_BY = "sortBy";
+		public static final String TAG_SORT_BY_FIELD = "field";
+		public static final String TAG_SORT_BY_DESCENDING = "descending";
 		/**
 		 * field/tag name for filter condition
 		 */
-		public static final String TAG_FILTER_COMP = "comp";
+		public static final String TAG_FILTER_FIELD = "field";
+		public static final String TAG_FILTER_COMPARATOR = "comparator";
 		/**
 		 * field/tag name for filter value
 		 */
@@ -224,7 +229,7 @@ public class Conventions {
 		/**
 		 * field/tag name for filter to-value in case the comparator is between
 		 */
-		public static final String TAG_FILTER_VALUE_TO = "toValue";
+		public static final String TAG_FILTER_TO_VALUE = "toValue";
 		/**
 		 * default MAX nbr rows
 		 */
