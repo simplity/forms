@@ -206,6 +206,11 @@ public class Conventions {
 		public static final String TAG_MAX_ROWS = "maxRows";
 
 		/**
+		 * while requesting a filter, client may specify the name of the table to be
+		 * responded with
+		 */
+		public static final String TAG_TABLE_NAME = "tableName";
+		/**
 		 * request object may contain an array of filter conditions with tag filterBy
 		 * e.g. "filterBy":[{"field": "field1"....}
 		 */
@@ -214,9 +219,13 @@ public class Conventions {
 		/**
 		 * filter sort order. "sortBy" : [{"field":"field1", "descending": true...}
 		 */
-		public static final String TAG_SORT_BY = "sortBy";
+		public static final String TAG_SORTS = "sorts";
 		public static final String TAG_SORT_BY_FIELD = "field";
 		public static final String TAG_SORT_BY_DESCENDING = "descending";
+		/**
+		 * fields to be included in the selected rows for a filter request
+		 */
+		public static final String TAG_FIELDS = "fields";
 		/**
 		 * field/tag name for filter condition
 		 */
@@ -460,6 +469,11 @@ public class Conventions {
 	 *
 	 */
 	public class Db {
+		/**
+		 * this is the max number of rows returned to the client on a filter request.
+		 * This is a safety mechanism. TODO: make this configurable
+		 */
+		public static final int MAX_ROWS_TO_FILTER = 10000;
 		/**
 		 * We strongly recommend treating null in db as empty string in the programming
 		 * world, there by reducing possible null-pointer exceptions.

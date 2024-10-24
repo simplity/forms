@@ -146,39 +146,47 @@ public interface IServiceContext {
 
 	/**
 	 *
-	 * serialize this data as response. Note that this can be called only once with
-	 * success. any subsequent call will result an ApplicationError() exception.
-	 * Also, this cannot be called after a call to getSerializer() is called
+	 * serialize this tabular data as the response. Note that this can be called
+	 * only once with success. any subsequent call will result an ApplicationError()
+	 * exception. Also, this cannot be called after a call to getSerializer() is
+	 * called.
+	 * 
+	 * Response will be like {tableName: [[...]...]}
 	 *
+	 * @param tableName
 	 * @param fields
-	 * @param objects
+	 * @param rows
 	 */
-	void setAsResponse(Field[] fields, Object[][] objects);
+	void setAsResponse(String tableName, Field[] fields, Object[][] rows);
 
 	/**
-	 * serialize this dbTAble as the response
+	 * serialize this dbTable as the response.
+	 * 
+	 * Response will be like {tableName: [[...]...]}
 	 *
+	 * @param tableName
 	 * @param table
 	 */
-	void setAsResponse(final DbTable<?> table);
+	void setAsResponse(String tableName, final DbTable<?> table);
+
+	/**
+	 * Response is composed as serialized header with childName: table[][] added to
+	 * it
+	 *
+	 * @param header
+	 * @param childName
+	 * @param table
+	 */
+	void setAsResponse(Record header, String childName, DbTable<?> table);
 
 	/**
 	 * set a header-lines data structure as response
 	 *
 	 * @param header
 	 * @param childName
-	 * @param lines
+	 * @param rows
 	 */
-	void setAsResponse(Record header, String childName, DbTable<?> lines);
-
-	/**
-	 * set a header-lines data structure as response
-	 *
-	 * @param header
-	 * @param childName
-	 * @param lines
-	 */
-	void setAsResponse(Record header, String childName, List<? extends Record> lines);
+	void setAsResponse(Record header, String childName, List<? extends Record> rows);
 
 	/**
 	 *

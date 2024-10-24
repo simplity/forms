@@ -357,7 +357,7 @@ public abstract class Form<T extends Record> {
 
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
-						filter.getWhereParamValues(), filter.getWhereParamTypes());
+						filter.getWhereParamValues(), filter.getWhereParamTypes(), null);
 				/*
 				 * instead of storing data and then serializing it, we have designed this
 				 * service to serialize data then-and-there

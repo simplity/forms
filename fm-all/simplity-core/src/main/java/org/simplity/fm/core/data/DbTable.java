@@ -33,8 +33,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * to provide db/persistence related functionalities
  *
  * @author simplity.org
- * @param <T>
- *            DbRecord rows this class is to contain
+ * @param <T> DbRecord rows this class is to contain
  *
  */
 public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
@@ -51,22 +50,24 @@ public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
 	}
 
 	/**
-	 * To be used by utility programs. End-programmers should not use as this is
-	 * not type-safe. ENd-programmers should use FilterSqls instead
+	 * To be used by utility programs. End-programmers should not use as this is not
+	 * type-safe. End-programmers should use FilterSqls instead
 	 *
 	 * @param handle
 	 * @param whereClauseStartingWithWhere
 	 * @param parameterValues
 	 * @param parameterTypes
+	 * @param fieldNames                   optional names of columns to be selected.
+	 *                                     Assumed that the names are validated by
+	 *                                     the caller. null implies select all
+	 *                                     columns
 	 * @return true if at least row is filtered. false if no rows.
 	 * @throws SQLException
 	 */
-	public boolean filter(final IReadonlyHandle handle,
-			final String whereClauseStartingWithWhere,
-			final Object[] parameterValues, final ValueType[] parameterTypes)
-			throws SQLException {
-		this.rows = this.dbRecord.dba.filter(handle,
-				whereClauseStartingWithWhere, parameterValues, parameterTypes);
+	public boolean filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
+			final Object[] parameterValues, final ValueType[] parameterTypes, String[] fieldNames) throws SQLException {
+		this.rows = this.dbRecord.dba.filter(handle, whereClauseStartingWithWhere, parameterValues, parameterTypes,
+				fieldNames);
 		return this.rows.size() > 0;
 	}
 
@@ -74,48 +75,41 @@ public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
 	 * insert all rows into the db
 	 *
 	 * @param handle
-	 * @return number true if all rows were saved. false in case of any error,
-	 *         in which case the caller better roll-back the transaction rows
-	 *         saved
+	 * @return number true if all rows were saved. false in case of any error, in
+	 *         which case the caller better roll-back the transaction rows saved
 	 * @throws SQLException
 	 */
 	public boolean insert(final IReadWriteHandle handle) throws SQLException {
-		return this.dbRecord.dba.insertAll(handle,
-				this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.insertAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
 	/**
 	 * update all the rows into the data base
 	 *
 	 * @param handle
-	 * @return number true if all rows were saved. false in case of any error,
-	 *         in which case the caller better roll-back the transaction rows
-	 *         saved
+	 * @return number true if all rows were saved. false in case of any error, in
+	 *         which case the caller better roll-back the transaction rows saved
 	 * @throws SQLException
 	 */
 	public boolean update(final IReadWriteHandle handle) throws SQLException {
-		return this.dbRecord.dba.updateAll(handle,
-				this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.updateAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
 	/**
-	 * save the row into database. if the key is present, it is updated else it
-	 * is inserted
+	 * save the row into database. if the key is present, it is updated else it is
+	 * inserted
 	 *
 	 * @param handle
-	 * @return number true if all rows were saved. false in case of any error,
-	 *         in which case the caller better roll-back the transaction rows
-	 *         saved
+	 * @return number true if all rows were saved. false in case of any error, in
+	 *         which case the caller better roll-back the transaction rows saved
 	 * @throws SQLException
 	 */
 	public boolean save(final IReadWriteHandle handle) throws SQLException {
-		return this.dbRecord.dba.saveAll(handle,
-				this.rows.toArray(new Object[0][]));
+		return this.dbRecord.dba.saveAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
 	/**
-	 * fetch is used instead of get to avoid clash with getters in generated
-	 * classes
+	 * fetch is used instead of get to avoid clash with getters in generated classes
 	 *
 	 * @param idx
 	 * @return record at 0-based index. null if the index is not valid

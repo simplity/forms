@@ -175,13 +175,13 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Field[] fields, final Object[][] values) {
+	public void setAsResponse(final String tableName, final Field[] fields, final Object[][] values) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
 
-		this.outData.addName(Conventions.Request.TAG_LIST);
+		this.outData.addName(tableName);
 		this.outData.beginArray();
 
 		if (values != null && values.length > 0) {
@@ -194,18 +194,18 @@ public class DefaultServiceContext implements IServiceContext {
 
 	/**
 	 * set this data table as the response. Note that the response would be like
-	 * {"list":[{}...]} that is the standard response for a list/filter request
+	 * {"tableName":[{}...]} that is the standard response for a list/filter request
 	 *
 	 * @param table
 	 */
 	@Override
-	public void setAsResponse(final DbTable<?> table) {
+	public void setAsResponse(final String tableName, final DbTable<?> table) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
 		}
 		logger.info("Setting table as list inside the response object");
-		this.outData.addName(Conventions.Request.TAG_LIST);
+		this.outData.addName(tableName);
 		this.outData.beginArray();
 
 		if (table != null) {

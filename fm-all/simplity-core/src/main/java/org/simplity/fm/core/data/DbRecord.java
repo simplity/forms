@@ -134,7 +134,7 @@ public abstract class DbRecord extends Record {
 	 */
 	public List<Object[]> filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
 			final Object[] values, ValueType[] types) throws SQLException {
-		return this.dba.filter(handle, whereClauseStartingWithWhere, values, types);
+		return this.dba.filter(handle, whereClauseStartingWithWhere, values, types, null);
 	}
 
 	/**
@@ -409,22 +409,29 @@ public abstract class DbRecord extends Record {
 		@Override
 		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
+			String tableName = payload.getString(Conventions.Request.TAG_TABLE_NAME);
+			if (tableName == null || tableName.isEmpty()) {
+				tableName = Conventions.Request.TAG_LIST;
+			}
+
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
 				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
+
 			final Object[][][] result = new Object[1][][];
+
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
-						filter.getWhereParamValues(), filter.getWhereParamTypes());
+						filter.getWhereParamValues(), filter.getWhereParamTypes(), filter.getColumnNames());
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				}
 				result[0] = list.toArray(new Object[0][]);
 			});
 
-			ctx.setAsResponse(rec.fetchFields(), result[0]);
+			ctx.setAsResponse(tableName, rec.fetchFields(), result[0]);
 		}
 
 	}

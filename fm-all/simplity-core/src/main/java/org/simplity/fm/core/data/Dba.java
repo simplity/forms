@@ -295,12 +295,13 @@ public class Dba {
 		}
 
 		// sql parameters from row-data
-		Object[] params = copyFromRow(row, this.whereIndexes);
+		Object[] params = copyFromRow(row, this.whereIndexes, null);
 
 		Object[] result = handle.read(this.selectClause + ' ' + this.whereClause, params, this.whereTypes,
 				this.selectTypes);
 		// copy selected fields into row-data
-		return this.copySelectedValues(result, row);
+		copyFromRow(result, this.selectIndexes, row);
+		return true;
 	}
 
 	/**
@@ -319,29 +320,77 @@ public class Dba {
 	 *                                     objects we use: String, Long, Double,
 	 *                                     Boolean, LocalDate, Instant
 	 * @param parameterTypes               value types of the values
+	 * @param fieldNames                   optional names of columns to be selected.
+	 *                                     Assumed that the names are validated by
+	 *                                     the caller. null implies select all
+	 *                                     columns
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
 	List<Object[]> filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
-			final Object[] parameterValues, final ValueType[] parameterTypes) throws SQLException {
+			final Object[] parameterValues, final ValueType[] parameterTypes, String[] fieldNames) throws SQLException {
 
+		final List<Object[]> rows = new ArrayList<>();
+
+		int[] indexes = this.selectIndexes;
 		String sql = this.selectClause;
+
+		if (fieldNames != null && fieldNames.length > 0) {
+			int nbrCols = fieldNames.length;
+			StringBuilder select = new StringBuilder("SELECT ");
+			indexes = new int[nbrCols];
+			int idx = 0;
+			for (String name : fieldNames) {
+				DbField f = this.getField(name);
+				if (f != null) {
+					String colName = f.getColumnName();
+					if (colName != null) {
+						select.append(colName).append(", ");
+						indexes[idx] = f.getIndex();
+						idx++;
+						continue;
+					}
+				}
+				logger.warn(
+						"{} is not a column in the table/view {}. Field omitted from the columns to be filtered for the record {} ",
+						name, this.nameInDb, name);
+			}
+
+			if (idx == 0) {
+				logger.error(
+						"All fields marked for selection are invalid for the filter operation. Filter process aborted");
+				return rows;
+			}
+			if (idx < nbrCols) {
+				indexes = Arrays.copyOf(indexes, idx);
+			}
+			select.setLength(select.length() - 2);
+			select.append(" FROM ").append(this.nameInDb);
+
+			sql = this.makeSelect(fieldNames);
+		}
+
 		if (whereClauseStartingWithWhere != null) {
 			sql += ' ' + whereClauseStartingWithWhere;
 		}
 
-		final int nbrFields = this.dbFields.length;
-		final List<Object[]> rows = new ArrayList<>();
-
+		final int[] finalIndexes = indexes;
 		handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes, outputRow -> {
-			final Object[] row = new Object[nbrFields];
-			Dba.this.copySelectedValues(outputRow, row);
-			rows.add(row);
+			rows.add(copyFromRow(outputRow, finalIndexes, null));
 			return true;
-
 		});
 
 		return rows;
+	}
+
+	private String makeSelect(String[] names) {
+		StringBuilder select = new StringBuilder("SELECT ");
+		for (String name : names) {
+			select.append(name).append(", ");
+		}
+		select.setLength(select.length() - 2);
+		select.append(" FROM ").append(this.nameInDb);
+		return select.toString();
 	}
 
 	/**
@@ -386,7 +435,7 @@ public class Dba {
 			return notAllowed(IoType.Create);
 		}
 
-		final Object[] params = copyFromRow(rowToInsert, this.insertIndexes);
+		final Object[] params = copyFromRow(rowToInsert, this.insertIndexes, null);
 		if (this.generatedColumnName == null) {
 			return handle.write(this.insertClause, params, this.insertTypes) > 0;
 
@@ -426,7 +475,7 @@ public class Dba {
 			return notAllowed(IoType.Update);
 		}
 
-		final Object[] params = copyFromRow(rowToUpdate, this.updateIndexes);
+		final Object[] params = copyFromRow(rowToUpdate, this.updateIndexes, null);
 
 		return handle.write(this.updateClause, params, this.updateTypes) > 0;
 
@@ -447,7 +496,7 @@ public class Dba {
 			return notAllowed(IoType.Delete);
 		}
 
-		final Object[] params = copyFromRow(rowToDelete, this.keyIndexes);
+		final Object[] params = copyFromRow(rowToDelete, this.keyIndexes, null);
 		return handle.write(this.deleteClause, params, this.keyTypes) > 0;
 
 	}
@@ -678,20 +727,24 @@ public class Dba {
 	}
 
 	/**
-	 * copy object values from a row of data to parameters based on indexes
+	 * copy object values from a source of data to a target based on the mapped
+	 * indexes. that is, the source has the data for the target, but their positions
+	 * may be different.
 	 *
-	 * @param row     row data for this record
+	 * @param source  row data for this record
 	 * @param indexes row elements to be copied
-	 * @return inputParams from a select statement
+	 * @param target  optional. If specified, it must be of the right size. else a
+	 *                new one is created
+	 * @return copy of the source. target if it were non-null.
 	 */
-	private static Object[] copyFromRow(Object[] row, int[] indexes) {
-		Object[] params = new Object[indexes.length];
+	private static Object[] copyFromRow(Object[] source, int[] indexes, Object[] target) {
+		Object[] row = target == null ? new Object[indexes.length] : target;
 
 		for (int i = 0; i < indexes.length; i++) {
-			params[i] = row[indexes[i]];
+			row[i] = source[indexes[i]];
 		}
 
-		return params;
+		return row;
 	}
 
 	/**
@@ -712,25 +765,6 @@ public class Dba {
 			}
 		}
 		return params;
-	}
-
-	/**
-	 * copy result of a select into the values for this record
-	 *
-	 * @param result
-	 * @param row
-	 * @return true if values are copied. false if result is null
-	 */
-	private boolean copySelectedValues(Object[] result, Object[] row) {
-		if (result == null) {
-			return false;
-		}
-
-		for (int i = 0; i < result.length; i++) {
-			row[this.selectIndexes[i]] = result[i];
-		}
-
-		return true;
 	}
 
 	private void copyKeys(Object[][] rows, long[] keys) {

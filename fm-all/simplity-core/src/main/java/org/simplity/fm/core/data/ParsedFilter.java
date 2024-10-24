@@ -57,12 +57,14 @@ class ParsedFilter {
 	final private String whereClause;
 	final private Object[] whereParamValues;
 	final private ValueType[] whereParamTypes;
+	final private String[] columnNames;
 
 	ParsedFilter(final String whereClauseStartingWithWhere, final Object[] whereParamValues,
-			ValueType[] whereParamTypes) {
+			ValueType[] whereParamTypes, String[] columnNames) {
 		this.whereClause = whereClauseStartingWithWhere;
 		this.whereParamValues = whereParamValues;
 		this.whereParamTypes = whereParamTypes;
+		this.columnNames = columnNames;
 	}
 
 	String getWhereClause() {
@@ -77,23 +79,67 @@ class ParsedFilter {
 		return this.whereParamTypes;
 	}
 
+	String[] getColumnNames() {
+		return this.columnNames;
+	}
+
 	static ParsedFilter parse(final IInputData inputObject, final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
-		IInputArray conditions = inputObject.getArray(Conventions.Request.TAG_FILTERS);
-		if (conditions == null || conditions.length() == 0) {
+
+		/*
+		 * create a look-up map of fields by fieldName
+		 */
+		final Map<String, DbField> map = new HashMap<>();
+		for (final DbField field : fields) {
+			map.put(field.getName(), field);
+		}
+
+		/*
+		 * let us start parsing the input, starting with max rows
+		 */
+		int maxRows = (int) inputObject.getInteger(Conventions.Request.TAG_MAX_ROWS);
+		if (maxRows != 0 && maxRows > 0 && maxRows <= Conventions.Db.MAX_ROWS_TO_FILTER) {
+			logger.info("Client requested a max of {} rows.", maxRows);
+		} else {
+			maxRows = Conventions.Db.MAX_ROWS_TO_FILTER;
+			logger.info("As per configuration, a max of {} rows will be selected.", maxRows);
+		}
+
+		/*
+		 * column names to select
+		 */
+		String[] columnNames = null;
+		final IInputArray fieldNames = inputObject.getArray(Conventions.Request.TAG_FIELDS);
+		if (fieldNames != null) {
+			final List<String> names = new ArrayList<>(fieldNames.length());
+			for (String name : fieldNames.toStringArray()) {
+				final DbField f = map.get(name);
+				if (f == null) {
+					logger.warn("{} is not a valid field in this record. Field dropped from selection list.");
+				} else {
+					names.add(f.getColumnName());
+				}
+			}
+			int n = names.size();
+			if (n > 0) {
+				columnNames = names.toArray(new String[0]);
+			}
+		}
+
+		/*
+		 * filters
+		 */
+		IInputArray filters = inputObject.getArray(Conventions.Request.TAG_FILTERS);
+		if (filters == null || filters.length() == 0) {
 			logger.warn("payload for filter has no conditions. All rows will be filtered");
-			conditions = null;
+			filters = null;
 		}
 
 		/*
 		 * sort order
 		 */
-		final IInputArray sorts = inputObject.getArray(Conventions.Request.TAG_SORT_BY);
+		final IInputArray sorts = inputObject.getArray(Conventions.Request.TAG_SORTS);
 
-		final int maxRows = (int) inputObject.getInteger(Conventions.Request.TAG_MAX_ROWS);
-		if (maxRows != 0) {
-			logger.info("Number of max rows is set to {}. It is ignored as of now.", maxRows);
-		}
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
 		final List<ValueType> types = new ArrayList<>();
@@ -107,16 +153,8 @@ class ParsedFilter {
 			types.add(ValueType.Integer);
 		}
 
-		/*
-		 * get a look-up map of fields by fieldName
-		 */
-		final Map<String, DbField> map = new HashMap<>();
-		for (final DbField field : fields) {
-			map.put(field.getName(), field);
-		}
-
-		if (conditions != null) {
-			final boolean ok = parseConditions(map, conditions, ctx, values, types, sql);
+		if (filters != null) {
+			final boolean ok = parseConditions(map, filters, ctx, values, types, sql);
 			if (!ok) {
 				return null;
 			}
@@ -152,20 +190,14 @@ class ParsedFilter {
 				}
 			}
 		}
-		/*
-		 * did we get anything at all?
-		 */
-		if (sql.length() == 0) {
-			logger.info("Filter has no conditions or sort orders");
-			return new ParsedFilter(null, null, null);
-		}
+		sql.append(" FETCH FIRST " + maxRows + " ROWS ONLY");
 
 		final String sqlText = sql.toString();
 		logger.info("filter clause is: {}", sqlText);
 		final int n = values.size();
 		if (n == 0) {
 			logger.info("Filter clause has no parameters.");
-			return new ParsedFilter(sqlText, null, null);
+			return new ParsedFilter(sqlText, null, null, columnNames);
 		}
 
 		final StringBuilder sbf = new StringBuilder();
@@ -173,7 +205,7 @@ class ParsedFilter {
 			sbf.append('\n').append(i).append("= ").append(values.get(i));
 		}
 		logger.info("Filter parameters : {}", sbf.toString());
-		return new ParsedFilter(sqlText, values.toArray(), types.toArray(new ValueType[0]));
+		return new ParsedFilter(sqlText, values.toArray(), types.toArray(new ValueType[0]), columnNames);
 	}
 
 	private static boolean reportError(final String error, final IServiceContext ctx) {
@@ -217,6 +249,7 @@ class ParsedFilter {
 			if (value == null) {
 				return reportError("value is missing for a filter condition at index " + i, ctx);
 			}
+
 			DbField field1 = parseField(value, fields);
 
 			String value2 = null;
@@ -288,6 +321,7 @@ class ParsedFilter {
 							ctx);
 				}
 			}
+
 			if (opertor == FilterOperator.Between) {
 				Object obj2 = null;
 				if (field2 != null) {
@@ -324,6 +358,7 @@ class ParsedFilter {
 			if (field1 == null) {
 				sql.append(QN);
 				values.add(obj);
+				types.add(vt);
 			} else {
 				sql.append(field1.getColumnName());
 			}
