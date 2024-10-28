@@ -25,8 +25,6 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.db.IReadWriteHandle;
-import org.simplity.fm.core.db.IReadonlyHandle;
-import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * Represents an array of <code>DbRecord</code>. This wrapper class is created
@@ -47,28 +45,6 @@ public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
 	public DbTable(final T dbRecord) {
 		super(dbRecord);
 		this.dbRecord = dbRecord;
-	}
-
-	/**
-	 * To be used by utility programs. End-programmers should not use as this is not
-	 * type-safe. End-programmers should use FilterSqls instead
-	 *
-	 * @param handle
-	 * @param whereClauseStartingWithWhere
-	 * @param parameterValues
-	 * @param parameterTypes
-	 * @param fieldNames                   optional names of columns to be selected.
-	 *                                     Assumed that the names are validated by
-	 *                                     the caller. null implies select all
-	 *                                     columns
-	 * @return true if at least row is filtered. false if no rows.
-	 * @throws SQLException
-	 */
-	public boolean filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
-			final Object[] parameterValues, final ValueType[] parameterTypes, String[] fieldNames) throws SQLException {
-		this.rows = this.dbRecord.dba.filter(handle, whereClauseStartingWithWhere, parameterValues, parameterTypes,
-				fieldNames);
-		return this.rows.size() > 0;
 	}
 
 	/**

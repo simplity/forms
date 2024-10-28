@@ -38,13 +38,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class used by dbRecord to parse input for a filter service
+ * A data structure with details like fields to select, filtering and sorting
+ * for a filter operation. Provides a utility method to parse these details from
+ * a JSON source
  *
  * @author simplity.org
  *
  */
-class ParsedFilter {
-	private static final Logger logger = LoggerFactory.getLogger(ParsedFilter.class);
+class FilterDetails {
+	private static final Logger logger = LoggerFactory.getLogger(FilterDetails.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
 	private static final String BETWEEN = " BETWEEN ";
@@ -57,14 +59,31 @@ class ParsedFilter {
 	final private String whereClause;
 	final private Object[] whereParamValues;
 	final private ValueType[] whereParamTypes;
-	final private String[] columnNames;
+	final private DbField[] outputFields;
 
-	ParsedFilter(final String whereClauseStartingWithWhere, final Object[] whereParamValues,
-			ValueType[] whereParamTypes, String[] columnNames) {
+	/**
+	 * @param whereClauseStartingWithWhere e.g. "WHERE a=? and b=?" null if all rows
+	 *                                     are to be read. Best practice is to use
+	 *                                     parameters rather than dynamic sql. That
+	 *                                     is you should use a=? rather than a = 32
+	 * @param whereParamValues             null or empty if where-clause is null or
+	 *                                     has no parameters. every element MUST be
+	 *                                     non-null and must be one of the standard
+	 *                                     objects we use String, Long, Double,
+	 *                                     Boolean, LocalDate, Instant
+	 * @param whereParamTypes              value types of whereParamValues array
+	 * @param outputFields                 optional. defaults to all fields. List of
+	 *                                     fields to be selected. Caller's
+	 *                                     responsibility to ensure that the fields
+	 *                                     indeed are columns in this table/view
+	 * 
+	 */
+	FilterDetails(final String whereClauseStartingWithWhere, final Object[] whereParamValues,
+			ValueType[] whereParamTypes, final DbField[] outputFields) {
 		this.whereClause = whereClauseStartingWithWhere;
 		this.whereParamValues = whereParamValues;
 		this.whereParamTypes = whereParamTypes;
-		this.columnNames = columnNames;
+		this.outputFields = outputFields;
 	}
 
 	String getWhereClause() {
@@ -79,11 +98,24 @@ class ParsedFilter {
 		return this.whereParamTypes;
 	}
 
-	String[] getColumnNames() {
-		return this.columnNames;
+	/**
+	 * 
+	 * @return Fields to be selected for this filter. null implies sticking to
+	 *         standard select for this record/table
+	 */
+	DbField[] getOutputFields() {
+		return this.outputFields;
 	}
 
-	static ParsedFilter parse(final IInputData inputObject, final DbField[] fields, final DbField tenantField,
+	/**
+	 * 
+	 * @param inputObject JSON with all the required data
+	 * @param fields      all fields in the record
+	 * @param tenantField if the record is multi-tenant
+	 * @param ctx
+	 * @return Filter details that can be passed to Dba for a filter operation
+	 */
+	static FilterDetails parse(final IInputData inputObject, final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
 
 		/*
@@ -108,21 +140,21 @@ class ParsedFilter {
 		/*
 		 * column names to select
 		 */
-		String[] columnNames = null;
+		DbField[] outputFields = null;
 		final IInputArray fieldNames = inputObject.getArray(Conventions.Request.TAG_FIELDS);
 		if (fieldNames != null) {
-			final List<String> names = new ArrayList<>(fieldNames.length());
+			final List<DbField> fieldsList = new ArrayList<>(fieldNames.length());
 			for (String name : fieldNames.toStringArray()) {
 				final DbField f = map.get(name);
 				if (f == null) {
-					logger.warn("{} is not a valid field in this record. Field dropped from selection list.");
+					logger.warn("{} is not a valid field in this record. Field dropped from selection list.", name);
 				} else {
-					names.add(f.getColumnName());
+					fieldsList.add(f);
 				}
 			}
-			int n = names.size();
+			int n = fieldsList.size();
 			if (n > 0) {
-				columnNames = names.toArray(new String[0]);
+				outputFields = fieldsList.toArray(new DbField[0]);
 			}
 		}
 
@@ -197,7 +229,7 @@ class ParsedFilter {
 		final int n = values.size();
 		if (n == 0) {
 			logger.info("Filter clause has no parameters.");
-			return new ParsedFilter(sqlText, null, null, columnNames);
+			return new FilterDetails(sqlText, null, null, outputFields);
 		}
 
 		final StringBuilder sbf = new StringBuilder();
@@ -205,13 +237,12 @@ class ParsedFilter {
 			sbf.append('\n').append(i).append("= ").append(values.get(i));
 		}
 		logger.info("Filter parameters : {}", sbf.toString());
-		return new ParsedFilter(sqlText, values.toArray(), types.toArray(new ValueType[0]), columnNames);
+		return new FilterDetails(sqlText, values.toArray(), types.toArray(new ValueType[0]), outputFields);
 	}
 
-	private static boolean reportError(final String error, final IServiceContext ctx) {
+	private static void reportError(final String error, final IServiceContext ctx) {
 		logger.error(error);
 		ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
-		return false;
 	}
 
 	private static boolean parseConditions(final Map<String, DbField> fields, final IInputArray inputArray,
@@ -227,50 +258,101 @@ class ParsedFilter {
 		 */
 
 		int i = -1;
+		boolean allOk = true;
 		for (IInputData c : inputArray.toDataArray()) {
 			i++;
+
+			/*
+			 * Do we all the inputs ?
+			 */
 			final String fieldName = c.getString(Conventions.Request.TAG_FILTER_FIELD);
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
-				return reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
+				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
+				allOk = false;
 			}
 
 			final String operatorText = c.getString(Conventions.Request.TAG_FILTER_COMPARATOR);
 			if (operatorText == null || operatorText.isEmpty()) {
-				return reportError("filter operator is missing at index " + i, ctx);
+				reportError("filter operator is missing at index " + i, ctx);
+				allOk = false;
 			}
 
 			final FilterOperator opertor = FilterOperator.parse(operatorText);
 			if (opertor == null) {
-				return reportError(operatorText + " is not a valid filter condition", ctx);
+				reportError(operatorText + " is not a valid filter condition", ctx);
+				allOk = false;
 			}
 
-			String value = c.getString(Conventions.Request.TAG_FILTER_VALUE);
-			if (value == null) {
-				return reportError("value is missing for a filter condition at index " + i, ctx);
+			String value1 = c.getString(Conventions.Request.TAG_FILTER_VALUE);
+			if (value1 == null) {
+				reportError("value is missing for a filter condition at index " + i, ctx);
+				allOk = false;
 			}
-
-			DbField field1 = parseField(value, fields);
 
 			String value2 = null;
-			DbField field2 = null;
 			if (opertor == FilterOperator.Between) {
 				value2 = c.getString(Conventions.Request.TAG_FILTER_TO_VALUE);
 				if (value2 == null) {
-					return reportError("toValue is missing for a filter condition at index " + i, ctx);
+					reportError("toValue is missing for a filter condition at index " + i, ctx);
+					allOk = false;
 				}
-				field2 = parseField(value2, fields);
 			}
 
-			final int idx = values.size();
-			if (idx > 0) {
-				sql.append(" and ");
+			/*
+			 * operator == null is unnecessary, but added to avoid null-check-errors
+			 */
+			if (!allOk || opertor == null || value1 == null) {
+				// skip even checking semantic errors because we start building the sql along
+				// with further checks..
+				continue;
 			}
 
-			sql.append(field.getColumnName());
+			String column = null;
+			ValueType vt = null;
+			if (field != null) {
+				column = field.getColumnName();
+				vt = field.getValueType();
+			}
+			if (column == null || vt == null) {
+				reportError("Filter field " + fieldName + " is not a column in the table/view", ctx);
+				allOk = false;
+				continue;
+			}
 
-			final ValueType vt = field.getValueType();
-			Object obj = null;
+			String column1 = parseField(value1, fields, vt, ctx);
+			if (column1 != null && column1.isEmpty()) {
+				allOk = false;
+				continue;
+			}
+
+			String column2 = null;
+			if (value2 != null) {
+				column2 = parseField(value2, fields, vt, ctx);
+				if (column2 != null && column2.isEmpty()) {
+					allOk = false;
+					continue;
+				}
+			}
+
+			/*
+			 * we do all our string comparisons as case-insensitive.
+			 * 
+			 * This is because, in the business context 'case' of a letter has no meaning,
+			 * but used for formatting.
+			 * 
+			 * e.g. John is john, and is also JOHN.
+			 * 
+			 * TODO: Of course, this argument is not valid for a field that is a computer
+			 * generated unique text code. We will offer some feature to handle this
+			 * exception
+			 */
+			if (vt == ValueType.Text) {
+				column = toUpper(column);
+				column1 = toUpper(column1);
+				column2 = toUpper(column2);
+			}
+			sql.append(column);
 
 			/*
 			 * complex ones first.. we have to append ? to sql, and add type and value to
@@ -278,28 +360,47 @@ class ParsedFilter {
 			 */
 			if ((opertor == FilterOperator.Contains || opertor == FilterOperator.StartsWith)) {
 				if (vt != ValueType.Text) {
-					return reportError("Condition " + opertor + " is not valid for field " + fieldName
+					reportError("Condition " + opertor + " is not valid for field " + fieldName
 							+ " which is of value type " + vt, ctx);
+					allOk = false;
+					continue;
+				}
+				if (column1 != null) {
+					reportError(
+							"Operator " + opertor.name() + " can not be used with a field as the second operand." + vt,
+							ctx);
+					allOk = false;
+					continue;
 				}
 
 				sql.append(LIKE);
-				value = escapeLike(value) + WILD_CARD;
+				value1 = escapeLike(value1) + WILD_CARD;
 				if (opertor == FilterOperator.Contains) {
-					value = WILD_CARD + value;
+					value1 = WILD_CARD + value1;
 				}
-				values.add(value);
+				values.add(value1);
 				types.add(vt);
 				continue;
 			}
 
 			if (opertor == FilterOperator.In) {
+				if (column1 != null) {
+					reportError(
+							"Operator " + opertor.name() + " can not be used with a field as the second operand." + vt,
+							ctx);
+					allOk = false;
+					continue;
+				}
 				sql.append(IN);
 				boolean firstOne = true;
-				for (final String part : value.split(",")) {
-					obj = vt.parse(part.trim());
+				boolean ok = true;
+				for (final String part : value1.split(",")) {
+					Object obj = vt.parse(part.trim());
 					if (obj == null) {
-						return reportError(
-								value + " is not a valid value for value type " + vt + " for field " + fieldName, ctx);
+						reportError(value1 + " is not a valid value for value type " + vt + " for field " + fieldName,
+								ctx);
+						ok = false;
+						break;
 					}
 					if (firstOne) {
 						sql.append(QN);
@@ -310,76 +411,115 @@ class ParsedFilter {
 					values.add(obj);
 					types.add(vt);
 				}
-				sql.append(')');
+				if (ok) {
+					sql.append(')');
+				} else {
+					allOk = false;
+				}
 				continue;
 			}
 
-			if (field1 == null) {
-				obj = vt.parse(value);
-				if (obj == null) {
-					return reportError(value + " is not a valid value for value type " + vt + " for field " + fieldName,
-							ctx);
+			Object obj1 = null;
+			if (column1 == null) {
+				obj1 = vt.parse(value1);
+				if (obj1 == null) {
+					reportError(value1 + " is not a valid value for value type " + vt + " for field " + fieldName, ctx);
+					continue;
 				}
 			}
 
 			if (opertor == FilterOperator.Between) {
-				Object obj2 = null;
-				if (field2 != null) {
-					if (value2 != null) {
-						obj2 = vt.parse(value2);
-					}
+				sql.append(BETWEEN);
+				if (column1 == null) {
+					sql.append(QN);
+					values.add(obj1);
+					types.add(vt);
+				} else {
+					sql.append(column1);
+				}
+				sql.append(" AND ");
+				if (column2 == null) {
+					Object obj2 = vt.parse(value2);
 					if (obj2 == null) {
-						return reportError(
+						reportError(
 								value2 + " is not a valid value for value type " + vt + " for the field " + fieldName,
 								ctx);
+						continue;
 					}
-				}
-				sql.append(BETWEEN);
-				if (field1 == null) {
-					values.add(obj);
-					types.add(vt);
 					sql.append(QN);
-				} else {
-					sql.append(field1.getColumnName());
-				}
-
-				sql.append(" and ");
-				if (field2 == null) {
 					values.add(obj2);
 					types.add(vt);
-					sql.append(QN);
 				} else {
-					sql.append(field2.getColumnName());
+					sql.append(column2);
 				}
+
 				continue;
 			}
 
 			sql.append(' ').append(operatorText).append(" ");
-			if (field1 == null) {
+			if (column1 == null) {
 				sql.append(QN);
-				values.add(obj);
+				values.add(obj1);
 				types.add(vt);
 			} else {
-				sql.append(field1.getColumnName());
+				sql.append(column1);
 			}
 			sql.append(' ');
 		}
-		return true;
+		return allOk;
 	}
 
-	private static DbField parseField(String value, Map<String, DbField> fields) {
+	/**
+	 * 
+	 * @param name can be null, in which case null is returned
+	 * @return SQL text syntax to get the upper-case value of this column
+	 */
+	private static String toUpper(String name) {
+		if (name == null) {
+			return null;
+		}
+		return "UPPER(" + name + ")";
+	}
+
+	/**
+	 * returns null string if this is not of the form ${name}.
+	 * 
+	 * column name if the field valid.
+	 * 
+	 * Empty string if the field invalid. Appropriate error message is pushed to the
+	 * ctx
+	 * 
+	 */
+	private static String parseField(String value, Map<String, DbField> fields, ValueType vt, IServiceContext ctx) {
 		int lastPosn = value.length() - 1;
 		if (value.startsWith("${") == false || value.charAt(lastPosn) != '}') {
 			return null;
 		}
+		String msg = null;
 		String name = value.substring(2, lastPosn);
 		DbField field = fields.get(name);
 		if (field == null) {
-			logger.error(
-					"Filter condition used {} as value. As per the convention, this implies that a field named {} is to be used as this value. However {} is not a valid field in this record",
-					value, name, name);
+			msg = "This field does not exist";
+		} else {
+
+			final ValueType valueType = field.getValueType();
+			if (valueType == vt) {
+				final String columnName = field.getColumnName();
+				if (columnName != null) {
+					return columnName;
+				}
+				msg = "This field is not a column in the table/view";
+			} else {
+				msg = "This field is of value type " + valueType.name() + "but a value of type " + vt.name()
+						+ "is expected";
+			}
 		}
-		return field;
+
+		msg = "Filter condition uses '" + value + "' indicating that the field '" + name
+				+ "' to be used for comparison. " + msg;
+		reportError(msg, ctx);
+		return "";
+
 	}
 
 	/**

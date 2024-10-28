@@ -348,7 +348,7 @@ public abstract class Form<T extends Record> {
 		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
-			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
+			final FilterDetails filter = rec.dba.parseFilter(payload, ctx);
 
 			if (filter == null) {
 				logger.error("Error while parsing filter conditions from the input payload");
@@ -356,8 +356,7 @@ public abstract class Form<T extends Record> {
 			}
 
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
-						filter.getWhereParamValues(), filter.getWhereParamTypes(), null);
+				final List<Object[]> list = rec.dba.filter(handle, filter);
 				/*
 				 * instead of storing data and then serializing it, we have designed this
 				 * service to serialize data then-and-there

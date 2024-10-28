@@ -35,7 +35,6 @@ import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,31 +109,6 @@ public abstract class DbRecord extends Record {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
-	}
-
-	/**
-	 * select multiple rows from the db based on the filtering criterion. Meant for
-	 * use by frame-work and utilities. End programmers should not use this API.
-	 * They should use a filter-sql instead.
-	 *
-	 * @param handle
-	 * @param whereClauseStartingWithWhere e.g. "WHERE a=? and b=?" null if all rows
-	 *                                     are to be read. Best practice is to use
-	 *                                     parameters rather than dynamic sql. That
-	 *                                     is you should use a=? rather than a = 32
-	 * @param values                       null or empty if where-clause is null or
-	 *                                     has no parameters. every element MUST be
-	 *                                     non-null and must be one of the standard
-	 *                                     objects we use String, Long, Double,
-	 *                                     Boolean, LocalDate, Instant
-	 *
-	 * @param types                        value types of values array
-	 * @return non-null, possibly empty array of rows
-	 * @throws SQLException
-	 */
-	public List<Object[]> filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
-			final Object[] values, ValueType[] types) throws SQLException {
-		return this.dba.filter(handle, whereClauseStartingWithWhere, values, types, null);
 	}
 
 	/**
@@ -414,7 +388,7 @@ public abstract class DbRecord extends Record {
 				tableName = Conventions.Request.TAG_LIST;
 			}
 
-			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
+			final FilterDetails filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
 				logger.error("Error while parsing filter conditions from the input payload");
 				return;
@@ -423,8 +397,7 @@ public abstract class DbRecord extends Record {
 			final Object[][][] result = new Object[1][][];
 
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle, filter.getWhereClause(),
-						filter.getWhereParamValues(), filter.getWhereParamTypes(), filter.getColumnNames());
+				final List<Object[]> list = rec.dba.filter(handle, filter);
 				if (list.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				}

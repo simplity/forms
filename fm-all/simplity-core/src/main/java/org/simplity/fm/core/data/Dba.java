@@ -305,77 +305,44 @@ public class Dba {
 	}
 
 	/**
-	 * select multiple rows from the db based on the filtering criterion
-	 *
+	 * filter rows based on a parsed filter
+	 * 
 	 * @param handle
-	 *
-	 * @param whereClauseStartingWithWhere e.g. "WHERE a=? and b=?". null if all
-	 *                                     rows are to be read. Best practice is to
-	 *                                     use parameters rather than dynamic sql.
-	 *                                     That is you should use a=? rather than a
-	 *                                     = 32
-	 * @param parameterValues              null or empty if where-clause is null or
-	 *                                     has no parameters. every element MUST be
-	 *                                     non-null and must be one of the standard
-	 *                                     objects we use: String, Long, Double,
-	 *                                     Boolean, LocalDate, Instant
-	 * @param parameterTypes               value types of the values
-	 * @param fieldNames                   optional names of columns to be selected.
-	 *                                     Assumed that the names are validated by
-	 *                                     the caller. null implies select all
-	 *                                     columns
-	 * @return non-null, possibly empty array of rows
+	 * @param filter
+	 * @return
 	 * @throws SQLException
 	 */
-	List<Object[]> filter(final IReadonlyHandle handle, final String whereClauseStartingWithWhere,
-			final Object[] parameterValues, final ValueType[] parameterTypes, String[] fieldNames) throws SQLException {
+	List<Object[]> filter(final IReadonlyHandle handle, FilterDetails filter) throws SQLException {
+
+		final String sqlWhere = filter.getWhereClause();
+		final Object[] values = filter.getWhereParamValues();
+		final ValueType[] types = filter.getWhereParamTypes();
+		final DbField[] selectFields = filter.getOutputFields();
 
 		final List<Object[]> rows = new ArrayList<>();
 
-		int[] indexes = this.selectIndexes;
 		String sql = this.selectClause;
 
-		if (fieldNames != null && fieldNames.length > 0) {
-			int nbrCols = fieldNames.length;
+		if (selectFields != null && selectFields.length > 0) {
+			int nbrCols = selectFields.length;
 			StringBuilder select = new StringBuilder("SELECT ");
-			indexes = new int[nbrCols];
-			int idx = 0;
-			for (String name : fieldNames) {
-				DbField f = this.getField(name);
-				if (f != null) {
-					String colName = f.getColumnName();
-					if (colName != null) {
-						select.append(colName).append(", ");
-						indexes[idx] = f.getIndex();
-						idx++;
-						continue;
-					}
-				}
-				logger.warn(
-						"{} is not a column in the table/view {}. Field omitted from the columns to be filtered for the record {} ",
-						name, this.nameInDb, name);
+			for (int idx = 0; idx < nbrCols; idx++) {
+				final DbField f = selectFields[idx];
+				select.append(f.getColumnName()).append(", ");
 			}
 
-			if (idx == 0) {
-				logger.error(
-						"All fields marked for selection are invalid for the filter operation. Filter process aborted");
-				return rows;
-			}
-			if (idx < nbrCols) {
-				indexes = Arrays.copyOf(indexes, idx);
-			}
 			select.setLength(select.length() - 2);
 			select.append(" FROM ").append(this.nameInDb);
 
-			sql = this.makeSelect(fieldNames);
+			sql = select.toString();
 		}
 
-		if (whereClauseStartingWithWhere != null) {
-			sql += ' ' + whereClauseStartingWithWhere;
+		if (sqlWhere != null) {
+			sql += ' ' + sqlWhere;
 		}
 
 		final int[] finalIndexes = indexes;
-		handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes, outputRow -> {
+		handle.readWithRowProcessor(sql, values, types, this.selectTypes, outputRow -> {
 			rows.add(copyFromRow(outputRow, finalIndexes, null));
 			return true;
 		});
@@ -711,8 +678,8 @@ public class Dba {
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error
 	 */
-	public ParsedFilter parseFilter(final IInputData json, final IServiceContext ctx) {
-		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
+	public FilterDetails parseFilter(final IInputData json, final IServiceContext ctx) {
+		return FilterDetails.parse(json, this.dbFields, this.tenantField, ctx);
 	}
 
 	/**
