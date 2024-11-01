@@ -95,10 +95,22 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 		outData.beginArray();
 		for (final T rec : this) {
 			outData.beginObject();
-			outData.addRecord(rec);
+			rec.writeOut(outData);
 			outData.endObject();
 		}
 		outData.endArray();
+	}
+
+	/**
+	 * write out as name:[{..}, {...}....]
+	 * 
+	 * @param memberName
+	 * @param outputData
+	 * @throws IOException
+	 */
+	public void writeOutAsMember(final String memberName, final IOutputData outputData) throws IOException {
+		outputData.addName(memberName);
+		this.writeOut(outputData);
 	}
 
 	@Override

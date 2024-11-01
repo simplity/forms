@@ -25,7 +25,7 @@ package org.simplity.fm.core.service;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +35,6 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
 import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.data.DbTable;
-import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.data.RecordOverride;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +126,7 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public void addMessages(final Collection<Message> msgs) {
+	public void addMessages(final Iterable<Message> msgs) {
 		for (final Message msg : msgs) {
 			this.addMessage(msg);
 		}
@@ -165,101 +162,31 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public void setAsResponse(final Record record) {
-		if (this.responseSet) {
-			throw new ApplicationError("Cannot set " + record.fetchName()
-					+ " as response-record. A response is already set or the serializer is already in use.");
-		}
-		this.outData.addRecord(record);
-		this.responseSet = true;
-	}
-
-	@Override
-	public void setAsResponse(final String tableName, final Field[] fields, final Object[][] values) {
+	public void setAsResponse(final String memberName, final String[] columnNames, final Iterable<Object[]> values) {
 		if (this.responseSet) {
 			throw new ApplicationError(
 					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
-
-		this.outData.addName(tableName);
-		this.outData.beginArray();
-
-		if (values != null && values.length > 0) {
-			this.outData.addArrayElements(fields, values);
-		}
-
-		this.outData.endArray();
-		this.responseSet = true;
-	}
-
-	/**
-	 * set this data table as the response. Note that the response would be like
-	 * {"tableName":[{}...]} that is the standard response for a list/filter request
-	 *
-	 * @param table
-	 */
-	@Override
-	public void setAsResponse(final String tableName, final DbTable<?> table) {
-		if (this.responseSet) {
-			throw new ApplicationError(
-					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
-		}
-		logger.info("Setting table as list inside the response object");
-		this.outData.addName(tableName);
-		this.outData.beginArray();
-
-		if (table != null) {
-			table.forEach(record -> {
-				this.outData.beginObject();
-				this.outData.addRecord(record);
-				this.outData.endObject();
-			});
-		}
-
-		this.outData.endArray();
+		// this.outData.beginObject();
+		this.outData.addArray(memberName, columnNames, values);
+		// this.outData.endObject();
 		this.responseSet = true;
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName, final DbTable<?> lines) {
-		if (this.responseSet) {
-			throw new ApplicationError(
-					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
-		}
-		this.outData.addRecord(header);
-		this.outData.addName(childName);
-		this.outData.beginArray();
-
-		if (lines != null && lines.length() > 0) {
-			lines.forEach(record -> {
-				this.outData.beginObject();
-				this.outData.addRecord(record);
-				this.outData.endObject();
-			});
-		}
-
-		this.outData.endArray();
-		this.responseSet = true;
+	public void setAsResponse(final String memberName, final String[] columnNames, final Object[][] values) {
+		this.setAsResponse(memberName, columnNames, Arrays.asList(values));
 	}
 
 	@Override
-	public void setAsResponse(final Record header, final String childName, final List<? extends Record> lines) {
+	public void setAsResponse(final String[] names, final Object[] values) {
 		if (this.responseSet) {
 			throw new ApplicationError(
-					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
+					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
-		this.outData.addRecord(header);
-		this.outData.addName(childName);
-		this.outData.beginArray();
-
-		if (lines != null && lines.size() > 0) {
-			lines.forEach(record -> {
-				this.outData.beginObject();
-				this.outData.addRecord(record);
-				this.outData.endObject();
-			});
-		}
-		this.outData.endArray();
+		// this.outData.beginObject();
+		this.outData.addValues(names, values);
+		// this.outData.endObject();
 		this.responseSet = true;
 	}
 
@@ -333,5 +260,11 @@ public class DefaultServiceContext implements IServiceContext {
 	@Override
 	public String getSessionId() {
 		return (String) this.getValue(Conventions.Http.SESSION_ID_FIELD_NAME);
+	}
+
+	@Override
+	public void addMessages(Message[] msgs) {
+		this.addMessages(Arrays.asList(msgs));
+
 	}
 }

@@ -24,11 +24,6 @@ package org.simplity.fm.core.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-
-import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.data.DataTable;
 
 /**
  * API for a component that serializes arbitrary object structure for
@@ -130,104 +125,89 @@ public interface IOutputData {
 	IOutputData addValue(Instant value);
 
 	/**
-	 * @param value
-	 *            can be null. must be one of the standard objects we use as
-	 *            primitive. Otherwise a toString() is used
+	 * @param value can be null. must be one of the standard objects we use as
+	 *              primitive. Otherwise a toString() is used
 	 * @return current instance so that methods can be chained
 	 */
 	IOutputData addPrimitive(Object value);
 
 	/**
-	 * to be called inside of an object. Short cut to issue a series of name()
-	 * and value() calls
+	 * @param name  non-null name of the primitive to be added.
+	 * @param value can be null. must be one of the standard objects we use as
+	 *              primitive. Otherwise a toString() is used
+	 * @return current instance so that methods can be chained
+	 */
+	IOutputData addNameValuePair(String name, Object value);
+
+	/**
+	 * to be called inside of an object. Short cut to issue a series of name() and
+	 * value() calls
 	 *
-	 * @param fields
+	 * @param names
 	 * @param values
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addFields(Field[] fields, Object[] values);
+	IOutputData addValues(String[] names, Iterable<Object> values);
 
 	/**
-	 * to be called inside an object. A member is added as an array of objects
-	 * for the rows.
+	 * to be called inside of an object. Short cut to issue a series of name() and
+	 * value() calls
 	 *
-	 * @param memberName
-	 *
-	 * @param fields
-	 * @param rows
-	 *            rows of data, each row being an array of objects for the
-	 *            specified fields
-	 * @return current instance so that methods can be chained
-	 */
-
-	IOutputData addArray(String memberName, Field[] fields, Object[][] rows);
-
-	/**
-	 * to be called inside an array(). Each row is added as an object-member of
-	 * the array. Each object has all the fields as its members.
-	 *
-	 * @param fields
+	 * @param names
 	 * @param values
-	 *            rows of data, each row being an array of objects for the
-	 *            specified fields. could be null or empty
 	 * @return current instance so that methods can be chained
 	 */
-
-	IOutputData addArrayElements(Field[] fields, Object[][] values);
-
-	/**
-	 * to be called inside of an object. Short cut to issue a series of name()
-	 * and value() calls for all fields in the record
-	 *
-	 * @param record
-	 * @return current instance so that methods can be chained
-	 */
-	IOutputData addRecord(Record record);
+	IOutputData addValues(String[] names, Object[] values);
 
 	/**
-	 * to be called inside an array, (Not directly inside an object) Each record
-	 * in the table is serialized as members of the enclosing array
-	 *
-	 * @param table
-	 * @return current instance so that methods can be chained
-	 */
-	IOutputData addArrayElements(DataTable<?> table);
-
-	/**
-	 * to be called inside an array, (Not directly inside an object) Each record
-	 * in the table is serialized as members of the enclosing array
+	 * to be called inside an object. A member is added as an array of rows, each
+	 * row being an object
 	 *
 	 * @param memberName
-	 *            name with which this array is added to the current object
 	 *
-	 * @param table
-	 *            records from which the array elements are to be added. Ccould
-	 *            be null or empty
+	 * @param names      length must match the length of objects in each row
+	 * @param rows       rows of data, each row being an array of objects.
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addArray(String memberName, DataTable<?> table);
+	IOutputData addArray(String memberName, String[] names, Iterable<Object[]> rows);
 
 	/**
-	 * to be called inside an array, (Not directly inside an object) Each record
-	 * in the table is serialized as members of the enclosing array
+	 * to be called inside an object. A member is added as an array of rows, each
+	 * row being an object
 	 *
 	 * @param memberName
-	 *            name with which this array is added to the current object
 	 *
-	 * @param records
-	 *            records from which the array elements are to be added. Could
-	 *            be null or empty
+	 * @param names      length must match the length of objects in each row
+	 * @param rows       rows of data, each row being an array of objects.
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addArray(String memberName, List<? extends Record> records);
+	IOutputData addArray(String memberName, String[] names, Object[][] rows);
 
 	/**
-	 * to be called inside an array, (Not directly inside an object) Each record
-	 * in the table is serialized as members of the enclosing array
+	 * to be called inside an array(). Each row is added as an object-member of the
+	 * array. Each object has all the field names as its members.
+	 * 
+	 * to be used if addArray() is not suitable.
 	 *
-	 * @param records
+	 * @param names  length of this array must be the same as the number of values
+	 *               in each row
+	 * @param values rows of data, each row being an array of objects for the
+	 *               specified fields. could be null or empty
 	 * @return current instance so that methods can be chained
 	 */
-	IOutputData addArrayElements(List<? extends Record> records);
+	IOutputData addArrayElements(String[] names, Iterable<Object[]> rows);
 
+	/**
+	 * to be called inside an array(). Each row is added as an object-member of the
+	 * array. Each object has all the field names as its members.
+	 * 
+	 * to be used if addArray() is not suitable.
+	 *
+	 * @param names  length of this array must be the same as the number of values
+	 *               in each row
+	 * @param values rows of data, each row being an array of objects for the
+	 *               specified fields. could be null or empty
+	 * @return current instance so that methods can be chained
+	 */
+	IOutputData addArrayElements(String[] names, Object[][] rows);
 }

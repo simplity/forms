@@ -22,7 +22,6 @@
 
 package org.simplity.fm.core.data;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -136,6 +135,19 @@ public class Record {
 	 */
 	public Field[] fetchFields() {
 		return this.metaData.getFields();
+	}
+
+	/**
+	 * @return the fields
+	 */
+	public String[] fetchFieldNames() {
+		final Field[] fields = this.metaData.getFields();
+		int n = fields.length;
+		final String names[] = new String[n];
+		for (int i = 0; i < n; i++) {
+			names[i] = fields[i].getName();
+		}
+		return names;
 	}
 
 	/**
@@ -628,18 +640,40 @@ public class Record {
 	}
 
 	/**
-	 * @param outData
-	 * @throws IOException
+	 * to be called to serialize all the data-elements of this record inside an
+	 * object that is already started. that is, this should be called AFTER
+	 * outputData.beginObject().
+	 * 
+	 * Consider using serialzeAsMember() if this record is to be serialized as an
+	 * object-member of a parent
+	 * 
+	 * @param outputData
 	 */
-	protected void serializeRows(final IOutputData outData, final Object[][] rows) throws IOException {
-		if (rows == null || rows.length == 0) {
-			return;
+	public void writeOut(IOutputData outputData) {
+		final String[] names = this.fetchFieldNames();
+		for (int i = 0; i < names.length; i++) {
+			outputData.addNameValuePair(names[i], this.fieldValues[i]);
 		}
-		for (final Object[] row : rows) {
-			outData.beginObject();
-			outData.addFields(this.fetchFields(), row);
-			outData.endObject();
-		}
+	}
+
+	public void writeOutAsMember(IOutputData outputData) {
+		outputData.addName(this.fetchName()).beginObject();
+		this.writeOut(outputData);
+		outputData.endObject();
+
+	}
+
+	/**
+	 * this record is to be set as response to the service request.
+	 * 
+	 * Note that this can be used ONLY if no other calls were made to write any
+	 * output. Also, once this is called, NO other call should be made to output
+	 * anything
+	 * 
+	 * @param ctx
+	 */
+	public void setAsResponse(IServiceContext ctx) {
+		this.writeOut(ctx.getOutputData());
 	}
 
 	/**

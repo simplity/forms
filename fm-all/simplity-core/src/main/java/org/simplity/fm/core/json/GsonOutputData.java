@@ -26,12 +26,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Arrays;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.service.IOutputData;
 
 import com.google.gson.stream.JsonWriter;
@@ -49,8 +46,7 @@ class GsonOutputData implements IOutputData {
 
 	/**
 	 *
-	 * @param sw
-	 *            underlying string writer to which output json is written to
+	 * @param sw underlying string writer to which output json is written to
 	 */
 	GsonOutputData(final StringWriter sw) {
 		this.writer = new JsonWriter(sw);
@@ -192,12 +188,19 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
-	public GsonOutputData addFields(final Field[] fields,
-			final Object[] values) {
+	public IOutputData addNameValuePair(String name, Object value) {
+		this.addName(name).addPrimitive(value);
+		return this;
+	}
+
+	@Override
+	public IOutputData addValues(String[] names, Iterable<Object> values) {
 		try {
-			for (int i = 0; i < fields.length; i++) {
-				this.writer.name(fields[i].getName());
-				this.addPrimitive(values[i]);
+			int idx = 0;
+			for (Object value : values) {
+				this.writer.name(names[idx]);
+				this.addPrimitive(value);
+				idx++;
 			}
 		} catch (final IOException e) {
 			throw new ApplicationError("", e);
@@ -206,19 +209,18 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
-	public GsonOutputData addRecord(final Record record) {
-		this.addFields(record.fetchFields(), record.fetchRawData());
+	public GsonOutputData addValues(final String[] names, final Object[] values) {
+		this.addValues(names, Arrays.asList(values));
 		return this;
 	}
 
 	@Override
-	public GsonOutputData addArray(final String memberName,
-			final Field[] fields, final Object[][] rows) {
+	public GsonOutputData addArray(final String memberName, final String[] names, final Iterable<Object[]> rows) {
 		try {
 			this.writer.name(memberName);
 			this.writer.beginArray();
-			if (rows != null && rows.length > 0) {
-				this.addArrayElements(fields, rows);
+			if (rows != null) {
+				this.addArrayElements(names, rows);
 			}
 			this.writer.endArray();
 		} catch (final IOException e) {
@@ -228,15 +230,17 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
-	public GsonOutputData addArrayElements(final Field[] fields,
-			final Object[][] rows) {
+	public GsonOutputData addArray(final String memberName, final String[] names, final Object[][] rows) {
+		this.addArray(memberName, names, Arrays.asList(rows));
+		return this;
+	}
+
+	@Override
+	public GsonOutputData addArrayElements(final String[] names, final Iterable<Object[]> rows) {
 		try {
 			for (final Object[] row : rows) {
 				this.writer.beginObject();
-				for (int i = 0; i < fields.length; i++) {
-					this.writer.name(fields[i].getName());
-					this.addPrimitive(row[i]);
-				}
+				this.addValues(names, row);
 				this.writer.endObject();
 			}
 		} catch (final IOException e) {
@@ -246,66 +250,8 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
-	public GsonOutputData addArray(final String memberName,
-			final DataTable<?> table) {
-		try {
-			this.writer.name(memberName);
-			this.writer.beginArray();
-			if (table != null && table.length() > 0) {
-				this.addArrayElements(table);
-			}
-			this.writer.endArray();
-		} catch (final IOException e) {
-			throw new ApplicationError("", e);
-		}
-		return this;
-	}
-
-	@Override
-	public GsonOutputData addArrayElements(final DataTable<?> table) {
-		table.forEach(rec -> {
-			try {
-				this.writer.beginObject();
-				this.addRecord(rec);
-				this.writer.endObject();
-			} catch (final IOException e) {
-				throw new ApplicationError("", e);
-			}
-		});
-		return this;
-	}
-
-	@Override
-	public GsonOutputData addArray(final String memberName,
-			final List<? extends Record> records) {
-		try {
-			this.writer.name(memberName);
-			this.writer.beginArray();
-			if (records != null && records.size() > 0) {
-				this.addArrayElements(records);
-			}
-			this.writer.endArray();
-			return this;
-		} catch (final IOException e) {
-			throw new ApplicationError("", e);
-		}
-	}
-
-	@Override
-	public GsonOutputData addArrayElements(
-			final List<? extends Record> records) {
-		if (records == null) {
-			return this;
-		}
-		try {
-			for (final Record rec : records) {
-				this.writer.beginObject();
-				this.addRecord(rec);
-				this.writer.endObject();
-			}
-		} catch (final IOException e) {
-			throw new ApplicationError("", e);
-		}
+	public GsonOutputData addArrayElements(final String[] names, final Object[][] rows) {
+		this.addArrayElements(names, Arrays.asList(rows));
 		return this;
 	}
 

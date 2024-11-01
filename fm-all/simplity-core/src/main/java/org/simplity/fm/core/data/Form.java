@@ -23,6 +23,7 @@
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
@@ -194,10 +195,12 @@ public abstract class Form<T extends Record> {
 
 		@Override
 		public void serve(final IServiceContext ctx, final IInputData inputPayload) throws Exception {
-			Form.this.record.parse(inputPayload, this.operation == IoType.Create, ctx, null, 0);
+			final Record rec = Form.this.record;
+			rec.parse(inputPayload, this.operation == IoType.Create, ctx, null, 0);
 			if (ctx.allOk()) {
 				logger.info("Service " + this.serviceName + " succeeded in parsing input. Same is set as response");
-				ctx.setAsResponse(Form.this.record);
+				// ctx.setAsResponse(Form.this.record);
+				ctx.setAsResponse(rec.fetchFieldNames(), rec.fieldValues);
 				return;
 			}
 			logger.error("Validation failed for service {} and operation {}", this.serviceName, this.operation.name());
@@ -231,7 +234,7 @@ public abstract class Form<T extends Record> {
 				 */
 				final IOutputData outData = ctx.getOutputData();
 				outData.beginObject();
-				outData.addRecord(rec);
+				outData.addValues(rec.fetchFieldNames(), rec.fieldValues);
 
 				for (final ChildForm<?> child : Form.this.childForms) {
 					child.read(rec, outData, handle);
@@ -348,15 +351,21 @@ public abstract class Form<T extends Record> {
 		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
-			final FilterDetails filter = rec.dba.parseFilter(payload, ctx);
+			final FilterDetails filter = rec.dba.parseFilterRequest(payload, ctx);
 
 			if (filter == null) {
 				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
 
+			final List<Object[]> rows = new ArrayList<>();
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle, filter);
+				handle.readWithRowProcessor(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
+						filter.getOutputTypes(), outputRow -> {
+							rows.add(outputRow);
+							return true;
+						});
+
 				/*
 				 * instead of storing data and then serializing it, we have designed this
 				 * service to serialize data then-and-there
@@ -366,13 +375,13 @@ public abstract class Form<T extends Record> {
 				outData.addName(Conventions.Request.TAG_LIST);
 				outData.beginArray();
 
-				if (list.size() == 0) {
+				if (rows.size() == 0) {
 					logger.warn("No rows filtered. Responding with empty list");
 				} else {
-					for (final Object[] row : list) {
+					for (final Object[] row : rows) {
 						final DbRecord r = rec.newInstance(row);
 						outData.beginObject();
-						outData.addRecord(r);
+						outData.addValues(r.fetchFieldNames(), r.fieldValues);
 						for (final ChildForm<?> child : Form.this.childForms) {
 							child.read(r, outData, handle);
 						}

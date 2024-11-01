@@ -37,9 +37,24 @@ import org.slf4j.LoggerFactory;
  * data to parse, validate and serialize a value meant for this data element
  *
  * @author simplity.org
- *
+ * 
  */
 public class Field {
+
+	/**
+	 * get the array of names of the fields
+	 * 
+	 * @param fields
+	 * @return names of the fields
+	 */
+	public static String[] toNames(Field[] fields) {
+		String[] names = new String[fields.length];
+		for (int i = 0; i < names.length; i++) {
+			names[i] = fields[i].name;
+		}
+		return names;
+	}
+
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
 	/**
 	 * name is unique within a record/form

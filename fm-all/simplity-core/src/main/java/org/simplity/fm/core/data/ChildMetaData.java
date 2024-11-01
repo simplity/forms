@@ -220,17 +220,23 @@ public class ChildMetaData {
 			return false;
 		}
 
+		/**
+		 * Design Note: May be a case of early optimization, but we have designed this
+		 * routine to write to the output stream as and when rows are available, rather
+		 * than accumulating them in a collection and using simple APIs to write it out
+		 */
+
 		final ValuesAndTypes vt = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
 		outData.addName(this.childName);
-		final Field[] fields = thisRecord.fetchFields();
+		final String[] names = thisRecord.fetchFieldNames();
 		final ValueType[] outputTypes = thisRecord.fetchValueTypes();
 		if (this.isTable) {
 			outData.beginArray();
 			handle.readWithRowProcessor(this.linkWhereClause, vt.values, vt.types, outputTypes, row -> {
 				outData.beginObject();
-				outData.addFields(fields, row);
+				outData.addValues(names, row);
 				form.readChildForms(row, outData, handle);
 				outData.endObject();
 				return true;
@@ -242,7 +248,7 @@ public class ChildMetaData {
 		outData.beginObject();
 		final Object[] row = handle.read(this.linkWhereClause, vt.values, vt.types, outputTypes);
 		if (row != null) {
-			outData.addFields(fields, row);
+			outData.addValues(names, row);
 		}
 
 		outData.endObject();

@@ -23,6 +23,7 @@
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
@@ -289,7 +290,7 @@ public abstract class DbRecord extends Record {
 			});
 
 			if (ctx.allOk()) {
-				ctx.setAsResponse(rec);
+				ctx.setAsResponse(rec.fetchFieldNames(), rec.fieldValues);
 			}
 		}
 
@@ -388,23 +389,44 @@ public abstract class DbRecord extends Record {
 				tableName = Conventions.Request.TAG_LIST;
 			}
 
-			final FilterDetails filter = rec.dba.parseFilter(payload, ctx);
-			if (!ctx.allOk()) {
+			final FilterDetails filter = rec.dba.parseFilterRequest(payload, ctx);
+			if (filter == null) {
 				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
 
-			final Object[][][] result = new Object[1][][];
+			final List<Object[]> rows = new ArrayList<>();
 
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				final List<Object[]> list = rec.dba.filter(handle, filter);
-				if (list.size() == 0) {
-					logger.warn("No rows filtered. Responding with empty list");
-				}
-				result[0] = list.toArray(new Object[0][]);
-			});
+				handle.readWithRowProcessor(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
+						filter.getOutputTypes(), outputRow -> {
+							rows.add(outputRow);
+							return true;
+						});
 
-			ctx.setAsResponse(tableName, rec.fetchFields(), result[0]);
+			});
+			if (rows.size() == 0) {
+				logger.warn("No rows filtered. Responding with empty list");
+			}
+
+			ctx.setAsResponse(tableName, filter.getOutputNames(), rows);
+			return;
+			/**
+			 * TODO: If some fields in record are not DbFields, then the output row does not
+			 * match the fields in the record. By default, client may expect values for all
+			 * fields in the record, should we use "all-fields" and "dbFields" as the column
+			 * names?
+			 * 
+			 * Note:
+			 * 
+			 * 1. In any case, we respond back in JSON, and hence the order of fields is
+			 * irrelevant
+			 * 
+			 * 2. Even if we were to add all fields, the non-DbFields will have undefined as
+			 * their value.
+			 * 
+			 * Hence we will simply send only the selected fields.
+			 */
 		}
 
 	}

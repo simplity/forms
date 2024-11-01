@@ -24,14 +24,9 @@ package org.simplity.fm.core.service;
 
 import java.io.Reader;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.List;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.data.DbTable;
-import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.data.RecordOverride;
 
 /**
@@ -110,7 +105,13 @@ public interface IServiceContext {
 	 *
 	 * @param messages non-null messages
 	 */
-	void addMessages(Collection<Message> messages);
+	void addMessages(Iterable<Message> messages);
+
+	/**
+	 *
+	 * @param messages non-null non-empty array of messages
+	 */
+	void addMessages(Message[] messages);
 
 	/**
 	 *
@@ -136,13 +137,18 @@ public interface IServiceContext {
 	int getNbrErrors();
 
 	/**
-	 * serialize this data as response. Note that this can be called only once with
-	 * success. any subsequent call will result an ApplicationError() exception.
-	 * Also, this cannot be called after a call to getSerializer() is called
 	 *
-	 * @param record non-null;
+	 * serialize this object data as the response. Note that this can be called only
+	 * once with success. any subsequent call will result an ApplicationError()
+	 * exception. Also, this cannot be called after a call to getSerializer() is
+	 * called.
+	 * 
+	 * Response will be like {name: value, ....}
+	 *
+	 * @param names
+	 * @param values
 	 */
-	void setAsResponse(Record record);
+	void setAsResponse(String[] names, Object[] values);
 
 	/**
 	 *
@@ -151,42 +157,28 @@ public interface IServiceContext {
 	 * exception. Also, this cannot be called after a call to getSerializer() is
 	 * called.
 	 * 
-	 * Response will be like {tableName: [[...]...]}
+	 * Response will be like {listName: [[...]...]}
 	 *
-	 * @param tableName
-	 * @param fields
+	 * @param listName
+	 * @param columnNames
 	 * @param rows
 	 */
-	void setAsResponse(String tableName, Field[] fields, Object[][] rows);
+	void setAsResponse(String listName, String[] columnNames, Iterable<Object[]> rows);
 
 	/**
-	 * serialize this dbTable as the response.
+	 *
+	 * serialize this tabular data as the response. Note that this can be called
+	 * only once with success. any subsequent call will result an ApplicationError()
+	 * exception. Also, this cannot be called after a call to getSerializer() is
+	 * called.
 	 * 
-	 * Response will be like {tableName: [[...]...]}
+	 * Response will be like {listName: [[...]...]}
 	 *
-	 * @param tableName
-	 * @param table
-	 */
-	void setAsResponse(String tableName, final DbTable<?> table);
-
-	/**
-	 * Response is composed as serialized header with childName: table[][] added to
-	 * it
-	 *
-	 * @param header
-	 * @param childName
-	 * @param table
-	 */
-	void setAsResponse(Record header, String childName, DbTable<?> table);
-
-	/**
-	 * set a header-lines data structure as response
-	 *
-	 * @param header
-	 * @param childName
+	 * @param listName
+	 * @param columnNames
 	 * @param rows
 	 */
-	void setAsResponse(Record header, String childName, List<? extends Record> rows);
+	void setAsResponse(String listName, String[] columnNames, Object[][] rows);
 
 	/**
 	 *
