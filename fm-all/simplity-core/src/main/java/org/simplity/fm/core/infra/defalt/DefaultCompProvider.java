@@ -152,24 +152,35 @@ public class DefaultCompProvider implements ICompProvider {
 			return list;
 		}
 		final String clsName = toClassName(listId);
-		final String cls = this.listRoot + clsName;
+		String cls = this.listRoot + clsName;
 		try {
 			list = (IValueList) Class.forName(cls).getConstructor().newInstance();
+			this.lists.put(listId, list);
+			return list;
+		} catch (final ClassNotFoundException e1) {
+			// we will try a custom class instead
 		} catch (final Exception e) {
-			final String cls1 = this.customListRoot + clsName;
-			try {
-				list = (IValueList) Class.forName(cls1).getConstructor().newInstance();
-			} catch (final ClassNotFoundException e1) {
-				logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
-				return null;
-			} catch (final Exception e1) {
-				logger.error("Internal Error: List named" + listId
-						+ " exists but an excption occured while while creating an instance. Error :", e);
-				return null;
-			}
+			logger.error("Internal Error: List named " + listId
+					+ " exists but an exception occurred while creating an instance of its associated class " + cls
+					+ ". Error :", e);
+			return null;
 		}
-		this.lists.put(listId, list);
-		return list;
+
+		cls = this.customListRoot + clsName;
+		try {
+			list = (IValueList) Class.forName(cls).getConstructor().newInstance();
+			this.lists.put(listId, list);
+			return list;
+		} catch (final ClassNotFoundException e1) {
+			logger.error(
+					"{} is an invalid list name because we could not locate class {} in generated package {} or custom package {}",
+					listId, cls, this.listRoot, this.customListRoot);
+			return null;
+		} catch (final Exception e) {
+			logger.error("Internal Error: Exception while instantiating class {}. Error :", cls, e);
+			return null;
+		}
+
 	}
 
 	@Override

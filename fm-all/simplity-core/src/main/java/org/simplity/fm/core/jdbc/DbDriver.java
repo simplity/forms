@@ -26,6 +26,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.db.IDbDriver;
+import org.simplity.fm.core.db.IDbMetaDataReader;
 import org.simplity.fm.core.db.IDbReader;
 import org.simplity.fm.core.db.IDbTransacter;
 import org.simplity.fm.core.db.IDbWriter;
@@ -76,6 +77,34 @@ public class DbDriver implements IDbDriver {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
 			doReadOnly(con, reader);
+		}
+	}
+
+	@Override
+	public void doReadMetaData(IDbMetaDataReader reader) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection()) {
+			try {
+				reader.read(con.getMetaData());
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
+				throw new SQLException(e.getMessage());
+			}
+		}
+	}
+
+	@Override
+	public void doReadMetaData(String schemaName, IDbMetaDataReader reader) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection(schemaName)) {
+			try {
+				reader.read(con.getMetaData());
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
+				throw new SQLException(e.getMessage());
+			}
 		}
 	}
 

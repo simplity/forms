@@ -326,7 +326,8 @@ public abstract class Sql {
 				}
 				continue;
 			}
-			Object v = field.getValueSchema().parse(value);
+			// Object v = field.getValueSchema().parse(value);
+			Object v = field.parse(value.toString(), null, null, 0);
 			if (v == null) {
 				throw new SQLException("A value of " + value + " is not valid for the field " + field.getName()
 						+ " as per value schema " + field.getValueSchema().getName() + ". Sql not executed");

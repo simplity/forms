@@ -28,6 +28,7 @@ import java.util.Map;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.FieldType;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,7 @@ class Field implements Cloneable {
 	String fieldType = "optionalData";
 	String nameInDb;
 	boolean isList;
+	String valueType;
 	String valueSchema;
 	String messageId;
 	String defaultValue;
@@ -68,6 +70,7 @@ class Field implements Cloneable {
 
 	int index;
 	FieldType fieldTypeEnum;
+	ValueType valueTypeEnum;
 
 	public Field() {
 		super();
@@ -76,21 +79,27 @@ class Field implements Cloneable {
 
 	public void init(final int idx, Map<String, ValueSchema> schemas) {
 		this.index = idx;
-		this.schemaInstance = schemas.get(this.valueSchema);
-		if (this.schemaInstance == null) {
-			if (this.valueSchema == null) {
-				logger.error("Field {} has not defined a value-schema. A Default is assumed.", this.name);
-			} else {
-				logger.error(
-						"Field {} has specified {} as value-schema, but it is not defined. A default text-schema is used instead",
-						this.name, this.valueSchema);
+		try {
+			final String vt = this.valueType.toUpperCase().charAt(0) + this.valueType.substring(1);
+			this.valueTypeEnum = ValueType.valueOf(vt);
+		} catch (Exception e) {
+			logger.error("Field {} has an invalid valueType={}. 'text' assumed.", this.name, this.valueType);
+			this.valueTypeEnum = ValueType.Text;
+		}
+
+		if (this.valueSchema != null) {
+			this.schemaInstance = schemas.get(this.valueSchema);
+			if (this.schemaInstance == null) {
+				logger.error("Field {} has specified {} as value-schema, but it is not defined. Ignored", this.name,
+						this.valueSchema);
+				this.valueSchema = null;
 			}
-			this.schemaInstance = ValueSchema.DEFAULT_SCHEMA;
-			this.valueSchema = this.schemaInstance.name;
 		}
 
 		this.fieldTypeEnum = fieldTypes.get(this.fieldType.toLowerCase());
-		if (this.fieldTypeEnum == null) {
+		if (this.fieldTypeEnum == null)
+
+		{
 			logger.error("{} is an invalid fieldType for field {}. optional data is  assumed", this.fieldType,
 					this.name);
 			this.fieldType = "optionalData";
@@ -121,16 +130,23 @@ class Field implements Cloneable {
 		sbf.append("Field(\"").append(this.name).append('"');
 		// 2. index
 		sbf.append(C).append(this.index);
-		// 3. schema name. All Schema names are statically defined in the main
+		// 3. valueType
+		sbf.append(", ValueType.").append(this.valueTypeEnum.name());
+		// 4. schema name. All Schema names are statically defined in the main
 		// class. e.g. DataTypes.schemaName
-		sbf.append(C).append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(this.valueSchema);
-		// 4. isList as boolean
+		if (this.valueSchema == null) {
+			sbf.append(", null");
+		} else {
+			sbf.append(C).append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.')
+					.append(this.valueSchema);
+		}
+		// 5. isList as boolean
 		sbf.append(C).append(this.isList);
-		// 5. default value as string
+		// 6. default value as string
 		sbf.append(C).append(Util.quotedString(this.defaultValue));
-		// 6. message id
+		// 7. message id
 		sbf.append(C).append(Util.quotedString(this.messageId));
-		// 7. listName as string, null if not required
+		// 8. listName as string, null if not required
 		/*
 		 * list is handled by inter-field in case key is specified
 		 */
@@ -209,7 +225,7 @@ class Field implements Cloneable {
 		}
 
 		String value = "";
-		switch (this.schemaInstance.valueTypeEnum) {
+		switch (this.valueTypeEnum) {
 		case Boolean:
 			sbf.append(" BOOLEAN NOT NULL DEFAULT FALSE");
 			valSbf.append("false");
@@ -238,8 +254,13 @@ class Field implements Cloneable {
 			// DECIMAL(max-digits,nbr-decimals)
 			value = "0";
 			sbf.append(" DECIMAL(");
-			sbf.append(this.schemaInstance.maxLength - 1);
-			sbf.append(',').append(this.schemaInstance.nbrDecimalPlaces).append(") NOT NULL DEFAULT ");
+			int size = 13;
+			int nbrDecimals = 2;
+			if (this.schemaInstance != null) {
+				size = this.schemaInstance.maxLength - 1;
+				nbrDecimals = this.schemaInstance.nbrDecimalPlaces;
+			}
+			sbf.append(size).append(',').append(nbrDecimals).append(") NOT NULL DEFAULT ");
 			if (this.defaultValue != null) {
 				sbf.append(this.defaultValue);
 				value = this.defaultValue;
@@ -287,8 +308,7 @@ class Field implements Cloneable {
 			return true;
 
 		default:
-			throw new ApplicationError(
-					"ValueType " + this.schemaInstance.valueTypeEnum + " not handled by field sql generator");
+			throw new ApplicationError("ValueType " + this.valueTypeEnum + " not handled by field sql generator");
 		}
 	}
 

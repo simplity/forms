@@ -523,9 +523,9 @@ public class Util {
 
 	static void emitJavaGettersAndSetters(final Field[] fields, final StringBuilder sbf) {
 		for (final Field f : fields) {
-			ValueSchema vs = f.schemaInstance;
-			String typ = Util.JAVA_VALUE_TYPES[vs.valueTypeEnum.ordinal()];
-			String get = Util.JAVA_GET_TYPES[vs.valueTypeEnum.ordinal()];
+
+			String typ = Util.JAVA_VALUE_TYPES[f.valueTypeEnum.ordinal()];
+			String get = Util.JAVA_GET_TYPES[f.valueTypeEnum.ordinal()];
 			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
 

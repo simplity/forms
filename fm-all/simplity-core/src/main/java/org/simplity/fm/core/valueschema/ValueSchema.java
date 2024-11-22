@@ -36,8 +36,8 @@ public abstract class ValueSchema {
 	protected ValueType valueType;
 
 	/**
-	 * @return unique error message id that has the actual error message to be
-	 *         used if a value fails validation
+	 * @return unique error message id that has the actual error message to be used
+	 *         if a value fails validation
 	 */
 	public String getMessageId() {
 		return this.messageId;
@@ -51,24 +51,21 @@ public abstract class ValueSchema {
 	}
 
 	/**
-	 * @param value
-	 *            non-null. generic object to be to be parsed and validated.
-	 * @return null if the validation fails. object of the right type for the
-	 *         field.
+	 * @param value non-null. generic object to be to be parsed and validated.
+	 * @return null if the validation fails. object of the right type for the field.
 	 */
 
 	public abstract Object parse(Object value);
+
 	/**
-	 * @param value
-	 *            non-null. value to be parsed and validated into the right type
-	 *            after validation
-	 * @return null if the validation fails. object of the right type for the
-	 *         field.
+	 * @param value non-null. value to be parsed and validated into the right type
+	 *              after validation
+	 * @return null if the validation fails. object of the right type for the field.
 	 */
 	public abstract Object parse(String value);
+
 	/**
-	 * @param value
-	 *            non-null. String with comma separated values
+	 * @param value non-null. String with comma separated values
 	 * @return null if the validation fails.
 	 */
 	public ParsedList parseList(String value) {
@@ -91,6 +88,7 @@ public abstract class ValueSchema {
 		}
 		return new ParsedList(textValue, vals);
 	}
+
 	/**
 	 * @return the name
 	 */
@@ -99,8 +97,8 @@ public abstract class ValueSchema {
 	}
 
 	/**
-	 * immutable data structure to manage value-lists. Has the text-version as
-	 * well as an array of the value of the right type
+	 * immutable data structure to manage value-lists. Has the text-version as well
+	 * as an array of the value of the right type
 	 *
 	 * @author simplity.org
 	 *
@@ -117,13 +115,11 @@ public abstract class ValueSchema {
 		public final Object[] valueList;
 
 		/**
-		 * immutable, and hence the values for all the members are to be
-		 * supplied on instantiation
+		 * immutable, and hence the values for all the members are to be supplied on
+		 * instantiation
 		 *
-		 * @param textValue
-		 *            non-null
-		 * @param valueList
-		 *            non-null
+		 * @param textValue non-null
+		 * @param valueList non-null
 		 */
 		public ParsedList(String textValue, Object[] valueList) {
 			this.textValue = textValue;
@@ -131,41 +127,40 @@ public abstract class ValueSchema {
 		}
 	}
 
-	private static final ValueSchema BOOL_SCHEMA = new BooleanSchema(
-			"_defaultTextSchema", null);
-	private static final ValueSchema DATE_SCHEMA = new DateSchema(
-			"_defaultDateSchema", null, Integer.MAX_VALUE, Integer.MAX_VALUE);
-	private static final ValueSchema DECIMAL_SCHEMA = new DecimalSchema(
-			"_defaultDecimalSchema", null, Long.MIN_VALUE, Long.MAX_VALUE, 100);
-	private static final ValueSchema INTEGER_SCHEMA = new IntegerSchema(
-			"_defaultIntegerSchema", null, Long.MIN_VALUE, Long.MAX_VALUE);
-	private static final ValueSchema TEXT_SCHEMA = new TextSchema(
-			"_defaultTextSchema", null, 0, Integer.MAX_VALUE, null);
-	private static final ValueSchema STAMP_SCHEMA = new TimestampSchema(
-			"_defaultTimestampSchema", null);
+	private static final ValueSchema BOOL_SCHEMA = new BooleanSchema("_defaultTextSchema", null);
+	private static final ValueSchema DATE_SCHEMA = new DateSchema("_defaultDateSchema", null, Integer.MAX_VALUE,
+			Integer.MAX_VALUE);
+	private static final ValueSchema DECIMAL_SCHEMA = new DecimalSchema("_defaultDecimalSchema", null, Long.MIN_VALUE,
+			Long.MAX_VALUE, 100);
+	private static final ValueSchema INTEGER_SCHEMA = new IntegerSchema("_defaultIntegerSchema", null, Long.MIN_VALUE,
+			Long.MAX_VALUE);
+	private static final ValueSchema TEXT_SCHEMA = new TextSchema("_defaultTextSchema", null, 0, Integer.MAX_VALUE,
+			null);
+	private static final ValueSchema STAMP_SCHEMA = new TimestampSchema("_defaultTimestampSchema", null);
+
 	/**
-	 * get a pain vanilla value schema that validates just the value type, and
+	 * get a plain vanilla value schema that validates just the value type, and
 	 * nothing else. Useful for internal utility classes
 	 *
 	 * @param valueType
 	 * @return a schema that just validates the value type.
 	 */
-	public static ValueSchema defaultTextSchema(ValueType valueType) {
+	public static ValueSchema getDefaultSchema(ValueType valueType) {
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			return BOOL_SCHEMA;
 
-		case Date :
+		case Date:
 			return DATE_SCHEMA;
-		case Decimal :
+		case Decimal:
 			return DECIMAL_SCHEMA;
-		case Integer :
+		case Integer:
 			return INTEGER_SCHEMA;
-		case Text :
+		case Text:
 			return TEXT_SCHEMA;
-		case Timestamp :
+		case Timestamp:
 			return STAMP_SCHEMA;
-		default :
+		default:
 			return TEXT_SCHEMA;
 		}
 	}

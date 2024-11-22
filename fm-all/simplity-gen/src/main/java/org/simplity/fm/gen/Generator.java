@@ -27,6 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.app.IApp;
+import org.simplity.fm.core.data.DataTable;
+import org.simplity.fm.gen.db.ColumnMetaRecord;
+import org.simplity.fm.gen.db.MetaUtil;
+import org.simplity.fm.gen.db.TableMetaRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +83,94 @@ public class Generator {
 		// generatedSourceRootFolder generatedPackageName tsOutputFolder");
 	}
 
+	public static void generateTsFromDb(IApp app, String tsRoot) {
+		try {
+
+			String fileRoot = tsRoot + "records/";
+			File folder = new File(fileRoot);
+			ensureFolder(folder);
+
+			final Map<String, TableMetaRecord> tables = new HashMap<>();
+			final Map<String, DataTable<ColumnMetaRecord>> columnsOfTable = new HashMap<>();
+			int n = MetaUtil.getTableDetails(app.getDbDriver(), tables, columnsOfTable);
+
+			StringBuilder sbf = new StringBuilder();
+			sbf.append("import { Record, StringMap } from 'simplity-types';\n");
+			StringBuilder memberSbf = new StringBuilder();
+
+			for (Map.Entry<String, TableMetaRecord> entry : tables.entrySet()) {
+				String name = entry.getKey();
+				sbf.append("import { " + name + " } from './records/" + name + ".rec';\n");
+				memberSbf.append("\n\t" + name + ',');
+				generateARecordTs(tsRoot + "/records/", entry.getValue(), columnsOfTable.get(name));
+			}
+			sbf.append("\nexport const generatedRecords: StringMap<Record> = {");
+			sbf.append(memberSbf.toString());
+			sbf.append("\n};\n");
+			Util.writeOut(tsRoot + "/generatedRecords.ts", sbf.toString());
+
+			if (n == 0) {
+				logger.warn(
+						"There are no tables or views in the database. No records generated, but records.ts generated with an empty object");
+
+			} else {
+				logger.info(n + " records generated from the Database");
+			}
+		} catch (Exception e) {
+			logger.error("Error generating Typscripts from the database instance", e);
+		}
+
+	}
+
+	private static final String P = "\n\t";
+	private static final String PP = "\n\t\t\t";
+
+	private static void appendMember(StringBuilder sbf, String prefix, String name, String value) {
+		sbf.append(prefix).append(name).append(": '").append(value).append("',");
+	}
+
+	private static void generateARecordTs(String folder, TableMetaRecord table, DataTable<ColumnMetaRecord> columns) {
+		StringBuilder sbf = new StringBuilder();
+		String name = table.getName();
+		logger.info("Generating ts for " + name);
+		sbf.append("import { Record } from 'simplity-types';\n\n");
+		sbf.append("export const " + name + ": Record = {");
+
+		appendMember(sbf, P, "name", name);
+		appendMember(sbf, P, "recordType", "simple");
+		appendMember(sbf, P, "nameInDb", table.getNameInDb());
+		sbf.append("\n\tisVisibleToClient: true,");
+		appendMember(sbf, P, "description", table.getDescription());
+
+		sbf.append("\n\toperations: ['get', 'filter'");
+		if (!table.getIsView()) {
+			sbf.append(", 'create', 'update', 'delete', 'save'");
+		}
+		sbf.append("],");
+
+		sbf.append("\n\tfields: [");
+		for (ColumnMetaRecord column : columns) {
+			sbf.append("\n\t\t{");
+
+			appendMember(sbf, PP, "name", column.getName());
+			appendMember(sbf, PP, "fieldType", column.getFieldtype());
+			appendMember(sbf, PP, "nameInDb", column.getNameInDb());
+			appendMember(sbf, PP, "renderAs", column.getRenderAs());
+			appendMember(sbf, PP, "valueType", column.getValueType());
+			appendMember(sbf, PP, "description", column.getDescription());
+			appendMember(sbf, PP, "label", column.getLabel());
+			// TODO: we are pushing ValueTypeInfo as schema now
+			appendMember(sbf, PP, "valueSchema", column.getValueTypeInfo());
+
+			sbf.append("\n\t\t},");
+		}
+		sbf.append("\n\t],");
+
+		sbf.append("\n}\n");
+		Util.writeOut(folder + name + ".rec.ts", sbf.toString());
+
+	}
+
 	private static boolean ensureFolder(final File f) {
 		final String folder = f.getAbsolutePath();
 		if (f.exists()) {
@@ -127,7 +220,6 @@ public class Generator {
 		javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
 		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage);
 		return gen.go();
-
 	}
 
 	/*

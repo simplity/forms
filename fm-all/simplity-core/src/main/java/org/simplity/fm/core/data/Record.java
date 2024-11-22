@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
  *
  *
  */
-public class Record {
+public class Record implements Cloneable {
 	private static final Logger logger = LoggerFactory.getLogger(Record.class);
 
 	private final RecordMetaData metaData;

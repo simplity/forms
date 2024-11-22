@@ -28,20 +28,16 @@ public class DbUtil {
 	 * set value for a parameter for a prepared statement
 	 *
 	 * @param ps
-	 * @param position
-	 *            1-based
-	 * @param value
-	 *            can be null
-	 * @param valueType
-	 *            not null can be null, in which case it is treated as text
+	 * @param position  1-based
+	 * @param value     can be null
+	 * @param valueType not null can be null, in which case it is treated as text
 	 * @throws SQLException
 	 */
-	public static final void setPsParamValue(final PreparedStatement ps,
-			final int position, final Object value, final ValueType valueType)
-			throws SQLException {
+	public static final void setPsParamValue(final PreparedStatement ps, final int position, final Object value,
+			final ValueType valueType) throws SQLException {
 
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			if (value == null) {
 				ps.setNull(position, Types.BOOLEAN);
 			} else {
@@ -49,7 +45,7 @@ public class DbUtil {
 			}
 			return;
 
-		case Date :
+		case Date:
 			java.sql.Date date = null;
 			if (value != null) {
 				date = java.sql.Date.valueOf((LocalDate) value);
@@ -57,7 +53,7 @@ public class DbUtil {
 			ps.setDate(position, date);
 			return;
 
-		case Decimal :
+		case Decimal:
 			if (value == null) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setDouble(position, 0.0);
@@ -69,7 +65,7 @@ public class DbUtil {
 			}
 			return;
 
-		case Integer :
+		case Integer:
 			if (value == null) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setLong(position, 0L);
@@ -81,14 +77,11 @@ public class DbUtil {
 			}
 			return;
 
-		case Text :
-			ps.setString(position,
-					value == null
-							? Conventions.Db.TEXT_VALUE_OF_NULL
-							: value.toString());
+		case Text:
+			ps.setString(position, value == null ? Conventions.Db.TEXT_VALUE_OF_NULL : value.toString());
 			return;
 
-		case Timestamp :
+		case Timestamp:
 			java.sql.Timestamp stamp = null;
 			if (value != null) {
 				stamp = java.sql.Timestamp.from((Instant) value);
@@ -96,9 +89,8 @@ public class DbUtil {
 			ps.setTimestamp(position, stamp);
 			return;
 
-		default :
-			throw new ApplicationError("ValueType " + valueType
-					+ " is not handled in DB related operations");
+		default:
+			throw new ApplicationError("ValueType " + valueType + " is not handled in DB related operations");
 		}
 
 	}
@@ -107,15 +99,12 @@ public class DbUtil {
 	 * set values for all the parameters in a prepared statement
 	 *
 	 * @param ps
-	 * @param values
-	 *            has the right number of values for the ps
-	 * @param valueTypes
-	 *            one value-type for each of the values
+	 * @param values     has the right number of values for the ps
+	 * @param valueTypes one value-type for each of the values
 	 * @throws SQLException
 	 */
-	public static final void setPsParamValues(final PreparedStatement ps,
-			final Object[] values, final ValueType[] valueTypes)
-			throws SQLException {
+	public static final void setPsParamValues(final PreparedStatement ps, final Object[] values,
+			final ValueType[] valueTypes) throws SQLException {
 		for (int i = 0; i < values.length; i++) {
 			setPsParamValue(ps, i + 1, values[i], valueTypes[i]);
 		}
@@ -125,20 +114,15 @@ public class DbUtil {
 	 * set values for all the parameters in a prepared statement
 	 *
 	 * @param ps
-	 * @param values
-	 *            has the right number of values for the ps
-	 * @param valueTypes
-	 *            one value-type for each of the values
-	 * @param oneBasedStartingPosition
-	 *            should be greater than or equal to 1.
+	 * @param values                   has the right number of values for the ps
+	 * @param valueTypes               one value-type for each of the values
+	 * @param oneBasedStartingPosition should be greater than or equal to 1.
 	 * @throws SQLException
 	 */
-	public static final void setPsParamValues(final PreparedStatement ps,
-			final Object[] values, final ValueType[] valueTypes,
-			int oneBasedStartingPosition) throws SQLException {
+	public static final void setPsParamValues(final PreparedStatement ps, final Object[] values,
+			final ValueType[] valueTypes, int oneBasedStartingPosition) throws SQLException {
 		for (int i = 0; i < values.length; i++) {
-			setPsParamValue(ps, i + oneBasedStartingPosition, values[i],
-					valueTypes[i]);
+			setPsParamValue(ps, i + oneBasedStartingPosition, values[i], valueTypes[i]);
 		}
 	}
 
@@ -146,12 +130,10 @@ public class DbUtil {
 	 * set values for all the parameters in a prepared statement
 	 *
 	 * @param ps
-	 * @param record
-	 *            which has the right values for the parameters in the PS
+	 * @param record which has the right values for the parameters in the PS
 	 * @throws SQLException
 	 */
-	public static final void setPsParamValues(final PreparedStatement ps,
-			Record record) throws SQLException {
+	public static final void setPsParamValues(final PreparedStatement ps, Record record) throws SQLException {
 		if (record == null) {
 			return;
 		}
@@ -165,33 +147,30 @@ public class DbUtil {
 
 	/**
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param position
-	 *            1-based
-	 * @param valueType
-	 *            non-null
+	 * @param rs        non-null
+	 * @param position  1-based
+	 * @param valueType non-null
 	 * @return retrieved object value. can be null
 	 * @throws SQLException
 	 */
-	public static final Object getValueFromRs(final ResultSet rs,
-			final int position, ValueType valueType) throws SQLException {
+	public static final Object getValueFromRs(final ResultSet rs, final int position, ValueType valueType)
+			throws SQLException {
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			final boolean bool = rs.getBoolean(position);
 			if (rs.wasNull()) {
 				return null;
 			}
 			return bool;
 
-		case Date :
+		case Date:
 			final java.sql.Date date = rs.getDate(position);
 			if (date == null) {
 				return null;
 			}
 			return date.toLocalDate();
 
-		case Decimal :
+		case Decimal:
 			final double dbl = rs.getDouble(position);
 			if (rs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -201,7 +180,7 @@ public class DbUtil {
 			}
 			return dbl;
 
-		case Integer :
+		case Integer:
 			final long nbr = rs.getLong(position);
 			if (rs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -211,56 +190,52 @@ public class DbUtil {
 			}
 			return nbr;
 
-		case Text :
+		case Text:
 			String text = rs.getString(position);
 			if (text == null) {
 				text = Conventions.Db.TEXT_VALUE_OF_NULL;
 			}
 			return text;
 
-		case Timestamp :
+		case Timestamp:
 			final java.sql.Timestamp stamp = rs.getTimestamp(position);
 			if (stamp == null) {
 				return null;
 			}
 			return stamp.toInstant();
 
-		default :
-			throw new ApplicationError("ValueType " + valueType
-					+ " is not handled in DB related operations");
+		default:
+			throw new ApplicationError("ValueType " + valueType + " is not handled in DB related operations");
 		}
 	}
 
 	/**
 	 * to be called only after execute() is invoked on this statement
 	 *
-	 * @param cs
-	 *            Statement that
-	 * @param position
-	 *            1-based
-	 * @param valueType
-	 *            non-null
+	 * @param cs        Statement that
+	 * @param position  1-based
+	 * @param valueType non-null
 	 * @return retrieved object value. can be null
 	 * @throws SQLException
 	 */
-	public static final Object getValueFromCs(final CallableStatement cs,
-			final int position, ValueType valueType) throws SQLException {
+	public static final Object getValueFromCs(final CallableStatement cs, final int position, ValueType valueType)
+			throws SQLException {
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			final boolean bool = cs.getBoolean(position);
 			if (cs.wasNull()) {
 				return null;
 			}
 			return bool;
 
-		case Date :
+		case Date:
 			final java.sql.Date date = cs.getDate(position);
 			if (date == null) {
 				return null;
 			}
 			return date.toLocalDate();
 
-		case Decimal :
+		case Decimal:
 			final double dbl = cs.getDouble(position);
 			if (cs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -270,7 +245,7 @@ public class DbUtil {
 			}
 			return dbl;
 
-		case Integer :
+		case Integer:
 			final long nbr = cs.getLong(position);
 			if (cs.wasNull()) {
 				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
@@ -280,37 +255,33 @@ public class DbUtil {
 			}
 			return nbr;
 
-		case Text :
+		case Text:
 			String text = cs.getString(position);
 			if (text == null) {
 				text = Conventions.Db.TEXT_VALUE_OF_NULL;
 			}
 			return text;
 
-		case Timestamp :
+		case Timestamp:
 			final java.sql.Timestamp stamp = cs.getTimestamp(position);
 			if (stamp == null) {
 				return null;
 			}
 			return stamp.toInstant();
 
-		default :
-			throw new ApplicationError("ValueType " + valueType
-					+ " is not handled in DB related operations");
+		default:
+			throw new ApplicationError("ValueType " + valueType + " is not handled in DB related operations");
 		}
 	}
 
 	/**
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param valueTypes
-	 *            non-null
+	 * @param rs         non-null
+	 * @param valueTypes non-null
 	 * @return retrieved object values.
 	 * @throws SQLException
 	 */
-	public static final Object[] getValuesFromRs(final ResultSet rs,
-			ValueType[] valueTypes) throws SQLException {
+	public static final Object[] getValuesFromRs(final ResultSet rs, ValueType[] valueTypes) throws SQLException {
 		Object[] values = new Object[valueTypes.length];
 		for (int i = 0; i < values.length; i++) {
 			values[i] = getValueFromRs(rs, i + 1, valueTypes[i]);
@@ -321,15 +292,12 @@ public class DbUtil {
 	/**
 	 * read all the rows from a ResultSet
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param valueTypes
-	 *            non-null
+	 * @param rs         non-null
+	 * @param valueTypes non-null
 	 * @return retrieved object values.
 	 * @throws SQLException
 	 */
-	public static final List<Object[]> getRowsFromRs(final ResultSet rs,
-			ValueType[] valueTypes) throws SQLException {
+	public static final List<Object[]> getRowsFromRs(final ResultSet rs, ValueType[] valueTypes) throws SQLException {
 		List<Object[]> rows = new ArrayList<>();
 		while (rs.next()) {
 			Object[] row = new Object[valueTypes.length];
@@ -344,16 +312,13 @@ public class DbUtil {
 	/**
 	 * process all the rows from a ResultSet
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param valueTypes
-	 *            non-null
+	 * @param rs         non-null
+	 * @param valueTypes non-null
 	 * @param processor
 	 * @return number of rows processed.
 	 * @throws SQLException
 	 */
-	public static final int processRowsFromRs(final ResultSet rs,
-			ValueType[] valueTypes, IRowProcessor processor)
+	public static final int processRowsFromRs(final ResultSet rs, ValueType[] valueTypes, IRowProcessor processor)
 			throws SQLException {
 		int nbr = 0;
 		while (rs.next()) {
@@ -371,15 +336,12 @@ public class DbUtil {
 
 	/**
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param record
-	 *            to which data is to be extracted based on the value types of
-	 *            the fields non-null
+	 * @param rs     non-null
+	 * @param record to which data is to be extracted based on the value types of
+	 *               the fields non-null
 	 * @throws SQLException
 	 */
-	public static final void rsToRecord(final ResultSet rs, Record record)
-			throws SQLException {
+	public static final void rsToRecord(final ResultSet rs, Record record) throws SQLException {
 		ValueType[] valueTypes = record.fetchValueTypes();
 		for (int i = 0; i < valueTypes.length; i++) {
 			record.assignValue(i, getValueFromRs(rs, i + 1, valueTypes[i]));
@@ -388,15 +350,12 @@ public class DbUtil {
 
 	/**
 	 *
-	 * @param rs
-	 *            non-null
-	 * @param dataTable
-	 *            to which data is to be extracted based on the value types of
-	 *            the fields non-null
+	 * @param rs        non-null
+	 * @param dataTable to which data is to be extracted based on the value types of
+	 *                  the fields non-null
 	 * @throws SQLException
 	 */
-	public static final void rsToDataTable(final ResultSet rs,
-			DataTable<?> dataTable) throws SQLException {
+	public static final void rsToDataTable(final ResultSet rs, DataTable<?> dataTable) throws SQLException {
 		ValueType[] types = dataTable.fetchValueTypes();
 		while (rs.next()) {
 			Object[] row = new Object[types.length];
@@ -411,39 +370,37 @@ public class DbUtil {
 	 * set value for a parameter for a prepared statement
 	 *
 	 * @param cs
-	 * @param position
-	 *            1-based
-	 * @param valueType
-	 *            not null can be null, in which case it is treated as text
+	 * @param position  1-based
+	 * @param valueType not null can be null, in which case it is treated as text
 	 * @throws SQLException
 	 */
-	public static final void registerOutputParam(final CallableStatement cs,
-			final int position, final ValueType valueType) throws SQLException {
+	public static final void registerOutputParam(final CallableStatement cs, final int position,
+			final ValueType valueType) throws SQLException {
 		switch (valueType) {
-		case Boolean :
+		case Boolean:
 			cs.registerOutParameter(position, java.sql.Types.BOOLEAN);
 			return;
 
-		case Date :
+		case Date:
 			cs.registerOutParameter(position, java.sql.Types.DATE);
 			return;
-		case Decimal :
+		case Decimal:
 			cs.registerOutParameter(position, java.sql.Types.DECIMAL);
 			return;
 
-		case Integer :
+		case Integer:
 			cs.registerOutParameter(position, java.sql.Types.INTEGER);
 			return;
 
-		case Text :
+		case Text:
 			cs.registerOutParameter(position, java.sql.Types.NVARCHAR);
 			return;
 
-		case Timestamp :
+		case Timestamp:
 			cs.registerOutParameter(position, java.sql.Types.TIMESTAMP);
 			return;
 
-		default :
+		default:
 			throwIt(valueType);
 			return;
 		}
@@ -451,7 +408,7 @@ public class DbUtil {
 	}
 
 	private static void throwIt(ValueType vt) {
-		throw new ApplicationError(
-				"ValueType " + vt + " is not handled in DB related operations");
+		throw new ApplicationError("ValueType " + vt + " is not handled in DB related operations");
 	}
+
 }

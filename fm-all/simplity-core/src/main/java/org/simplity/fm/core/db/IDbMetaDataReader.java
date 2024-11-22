@@ -20,42 +20,27 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
+package org.simplity.fm.core.db;
+
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 
 /**
- * data structure with field attributes that are to be overridden
+ * interface/lambda to carry out read operations with the jdbc object
+ * DatabaseMetadata.
+ *
  *
  * @author simplity.org
  *
  */
-public class FieldOverride {
-	/**
-	 * name is unique within a record/form
-	 */
-	public String name;
+public interface IDbMetaDataReader {
 
 	/**
-	 * data type describes the type of value and restrictions (validations) on
-	 * the value
+	 * function that accesses the DatabaseMetaData instance for this database
+	 * transaction is managed by the called driver, and not this function.
+	 *
+	 * @param metaData
+	 * @throws SQLException
 	 */
-	public String valueSchema;
-	/**
-	 * default value is used only if this is optional and the value is missing.
-	 * not used if the field is mandatory
-	 */
-	public String defaultValue;
-	/**
-	 * refers to the message id/code that is used for i18n of messages
-	 */
-	public String messageId;
-	/**
-	 * required/mandatory. If set to true, text value of empty string and 0 for
-	 * integral are assumed to be not valid. Relevant only for editable fields.
-	 */
-	public boolean isRequired;
-
-	/**
-	 * list that provides drop-down values for this field
-	 */
-	public String listName;
+	void read(DatabaseMetaData metaData) throws SQLException;
 }

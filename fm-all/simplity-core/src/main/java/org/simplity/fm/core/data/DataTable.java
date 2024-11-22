@@ -1,11 +1,13 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.db.IRowProcessor;
 import org.simplity.fm.core.service.IOutputData;
 import org.simplity.fm.core.valueschema.ValueType;
@@ -18,6 +20,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  */
 public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	private final T record;
+	private final Constructor<T> constructor;
 	protected List<Object[]> rows = new ArrayList<>();
 
 	/**
@@ -25,8 +28,14 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	 *
 	 * @param record
 	 */
+	@SuppressWarnings("unchecked")
 	public DataTable(final T record) {
 		this.record = record;
+		try {
+			this.constructor = (Constructor<T>) record.getClass().getConstructor();
+		} catch (Exception e) {
+			throw new ApplicationError("error while getting a constructor for a Record instance", e);
+		}
 	}
 
 	/**
@@ -76,13 +85,19 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	 * @param idx
 	 * @return record at 0-based index. null if the index is not valid
 	 */
-	@SuppressWarnings("unchecked")
+
 	public T fetchRecord(final int idx) {
 		final Object[] row = this.rows.get(idx);
 		if (row == null) {
 			return null;
 		}
-		return (T) this.record.newInstance(row);
+		try {
+			T rec = this.constructor.newInstance();
+			rec.assignRawData(row);
+			return rec;
+		} catch (Exception e) {
+			throw new ApplicationError("Error while creating a new instance of " + this.record.getClass().getName(), e);
+		}
 	}
 
 	/**

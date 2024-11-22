@@ -25,6 +25,7 @@ package org.simplity.fm.core.data;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.valueschema.ValueSchema;
+import org.simplity.fm.core.valueschema.ValueType;
 
 /**
  * @author simplity.org
@@ -45,39 +46,30 @@ public class DbField extends Field {
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
 	 *
-	 * @param fieldName
-	 *            unique within its data structure
-	 * @param index
-	 *            0-based index of this field in the parent form
-	 * @param valueSchema
-	 *            pre-defined value schema. used for validating data coming from
-	 *            a client
-	 * @param isList
-	 *            is this a comma-separated list of values?
-	 * @param defaultValue
-	 *            value to be used in case the client has not sent a value for
-	 *            this. This e is used ONLY if isRequired is false. That is,
-	 *            this is used if the field is optional, and the client skips
-	 *            it. This value is NOT used if isRequired is set to true
-	 * @param messageId
-	 *            can be null in which case the id from dataType is used
-	 * @param valueListName
-	 *            if this field has a list of valid values that are typically
-	 *            rendered in a drop-down. If the value list depends on value of
-	 *            another field, then it is part of inter-field validation, and
-	 *            not part of this field.
-	 * @param columnName
-	 *            db column name. non-null
-	 * @param fieldType
-	 *            db field type. non-null
+	 * @param fieldName     unique within its data structure
+	 * @param index         0-based index of this field in the parent form
+	 * @param valueType     non-null
+	 * @param valueSchema   can be null. pre-defined value schema. optional. used
+	 *                      for validating data coming from a client
+	 * @param isList        is this a comma-separated list of values?
+	 * @param defaultValue  value to be used in case the client has not sent a value
+	 *                      for this. This e is used ONLY if isRequired is false.
+	 *                      That is, this is used if the field is optional, and the
+	 *                      client skips it. This value is NOT used if isRequired is
+	 *                      set to true
+	 * @param messageId     can be null in which case the id from dataType is used
+	 * @param valueListName if this field has a list of valid values that are
+	 *                      typically rendered in a drop-down. If the value list
+	 *                      depends on value of another field, then it is part of
+	 *                      inter-field validation, and not part of this field.
+	 * @param columnName    db column name. non-null
+	 * @param fieldType     db field type. non-null
 	 */
-	public DbField(final String fieldName, final int index,
-			final ValueSchema valueSchema, final boolean isList,
-			final String defaultValue, final String messageId,
-			final String valueListName, final String columnName,
-			final FieldType fieldType) {
-		super(fieldName, index, valueSchema, isList, defaultValue, messageId,
-				valueListName, fieldType.isRequired());
+	public DbField(final String fieldName, final int index, final ValueType valueType, final ValueSchema valueSchema,
+			final boolean isList, final String defaultValue, final String messageId, final String valueListName,
+			final String columnName, final FieldType fieldType) {
+		super(fieldName, index, valueType, valueSchema, isList, defaultValue, messageId, valueListName,
+				fieldType.isRequired());
 		this.columnName = columnName;
 		this.fieldType = fieldType;
 	}
@@ -101,8 +93,7 @@ public class DbField extends Field {
 	 * @return true if this column is part of the primary key
 	 */
 	public boolean isPrimaryKey() {
-		return this.fieldType == FieldType.PrimaryKey
-				|| this.fieldType == FieldType.GeneratedPrimaryKey;
+		return this.fieldType == FieldType.PrimaryKey || this.fieldType == FieldType.GeneratedPrimaryKey;
 	}
 
 	/**
@@ -116,8 +107,7 @@ public class DbField extends Field {
 	 * @return true if this field is user id, like createdBy and modifiedBy.
 	 */
 	public boolean isUserId() {
-		return this.fieldType == FieldType.ModifiedBy
-				|| this.fieldType == FieldType.CreatedBy;
+		return this.fieldType == FieldType.ModifiedBy || this.fieldType == FieldType.CreatedBy;
 	}
 
 	/**
@@ -129,12 +119,10 @@ public class DbField extends Field {
 	 * @param ctx
 	 * @param tableName
 	 * @param rowNbr
-	 * @return true if all OK. false if an error message is addedd to the
-	 *         context
+	 * @return true if all OK. false if an error message is addedd to the context
 	 */
-	public boolean validate(final Object[] data, final boolean forInsert,
-			final IServiceContext ctx, final String tableName,
-			final int rowNbr) {
+	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
 		final int idx = this.getIndex();
 		final Object val = data[idx];
 
@@ -142,31 +130,30 @@ public class DbField extends Field {
 		/*
 		 * tenant key is ignored from the client, and populated from the context
 		 */
-		case TenantKey :
+		case TenantKey:
 			data[idx] = ctx.getTenantId();
 			return true;
 
 		/*
 		 * user id is also populated from the context
 		 */
-		case CreatedBy :
-		case ModifiedBy :
+		case CreatedBy:
+		case ModifiedBy:
 			data[idx] = ctx.getUserId();
 			return true;
 
 		/*
-		 * generated primary key is set as "optional". However this is required
-		 * if the input is for an update operation
+		 * generated primary key is set as "optional". However this is required if the
+		 * input is for an update operation
 		 */
-		case GeneratedPrimaryKey :
+		case GeneratedPrimaryKey:
 			if (forInsert == false && val == null) {
-				ctx.addMessage(
-						Message.newValidationError(this, tableName, rowNbr));
+				ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
 				return false;
 			}
 			return true;
 
-		default :
+		default:
 			return true;
 
 		}

@@ -2,7 +2,6 @@ package org.simplity.fm.core.db;
 
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.valueschema.ValueSchema;
 import org.simplity.fm.core.valueschema.ValueType;
 
 /**
@@ -12,9 +11,9 @@ import org.simplity.fm.core.valueschema.ValueType;
  */
 public class NbrRowsAffectedRecord extends Record {
 
-	private static final Field[] FIELDS = new Field[]{new Field(
-			"nbrAffectedRows", 0,
-			ValueSchema.defaultTextSchema(ValueType.Integer), false, null)};
+	private static final Field[] FIELDS = new Field[] {
+			new Field("nbrAffectedRows", 0, ValueType.Integer, null, false, null) };
+
 	/**
 	 * default constructor
 	 */

@@ -44,6 +44,7 @@ import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InterFieldValidationType;
+import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -412,6 +413,7 @@ class Record {
 		 * imports
 		 */
 		Util.emitImport(sbf, LocalDate.class);
+		Util.emitImport(sbf, ValueType.class);
 		Util.emitImport(sbf, Instant.class);
 		Util.emitImport(sbf, IInputData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);

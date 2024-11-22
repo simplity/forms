@@ -679,10 +679,18 @@ public class Sql {
 			} else {
 				sbf.append(", ");
 			}
-			sbf.append("new Field(\"").append(field.name).append("\", ").append(field.index).append(", ")
-					.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(field.valueSchema)
-					.append(", ").append(field.isRequired).append(", ").append(Util.quotedString(field.defaultValue))
-					.append(")");
+			sbf.append("new Field(\"").append(field.name).append("\", ");
+			sbf.append(field.index).append(", ");
+			sbf.append("ValueType.").append(field.valueType.name()).append(", ");
+
+			if (field.valueSchema == null) {
+				sbf.append("null, ");
+			} else {
+				sbf.append(Conventions.App.GENERATED_VALUE_SCHEMAS_CLASS_NAME).append('.').append(field.valueSchema)
+						.append(", ");
+			}
+
+			sbf.append(field.isRequired).append(", ").append(Util.quotedString(field.defaultValue)).append(")");
 		}
 
 		sbf.append("};");

@@ -65,6 +65,8 @@ public class Field {
 	 * 0-based index of the field in the record.;
 	 */
 	private final int index;
+
+	private final ValueType valueType;
 	/**
 	 * value schema describes the restriction on the value (validations)
 	 */
@@ -103,14 +105,16 @@ public class Field {
 	 *
 	 * @param fieldName
 	 * @param index
-	 * @param valueSchema
+	 * @param valueType
+	 * @param valueSchema  optional
 	 * @param isRequired
 	 * @param defaultValue optional, can be null
 	 */
-	public Field(final String fieldName, final int index, final ValueSchema valueSchema, boolean isRequired,
-			String defaultValue) {
+	public Field(final String fieldName, final int index, final ValueType valueType, final ValueSchema valueSchema,
+			boolean isRequired, String defaultValue) {
 		this.name = fieldName;
 		this.index = index;
+		this.valueType = valueType;
 		this.isRequired = isRequired;
 		this.valueSchema = valueSchema;
 		if (defaultValue == null) {
@@ -125,6 +129,7 @@ public class Field {
 	 *
 	 * @param fieldName     unique within its data structure
 	 * @param index         0-based index of this field in the parent form
+	 * @param valueType     mandatory value type
 	 * @param valueSchema   pre-defined value schema. used for validating data
 	 *                      coming from a client
 	 * @param isArray       is this field represent a list of primitive values? If
@@ -142,10 +147,12 @@ public class Field {
 	 * @param isRequired    is this field mandatory. used for validating data coming
 	 *                      from a client
 	 */
-	public Field(final String fieldName, final int index, final ValueSchema valueSchema, final boolean isArray,
-			final String defaultValue, final String messageId, final String valueListName, final boolean isRequired) {
+	public Field(final String fieldName, final int index, final ValueType valueType, final ValueSchema valueSchema,
+			final boolean isArray, final String defaultValue, final String messageId, final String valueListName,
+			final boolean isRequired) {
 		this.name = fieldName;
 		this.index = index;
+		this.valueType = valueType;
 		this.isRequired = isRequired;
 		this.messageId = messageId;
 		this.valueSchema = valueSchema;
@@ -177,7 +184,8 @@ public class Field {
 	}
 
 	/**
-	 * @return the value-schema associated with this field
+	 * @return the value-schema associated with this field, or null if it is not
+	 *         specified
 	 */
 	public ValueSchema getValueSchema() {
 		return this.valueSchema;
@@ -215,7 +223,7 @@ public class Field {
 		if (this.isArray) {
 			return ValueType.Text;
 		}
-		return this.valueSchema.getValueType();
+		return this.valueType;
 	}
 
 	/**
@@ -239,7 +247,7 @@ public class Field {
 			}
 
 			logger.error("Field {} is required but no data is received", this.name);
-			ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
+			this.addError(ctx, tableName, rowNbr);
 			return false;
 		}
 
@@ -258,16 +266,28 @@ public class Field {
 	 * @param idx
 	 * @return object of the right type. or null if the value is invalid
 	 */
-	private Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
-		final Object obj = this.valueSchema.parse(inputValue);
+	public Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
+		Object obj = null;
+		if (this.valueSchema == null) {
+			obj = this.valueType.parse(inputValue);
+		} else {
+			obj = this.valueSchema.parse(inputValue);
+		}
 		if (obj == null) {
 			logger.error("{} is not valid for field {} as per value schema {}", inputValue, this.name,
 					this.valueSchema.getName());
-			ctx.addMessage(Message.newValidationError(this, tableName, idx));
+			this.addError(ctx, tableName, idx);
 			return null;
 		}
 
 		if (this.isArray) {
+			if (this.valueSchema == null) {
+				logger.error(
+						"Field has to have an array of values. However, no value schema is specified. hence unable to parse the value into list of values",
+						this.name);
+				this.addError(ctx, tableName, idx);
+				return null;
+			}
 			final ValueSchema.ParsedList parsedList = (ValueSchema.ParsedList) obj;
 
 			if (this.valueList == null) {
@@ -303,6 +323,12 @@ public class Field {
 		return null;
 	}
 
+	private void addError(IServiceContext ctx, String tableName, int idx) {
+		if (ctx != null) {
+			ctx.addMessage(Message.newValidationError(this, tableName, idx));
+		}
+	}
+
 	/**
 	 * override attributes of this field
 	 *
@@ -311,17 +337,17 @@ public class Field {
 	public void override(final FieldOverride over) {
 		this.isRequired = over.isRequired;
 
-		if (over.dataType != null && over.dataType.isEmpty() == false) {
-			final ValueSchema dt = AppManager.getApp().getCompProvider().getValueSchema(over.dataType);
+		if (over.valueSchema != null && over.valueSchema != null && over.valueSchema.isEmpty() == false) {
+			final ValueSchema dt = AppManager.getApp().getCompProvider().getValueSchema(over.valueSchema);
 			if (dt.getValueType() != this.getValueType()) {
 				throw new ApplicationError(
-						"Field {} is of value schema {}. It can not be overrideen with value schema '{}' because its value type is different");
+						"Field {} is of value schema {}. It can not be overridden with value schema '{}' because its value type is different");
 			}
-			this.valueSchema = AppManager.getApp().getCompProvider().getValueSchema(over.dataType);
+			this.valueSchema = AppManager.getApp().getCompProvider().getValueSchema(over.valueSchema);
 		}
 
 		if (over.defaultValue != null && over.defaultValue.isEmpty() == false) {
-			this.defaultValue = this.valueSchema.parse(over.defaultValue);
+			this.defaultValue = this.valueType.parse(over.defaultValue);
 		}
 
 		if (over.messageId != null && over.messageId.isEmpty() == false) {
