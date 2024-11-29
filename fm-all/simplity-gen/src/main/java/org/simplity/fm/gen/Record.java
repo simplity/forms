@@ -338,7 +338,8 @@ class Record {
 			}
 		} else if (this.nameInDb != null) {
 			this.addError(
-					"nameInDb is specified as {} but no operations are specified. You must specify the operations that can be performed using this record.");
+					"nameInDb is specified as {} but no operations are specified. You must specify the operations that can be performed using this record.",
+					this.nameInDb);
 
 		}
 

@@ -236,8 +236,8 @@ public abstract class DbRecord extends Record {
 	 * get a service for the specific operation on this record
 	 *
 	 * @param operation   non-null
-	 * @param serviceName optional. If not specified, record-names service name is
-	 *                    used
+	 * @param serviceName optional. If not specified, it is composed as
+	 *                    operation_recordName* used
 	 * @return service if this record is designed for this operation. null
 	 *         otherwise.
 	 */

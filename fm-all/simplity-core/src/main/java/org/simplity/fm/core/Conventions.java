@@ -64,6 +64,10 @@ public class Conventions {
 		/**
 		 * list name is required to invoke a list service
 		 */
+		public static final String RECORD_NAME_REQUIRED = "_recordNameRequired";
+		/**
+		 * list name is required to invoke a list service
+		 */
 		public static final String LIST_NOT_CONFIGURED = "_listNotConfigured";
 		/**
 		 * list name is required to invoke a list service
@@ -239,6 +243,11 @@ public class Conventions {
 		 * field/tag name for filter to-value in case the comparator is between
 		 */
 		public static final String TAG_FILTER_TO_VALUE = "toValue";
+
+		/**
+		 * for report-service request, name of the record
+		 */
+		public static final String TAG_RECORD_NAME = "recordName";
 		/**
 		 * default MAX nbr rows
 		 */
@@ -382,6 +391,10 @@ public class Conventions {
 		 */
 		public static final String SERVICE_LIST = "_getList";
 
+		/**
+		 * predefined name for Report Configuration Service service
+		 */
+		public static final String SERVICE_REPORT_CONFIG = "_getReportConfig";
 		/**
 		 * predefined name for the service to get the output of an asynch-service
 		 * requested earlier

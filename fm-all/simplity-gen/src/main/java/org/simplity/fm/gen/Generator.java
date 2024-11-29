@@ -55,9 +55,9 @@ public class Generator {
 			+ "\n-- Values clause has one row of empty/0/false values."
 			+ "\n-- we intend to introduce some syntax to generate this fiel WITH data in the future";
 
-	private static final String INPUT_ROOT = "c:/gitHub/wip/trm/trm-meta/meta/json/";
-	private static final String JAVA_ROOT = "c:/gitHub/wip/trm/trm-meta/trm-server-gen/src/main/java/";
-	private static final String PACKAGE_NAME = "in.nsoft.trm.gen";
+	private static final String INPUT_ROOT = "c:/gitHub/wip/amr/amr-meta/meta/json/";
+	private static final String JAVA_ROOT = "c:/gitHub/wip/amr/arm-meta/amr-server-gen/src/main/java/";
+	private static final String PACKAGE_NAME = "in.nsoft.amr.gen";
 
 	// private static final String INPUT_ROOT =
 	// "c:/bitBucket/simeta/simeta-meta/meta/";
