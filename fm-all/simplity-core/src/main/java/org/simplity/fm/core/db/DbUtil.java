@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
@@ -278,15 +277,16 @@ public class DbUtil {
 	 *
 	 * @param rs         non-null
 	 * @param valueTypes non-null
-	 * @return retrieved object values.
+	 * @param values     retrieved object values.
+	 * @return true if all ok. false if get values fails
 	 * @throws SQLException
 	 */
-	public static final Object[] getValuesFromRs(final ResultSet rs, ValueType[] valueTypes) throws SQLException {
-		Object[] values = new Object[valueTypes.length];
+	public static final boolean getValuesFromRs(final ResultSet rs, ValueType[] valueTypes, Object[] values)
+			throws SQLException {
 		for (int i = 0; i < values.length; i++) {
 			values[i] = getValueFromRs(rs, i + 1, valueTypes[i]);
 		}
-		return values;
+		return true;
 	}
 
 	/**
@@ -294,11 +294,13 @@ public class DbUtil {
 	 *
 	 * @param rs         non-null
 	 * @param valueTypes non-null
-	 * @return retrieved object values.
+	 * @param output     rows are put into this list.
+	 * @return number of rows extracted
 	 * @throws SQLException
 	 */
-	public static final List<Object[]> getRowsFromRs(final ResultSet rs, ValueType[] valueTypes) throws SQLException {
-		List<Object[]> rows = new ArrayList<>();
+	public static int getRowsFromRs(final ResultSet rs, ValueType[] valueTypes, final List<Object[]> rows)
+			throws SQLException {
+		int n = rows.size();
 		while (rs.next()) {
 			Object[] row = new Object[valueTypes.length];
 			rows.add(row);
@@ -306,7 +308,7 @@ public class DbUtil {
 				row[i] = getValueFromRs(rs, i + 1, valueTypes[i]);
 			}
 		}
-		return rows;
+		return rows.size() - n;
 	}
 
 	/**

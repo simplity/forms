@@ -101,8 +101,13 @@ public abstract class Sql {
 	protected boolean read(final IReadonlyHandle handle, Record outputRecord) throws SQLException {
 
 		this.checkValues();
-
-		return handle.readIntoRecord(this.sqlText, this.inputValues, this.inputTypes, outputRecord);
+		final Object[] row = new Object[outputRecord.length()];
+		final boolean ok = handle.read(this.sqlText, this.inputValues, this.inputTypes, outputRecord.fetchValueTypes(),
+				row);
+		if (ok) {
+			outputRecord.assignRawData(row);
+		}
+		return ok;
 	}
 
 	/**
@@ -189,13 +194,13 @@ public abstract class Sql {
 	 */
 	protected boolean readIn(final IReadonlyHandle handle, Record inputRecord) throws SQLException {
 
-		Object[] row = handle.read(this.sqlText, inputRecord.fetchRawData(), inputRecord.fetchValueTypes(),
-				this.outputTypes);
-		if (row == null) {
-			return false;
+		Object[] row = new Object[this.outputTypes.length];
+		final boolean ok = handle.read(this.sqlText, inputRecord.fetchRawData(), inputRecord.fetchValueTypes(),
+				this.outputTypes, row);
+		if (ok) {
+			this.outputValues = row;
 		}
-		this.outputValues = row;
-		return true;
+		return ok;
 	}
 
 	/**
@@ -226,12 +231,12 @@ public abstract class Sql {
 
 		this.checkValues();
 
-		Object[] row = handle.read(this.sqlText, this.inputValues, this.inputTypes, this.outputTypes);
-		if (row == null) {
-			return false;
+		Object[] row = new Object[this.outputTypes.length];
+		final boolean ok = handle.read(this.sqlText, this.inputValues, this.inputTypes, this.outputTypes, row);
+		if (ok) {
+			this.outputValues = row;
 		}
-		this.outputValues = row;
-		return true;
+		return ok;
 	}
 
 	/**

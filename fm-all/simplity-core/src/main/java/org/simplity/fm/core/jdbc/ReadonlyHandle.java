@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Record;
@@ -51,8 +52,6 @@ import org.slf4j.LoggerFactory;
 public class ReadonlyHandle implements IReadonlyHandle {
 	private static final Logger logger = LoggerFactory.getLogger(ReadonlyHandle.class);
 
-	private static final Object[][] EMPTY_ARRAY = new Object[0][];
-
 	@SuppressWarnings("resource")
 	protected final Connection con;
 
@@ -67,16 +66,16 @@ public class ReadonlyHandle implements IReadonlyHandle {
 	}
 
 	@Override
-	public Object[] read(final String sql, final Object[] parameterValues, ValueType[] parameterTypes,
-			final ValueType[] outputTypes) throws SQLException {
+	public boolean read(final String sql, final Object[] parameterValues, ValueType[] parameterTypes,
+			final ValueType[] outputTypes, Object[] outputData) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
 			try (ResultSet rs = ps.executeQuery()) {
 				if (!rs.next()) {
-					return null;
+					return false;
 				}
-				return DbUtil.getValuesFromRs(rs, outputTypes);
+				return DbUtil.getValuesFromRs(rs, outputTypes, outputData);
 			}
 		}
 	}
@@ -99,54 +98,54 @@ public class ReadonlyHandle implements IReadonlyHandle {
 		}
 	}
 
+//	@Override
+//	public boolean readIntoRecord(String sql, Object[] parameterValues, ValueType[] parameterTypes, Record outputRecord)
+//			throws SQLException {
+//
+//		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+//			if (parameterValues != null) {
+//				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
+//			}
+//			try (ResultSet rs = ps.executeQuery()) {
+//				if (rs.next()) {
+//					DbUtil.rsToRecord(rs, outputRecord);
+//					return true;
+//				}
+//				return false;
+//			}
+//		}
+//	}
+
 	@Override
-	public boolean readIntoRecord(String sql, Object[] parameterValues, ValueType[] parameterTypes, Record outputRecord)
-			throws SQLException {
+	public int readMany(final String sql, final Object[] parameterValues, final ValueType[] parameterTypes,
+			final ValueType[] outputTypes, List<Object[]> outputData) throws SQLException {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (parameterValues != null) {
 				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
 			}
+
 			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					DbUtil.rsToRecord(rs, outputRecord);
-					return true;
-				}
-				return false;
+				return DbUtil.getRowsFromRs(rs, outputTypes, outputData);
 			}
 		}
 	}
 
-	@Override
-	public Object[][] readMany(final String sql, final Object[] parameterValues, final ValueType[] parameterTypes,
-			final ValueType[] outputTypes) throws SQLException {
-
-		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (parameterValues != null) {
-				DbUtil.setPsParamValues(ps, parameterValues, parameterTypes);
-			}
-
-			try (ResultSet rs = ps.executeQuery()) {
-				return DbUtil.getRowsFromRs(rs, outputTypes).toArray(EMPTY_ARRAY);
-			}
-		}
-	}
-
-	@Override
-	public Object[][] readMany(final String sql, final Record inputRecord, final ValueType[] outputTypes)
-			throws SQLException {
-
-		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			if (inputRecord != null) {
-				DbUtil.setPsParamValues(ps, inputRecord);
-			}
-
-			try (ResultSet rs = ps.executeQuery()) {
-				return DbUtil.getRowsFromRs(rs, outputTypes).toArray(EMPTY_ARRAY);
-			}
-		}
-	}
-
+//	@Override
+//	public int readMany(final String sql, final Record inputRecord, final ValueType[] outputTypes, List<Object[]> rows)
+//			throws SQLException {
+//
+//		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+//			if (inputRecord != null) {
+//				DbUtil.setPsParamValues(ps, inputRecord);
+//			}
+//
+//			try (ResultSet rs = ps.executeQuery()) {
+//				return DbUtil.getRowsFromRs(rs, outputTypes).toArray(EMPTY_ARRAY);
+//			}
+//		}
+//	}
+//
 	@Override
 	public <T extends Record> void readIntoDataTable(String sql, Record inputRecord, DataTable<T> outputTable)
 			throws SQLException {

@@ -42,11 +42,9 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class RuntimeList implements IValueList {
-	protected static final Logger logger = LoggerFactory
-			.getLogger(RuntimeList.class);
-	private static final ValueType[] TYPES_FOR_ALL_ENTRIES = {ValueType.Text,
-			ValueType.Text, ValueType.Text};
-	private static final ValueType[] TYPES_FOR_KEYS = {ValueType.Text};
+	protected static final Logger logger = LoggerFactory.getLogger(RuntimeList.class);
+	private static final ValueType[] TYPES_FOR_ALL_ENTRIES = { ValueType.Text, ValueType.Text, ValueType.Text };
+	private static final ValueType[] TYPES_FOR_KEYS = { ValueType.Text };
 	private static final ValueType[] TYPES_FOR_VALIDATION = {};
 
 	protected String name;
@@ -87,9 +85,7 @@ public class RuntimeList implements IValueList {
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		Object tenantId = ctx.getTenantId();
 		if (this.hasKey && key == null) {
-			logger.error(
-					"ist {} requires value for its key. Value not receoved",
-					this.name);
+			logger.error("ist {} requires value for its key. Value not receoved", this.name);
 			return null;
 
 		}
@@ -107,9 +103,7 @@ public class RuntimeList implements IValueList {
 
 				if (this.hasKey) {
 					params[0] = key;
-					paramTypes[0] = this.keyIsNumeric
-							? ValueType.Integer
-							: ValueType.Text;
+					paramTypes[0] = this.keyIsNumeric ? ValueType.Integer : ValueType.Text;
 					nbr = 1;
 				}
 
@@ -124,42 +118,37 @@ public class RuntimeList implements IValueList {
 					paramTypes = Arrays.copyOf(paramTypes, nbr);
 				}
 
-				final ValueType[] typesForList = {this.valueIsNumeric
-						? ValueType.Integer
-						: ValueType.Text, ValueType.Text};
+				final ValueType[] typesForList = { this.valueIsNumeric ? ValueType.Integer : ValueType.Text,
+						ValueType.Text };
 
-				handle.readWithRowProcessor(this.listSql, params, paramTypes, typesForList,
-						row -> {
-							list.add(row);
-							return true;
-						});
+				handle.readWithRowProcessor(this.listSql, params, paramTypes, typesForList, row -> {
+					list.add(row);
+					return true;
+				});
 			});
 
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ",
-					this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 			return null;
 		}
 
 		Object[][] emptyList = new Object[0][];
 		if (list.size() == 0) {
-			logger.warn("No data found for list {} with key {}", this.name,
-					key);
+			logger.warn("No data found for list {} with key {}", this.name, key);
 			return emptyList;
 		}
 		return list.toArray(emptyList);
 	}
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue,
-			final IServiceContext ctx) {
+	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
 		if (this.hasKey && keyValue == null) {
 			logger.error("Key should have value for list {}", this.name);
 			return false;
 		}
 
-		boolean[] isValid = {false}; // so that lambda function can change this
+		boolean[] isValid = { false }; // so that lambda function can change this
 		try {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				/*
@@ -175,27 +164,23 @@ public class RuntimeList implements IValueList {
 					paramTypes[1] = ValueType.Integer;
 				}
 				params[0] = fieldValue;
-				paramTypes[0] = this.valueIsNumeric
-						? ValueType.Integer
-						: ValueType.Text;
+				paramTypes[0] = this.valueIsNumeric ? ValueType.Integer : ValueType.Text;
 
-				Object[] result = handle.read(this.checkSql, params, paramTypes,
-						TYPES_FOR_VALIDATION);
-				isValid[0] = result != null;
+				Object[] result = new Object[paramTypes.length];
+				isValid[0] = handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);
 			});
 
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ",
-					this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 			return false;
 		}
 		return isValid[0];
 	}
 
 	/**
-	 * this is specifically for batch operations where id is to be inserted in
-	 * place of name.
+	 * this is specifically for batch operations where id is to be inserted in place
+	 * of name.
 	 *
 	 * @param ctx
 	 * @return map to get id from name
@@ -207,25 +192,21 @@ public class RuntimeList implements IValueList {
 
 		try {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				Object[] params = {ctx.getTenantId()};
-				ValueType[] paramTypes = {ValueType.Integer};
+				Object[] params = { ctx.getTenantId() };
+				ValueType[] paramTypes = { ValueType.Integer };
 				if (this.isTenantSpecific == false) {
 					params = null;
 					paramTypes = null;
 				}
 
-				handle.readWithRowProcessor(this.allSql, params, paramTypes,
-						TYPES_FOR_ALL_ENTRIES, row -> {
-							entries.put(
-									row[0].toString() + "|" + row[1].toString(),
-									row[2].toString());
-							return true;
-						});
+				handle.readWithRowProcessor(this.allSql, params, paramTypes, TYPES_FOR_ALL_ENTRIES, row -> {
+					entries.put(row[0].toString() + "|" + row[1].toString(), row[2].toString());
+					return true;
+				});
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ",
-					this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 		}
 		return entries;
 	}
@@ -242,19 +223,18 @@ public class RuntimeList implements IValueList {
 		try {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				// get all the keys first
-				Object[] params = {tenantId};
-				ValueType[] paramTypes = {ValueType.Integer};
+				Object[] params = { tenantId };
+				ValueType[] paramTypes = { ValueType.Integer };
 				if (tenantId == null) {
 					params = null;
 					paramTypes = null;
 				}
 
 				final List<String> keys = new ArrayList<>();
-				handle.readWithRowProcessor(this.allKeysSql, params, paramTypes,
-						TYPES_FOR_KEYS, row -> {
-							keys.add(row[0].toString());
-							return true;
-						});
+				handle.readWithRowProcessor(this.allKeysSql, params, paramTypes, TYPES_FOR_KEYS, row -> {
+					keys.add(row[0].toString());
+					return true;
+				});
 
 				if (tenantId == null) {
 					params = new Object[1];
@@ -266,27 +246,24 @@ public class RuntimeList implements IValueList {
 					paramTypes[1] = ValueType.Integer;
 				}
 
-				final ValueType[] typesForList = {ValueType.Text,
-						ValueType.Text};
+				final ValueType[] typesForList = { ValueType.Text, ValueType.Text };
 				if (this.keyIsNumeric) {
 					typesForList[0] = ValueType.Integer;
 				}
 				for (String key : keys) {
 					params[0] = this.keyIsNumeric ? Long.parseLong(key) : key;
 					final List<Object[]> list = new ArrayList<>();
-					handle.readWithRowProcessor(this.listSql, params, paramTypes,
-							typesForList, row -> {
-								list.add(row);
-								return true;
-							});
+					handle.readWithRowProcessor(this.listSql, params, paramTypes, typesForList, row -> {
+						list.add(row);
+						return true;
+					});
 					lists.put(key, list.toArray(new Object[0][]));
 				}
 			});
 
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
-			logger.error("Error while getting values for list {}. ERROR: {} ",
-					this.name, msg);
+			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 		}
 		return lists;
 	}

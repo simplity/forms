@@ -43,7 +43,7 @@ import org.simplity.fm.core.infra.ICompProvider;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.service.ListService;
-import org.simplity.fm.core.service.ReportConfigService;
+import org.simplity.fm.core.service.GetReportSettings;
 import org.simplity.fm.core.validn.IValueList;
 import org.simplity.fm.core.valueschema.ValueSchema;
 import org.slf4j.Logger;
@@ -94,7 +94,7 @@ public class DefaultCompProvider implements ICompProvider {
 		 * add hard-wired services to the list
 		 */
 		this.services.put(Conventions.App.SERVICE_LIST, ListService.getInstance());
-		this.services.put(Conventions.App.SERVICE_REPORT_CONFIG, ReportConfigService.getInstance());
+		this.services.put(Conventions.App.SERVICE_GET_REPORT_SETTINGS, GetReportSettings.getInstance());
 		/*
 		 * add standard functions
 		 */

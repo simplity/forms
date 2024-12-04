@@ -309,11 +309,14 @@ public class Dba {
 		// sql parameters from row-data
 		Object[] params = copyFromRow(row, this.whereIndexes, null);
 
-		Object[] result = handle.read(this.selectClause + ' ' + this.whereClause, params, this.whereTypes,
-				this.selectTypes);
+		Object[] result = new Object[this.selectTypes.length];
+		final boolean ok = handle.read(this.selectClause + ' ' + this.whereClause, params, this.whereTypes,
+				this.selectTypes, result);
 		// copy selected fields into row-data
-		copyFromRow(result, this.selectIndexes, row);
-		return true;
+		if (ok) {
+			copyFromRow(result, this.selectIndexes, row);
+		}
+		return ok;
 	}
 
 	/**
@@ -1077,6 +1080,7 @@ public class Dba {
 				obj1 = vt.parse(value1);
 				if (obj1 == null) {
 					reportError(value1 + " is not a valid value for value type " + vt + " for field " + fieldName, ctx);
+					allOk = false;
 					continue;
 				}
 			}
@@ -1097,6 +1101,7 @@ public class Dba {
 						reportError(
 								value2 + " is not a valid value for value type " + vt + " for the field " + fieldName,
 								ctx);
+						allOk = false;
 						continue;
 					}
 					sql.append(QN);

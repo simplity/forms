@@ -210,4 +210,14 @@ public interface IOutputData {
 	 * @return current instance so that methods can be chained
 	 */
 	IOutputData addArrayElements(String[] names, Object[][] rows);
+
+	/**
+	 * to be used in case the caller has a serialized JSON as a string.
+	 * 
+	 * @param json string to be written as it is to form the body of the json being
+	 *             written
+	 * @return current instance so that methods can be chained
+	 */
+	IOutputData addStringAsJson(String json);
+
 }

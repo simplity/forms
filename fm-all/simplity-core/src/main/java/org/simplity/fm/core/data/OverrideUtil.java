@@ -40,17 +40,15 @@ import com.google.gson.Gson;
  *
  */
 public class OverrideUtil {
-	private static final Logger logger = LoggerFactory
-			.getLogger(OverrideUtil.class);
+	private static final Logger logger = LoggerFactory.getLogger(OverrideUtil.class);
 	private static final String READ_OVR = "select forms, records from st_overrides where id=?";
-	private static final ValueType[] OVR_TYPES = {ValueType.Text,
-			ValueType.Text};
+	private static final ValueType[] OVR_TYPES = { ValueType.Text, ValueType.Text };
 	private static final String UPDATE_OVR = "update st_overrides set forms=?, records=? where id=?";
 	private static final String INSERT_OVR = "insert into st_overrides (forms, records, id) values (?,?,?)";
 	private static final String DELETE_OVR = "delete from st_overrides where id=?";
 
 	private static final String READ_REC = "select json from st_rec_overrides where id=? and name=?";
-	private static final ValueType[] REC_TYPES = {ValueType.Text};
+	private static final ValueType[] REC_TYPES = { ValueType.Text };
 	private static final String UPDATE_REC = "update st_rec_overrides set json=? where id=? and name=?";
 	private static final String INSERT_REC = "insert into st_rec_overrides(json, id, name) values(?,?,?)";
 	private static final String DELETE_REC = "delete from st_rec_overrides where id=? and name=?";
@@ -92,15 +90,15 @@ public class OverrideUtil {
 	 */
 	public static Overrides getOverides(final String id) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {id};
-		final ValueType[] types = {ValueType.Text};
+		final Object[] values = { id };
+		final ValueType[] types = { ValueType.Text };
 		final Overrides[] overs = new Overrides[1];
 
 		try {
 			driver.doReadonlyOperations(handle -> {
-				final Object[] result = handle.read(READ_OVR, values, types,
-						OVR_TYPES);
-				if (result == null) {
+				final Object[] result = new Object[OVR_TYPES.length];
+				final boolean ok = handle.read(READ_OVR, values, types, OVR_TYPES, result);
+				if (!ok) {
 					logger.info("No overrides for key {}", id);
 				} else {
 					final String[] forms = ((String) result[0]).split(COMMA);
@@ -123,10 +121,8 @@ public class OverrideUtil {
 	 */
 	public static void saveOverides(final String id, final Overrides overs) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {String.join(COMMA, overs.forms),
-				String.join(COMMA, overs.records), id};
-		final ValueType[] types = {ValueType.Text, ValueType.Text,
-				ValueType.Text};
+		final Object[] values = { String.join(COMMA, overs.forms), String.join(COMMA, overs.records), id };
+		final ValueType[] types = { ValueType.Text, ValueType.Text, ValueType.Text };
 
 		try {
 			driver.doReadWriteOperations(handle -> {
@@ -163,8 +159,8 @@ public class OverrideUtil {
 	 */
 	public static void deleteOverides(final String id) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {id};
-		final ValueType[] types = {ValueType.Text};
+		final Object[] values = { id };
+		final ValueType[] types = { ValueType.Text };
 
 		try {
 			driver.doReadWriteOperations(handle -> {
@@ -172,8 +168,7 @@ public class OverrideUtil {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
-					logger.warn(
-							"delete from st_overrides faield for id {} failed. Probably it was not there.");
+					logger.warn("delete from st_overrides faield for id {} failed. Probably it was not there.");
 				}
 				/*
 				 * in any case we commit
@@ -191,12 +186,10 @@ public class OverrideUtil {
 	 * @param recordName
 	 * @param recordJson
 	 */
-	public static void saveRecord(final String id, final String recordName,
-			final String recordJson) {
+	public static void saveRecord(final String id, final String recordName, final String recordJson) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {recordJson, id, recordName};
-		final ValueType[] types = {ValueType.Text, ValueType.Text,
-				ValueType.Text};
+		final Object[] values = { recordJson, id, recordName };
+		final ValueType[] types = { ValueType.Text, ValueType.Text, ValueType.Text };
 
 		try {
 			driver.doReadWriteOperations(handle -> {
@@ -227,8 +220,7 @@ public class OverrideUtil {
 	 * @param id
 	 * @param override
 	 */
-	public static void saveRecord(final String id,
-			final RecordOverride override) {
+	public static void saveRecord(final String id, final RecordOverride override) {
 		saveRecord(id, override.name, new Gson().toJson(override));
 	}
 
@@ -239,8 +231,8 @@ public class OverrideUtil {
 	 */
 	public static void deleteRecord(final String id, final String recordName) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {id, recordName};
-		final ValueType[] types = {ValueType.Text, ValueType.Text};
+		final Object[] values = { id, recordName };
+		final ValueType[] types = { ValueType.Text, ValueType.Text };
 
 		try {
 			driver.doReadWriteOperations(handle -> {
@@ -248,8 +240,7 @@ public class OverrideUtil {
 					/*
 					 * it is okay if n == 0, it means that it is not there
 					 */
-					logger.warn(
-							"delete from st_rec_overrides faield for id {} failed. Probably it was not there.");
+					logger.warn("delete from st_rec_overrides faield for id {} failed. Probably it was not there.");
 				}
 				return true;
 			});
@@ -264,28 +255,22 @@ public class OverrideUtil {
 	 * @param recordName
 	 * @return instance of record override. null if this is not found.
 	 */
-	public static RecordOverride getRecord(final String id,
-			final String recordName) {
+	public static RecordOverride getRecord(final String id, final String recordName) {
 		final IDbDriver driver = AppManager.getApp().getDbDriver();
-		final Object[] values = {id, recordName};
-		final ValueType[] types = {ValueType.Text, ValueType.Text};
-		final String[] texts = new String[1];
+		final Object[] values = { id, recordName };
+		final ValueType[] types = { ValueType.Text, ValueType.Text };
+		final Object[] texts = new Object[1];
 
 		try {
 			driver.doReadonlyOperations(handle -> {
-				final Object[] result = handle.read(READ_REC, values, types,
-						REC_TYPES);
-				if (result != null) {
-					texts[0] = (String) result[0];
-				}
-
+				handle.read(READ_REC, values, types, REC_TYPES, texts);
 			});
 		} catch (final SQLException e) {
 
 			throw new ApplicationError("Error while accessing overrides", e);
 		}
 
-		final String text = texts[0];
+		final String text = (String) texts[0];
 		if (text == null) {
 			return null;
 		}

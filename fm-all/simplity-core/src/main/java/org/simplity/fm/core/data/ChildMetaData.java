@@ -246,8 +246,9 @@ public class ChildMetaData {
 		}
 
 		outData.beginObject();
-		final Object[] row = handle.read(this.linkWhereClause, vt.values, vt.types, outputTypes);
-		if (row != null) {
+		final Object[] row = new Object[outputTypes.length];
+		final boolean ok = handle.read(this.linkWhereClause, vt.values, vt.types, outputTypes, row);
+		if (ok) {
 			outData.addValues(names, row);
 		}
 

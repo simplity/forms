@@ -221,7 +221,7 @@ public class Conventions {
 		public static final String TAG_FILTERS = "filters";
 
 		/**
-		 * filter sort order. "sortBy" : [{"field":"field1", "descending": true...}
+		 * filter sort order. "sorts" : [{"field":"field1", "descending": true...}
 		 */
 		public static final String TAG_SORTS = "sorts";
 		public static final String TAG_SORT_BY_FIELD = "field";
@@ -245,9 +245,9 @@ public class Conventions {
 		public static final String TAG_FILTER_TO_VALUE = "toValue";
 
 		/**
-		 * for report-service request, name of the record
+		 * for report-service request, name of the report
 		 */
-		public static final String TAG_RECORD_NAME = "recordName";
+		public static final String TAG_REPORT_NAME = "reportName";
 		/**
 		 * default MAX nbr rows
 		 */
@@ -394,20 +394,16 @@ public class Conventions {
 		/**
 		 * predefined name for Report Configuration Service service
 		 */
-		public static final String SERVICE_REPORT_CONFIG = "_getReportConfig";
+		public static final String SERVICE_GET_REPORT_SETTINGS = "_getReportSettings";
 		/**
-		 * predefined name for the service to get the output of an asynch-service
-		 * requested earlier
+		 * predefined name for the service to get the output of an async-service that
+		 * was requested earlier
 		 */
 		public static final String SERVICE_GET_RESPONSE = "_getResponse";
 		/**
 		 * name with which the user data is saved in the context
 		 */
 		public static final String USER_IN_CTX = "_user";
-		/**
-		 * name of record to be used to get user details for creating context
-		 */
-		public static final String USER_RECORD_NAME = "user";
 
 	}
 

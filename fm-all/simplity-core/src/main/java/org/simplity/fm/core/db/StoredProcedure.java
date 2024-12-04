@@ -302,7 +302,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	private static final String MSG1 = "Stored procedure is to return an update count, but a result set is received";
-	private static final String MSG2 = "Stored procedure is to return a result set but an updtate count is recived";
+	private static final String MSG2 = "Stored procedure is to return a result set but an update count is received";
 
 	/**
 	 * lambda function to process a result from the called stored procedure
@@ -327,7 +327,8 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 				if (this.receivedRecord != null) {
 					DbUtil.rsToRecord(rs, this.receivedRecord);
 				} else {
-					this.outputValues = DbUtil.getValuesFromRs(rs, this.outputTypes);
+					this.outputValues = new Object[this.outputTypes.length];
+					DbUtil.getValuesFromRs(rs, this.outputTypes, this.outputValues);
 				}
 			} else {
 				DbUtil.rsToDataTable(rs, this.receivedTable);

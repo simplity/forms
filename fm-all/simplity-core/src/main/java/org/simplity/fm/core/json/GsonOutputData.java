@@ -255,4 +255,14 @@ class GsonOutputData implements IOutputData {
 		return this;
 	}
 
+	@Override
+	public GsonOutputData addStringAsJson(String json) {
+		try {
+			this.writer.jsonValue(json);
+		} catch (IOException e) {
+			throw new ApplicationError("String is not a valid json: " + json);
+		}
+		return this;
+	}
+
 }
