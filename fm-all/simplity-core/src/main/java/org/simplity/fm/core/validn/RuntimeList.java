@@ -67,7 +67,7 @@ public class RuntimeList implements IValueList {
 	protected String allKeysSql;
 	protected boolean hasKey;
 	protected boolean keyIsNumeric;
-	protected boolean valueIsNumeric;
+	protected boolean column1IsNumeric;
 	protected boolean isTenantSpecific;
 	protected boolean authenticationRequired;
 
@@ -84,47 +84,60 @@ public class RuntimeList implements IValueList {
 	@Override
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		Object tenantId = ctx.getTenantId();
-		if (this.hasKey && key == null) {
-			logger.error("ist {} requires value for its key. Value not receoved", this.name);
-			return null;
-
+		long numericKey = 0;
+		if (this.hasKey) {
+			if (key == null) {
+				logger.error("List {} requires value for its key. Value not received", this.name);
+				return null;
+			}
+			if (this.keyIsNumeric) {
+				try {
+					numericKey = Long.parseLong(key.toString());
+				} catch (Exception e) {
+					logger.error("List {} requires a numeric value for its key, but {} is set as the value of the key",
+							this.name, key.toString());
+					return null;
+				}
+			}
 		}
+		/*
+		 * we may have 0,1 or 2 params
+		 */
+		Object[] params = new Object[2];
+		ValueType[] paramTypes = new ValueType[2];
+		int nbr = 0;
+
+		if (this.hasKey) {
+			if (this.keyIsNumeric) {
+				paramTypes[0] = ValueType.Integer;
+				params[0] = numericKey;
+			} else {
+				params[0] = key.toString();
+				paramTypes[0] = ValueType.Text;
+			}
+			nbr = 1;
+		}
+
+		if (tenantId != null) {
+			params[nbr] = tenantId;
+			paramTypes[nbr] = ValueType.Integer;
+			nbr++;
+		}
+
+		if (nbr != 2) {
+			params = Arrays.copyOf(params, nbr);
+			paramTypes = Arrays.copyOf(paramTypes, nbr);
+		}
+
+		final ValueType[] typesForList = { this.column1IsNumeric ? ValueType.Integer : ValueType.Text, ValueType.Text };
+		final Object[] finalParams = params;
+		final ValueType[] finalTypes = paramTypes;
 		// list to accumulate list entries
 		final List<Object[]> list = new ArrayList<>();
 
 		try {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				/*
-				 * we may have 0,1 or 2 params
-				 */
-				Object[] params = new Object[3];
-				ValueType[] paramTypes = new ValueType[3];
-				int nbr = 0;
-
-				if (this.hasKey) {
-					params[0] = key;
-					paramTypes[0] = this.keyIsNumeric ? ValueType.Integer : ValueType.Text;
-					nbr = 1;
-				}
-
-				if (tenantId != null) {
-					params[nbr] = tenantId;
-					paramTypes[nbr] = ValueType.Integer;
-					nbr++;
-				}
-
-				if (nbr != 3) {
-					params = Arrays.copyOf(params, nbr);
-					paramTypes = Arrays.copyOf(paramTypes, nbr);
-				}
-
-				final ValueType[] typesForList = { this.valueIsNumeric ? ValueType.Integer : ValueType.Text,
-						ValueType.Text };
-
-				handle.readWithRowProcessor(this.listSql, params, paramTypes, typesForList, row -> {
-					list.add(row);
-					return true;
-				});
+				handle.readMany(this.listSql, finalParams, finalTypes, typesForList, list);
 			});
 
 		} catch (final SQLException e) {
@@ -164,7 +177,7 @@ public class RuntimeList implements IValueList {
 					paramTypes[1] = ValueType.Integer;
 				}
 				params[0] = fieldValue;
-				paramTypes[0] = this.valueIsNumeric ? ValueType.Integer : ValueType.Text;
+				paramTypes[0] = this.column1IsNumeric ? ValueType.Integer : ValueType.Text;
 
 				Object[] result = new Object[paramTypes.length];
 				isValid[0] = handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);

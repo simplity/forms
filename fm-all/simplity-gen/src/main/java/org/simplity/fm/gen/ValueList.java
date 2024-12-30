@@ -31,7 +31,7 @@ public class ValueList implements IInitializer {
 	private String dbColumn2;
 	private String keyColumn;
 	private boolean keyIsNumeric;
-	private boolean valueIsNumeric;
+	private boolean column1IsNumeric;
 	private String tenantColumnName;
 	private String activeColumnName;
 	/*
@@ -134,8 +134,8 @@ public class ValueList implements IInitializer {
 		sbf.append("\n\t\tthis.listSql = LIST_SQL;");
 		sbf.append("\n\t\tthis.checkSql = CHECK_SQL;");
 
-		if (this.valueIsNumeric) {
-			sbf.append("\n\t\tthis.valueIsNumeric = true;");
+		if (this.column1IsNumeric) {
+			sbf.append("\n\t\tthis.column1IsNumeric = true;");
 		}
 
 		if (this.keyColumn != null) {

@@ -17,6 +17,6 @@ public class SectionList extends RuntimeList {
 		this.name = NAME;
 		this.listSql = LIST_SQL;
 		this.checkSql = CHECK_SQL;
-		this.valueIsNumeric = true;
+		this.column1IsNumeric = true;
 	}
 }

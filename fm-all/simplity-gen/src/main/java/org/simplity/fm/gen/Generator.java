@@ -56,7 +56,7 @@ public class Generator {
 			+ "\n-- we intend to introduce some syntax to generate this fiel WITH data in the future";
 
 	private static final String INPUT_ROOT = "c:/gitHub/wip/amr/amr-meta/meta/json/";
-	private static final String JAVA_ROOT = "c:/gitHub/wip/amr/arm-meta/amr-server-gen/src/main/java/";
+	private static final String OUTPUT_ROOT = "c:/gitHub/wip/amr/arm-meta/amr-server-gen/src/main/";
 	private static final String PACKAGE_NAME = "in.nsoft.amr.gen";
 
 	// private static final String INPUT_ROOT =
@@ -75,7 +75,7 @@ public class Generator {
 			generate(args[0], args[1], args[2]);
 			return;
 		}
-		generate(INPUT_ROOT, JAVA_ROOT, PACKAGE_NAME);
+		generate(INPUT_ROOT, OUTPUT_ROOT, PACKAGE_NAME);
 		// System.err.println(
 		// "Usage : java Generator.class resourceRootFolder tsFormFolder\n or
 		// \n"
@@ -201,24 +201,23 @@ public class Generator {
 
 	/**
 	 *
-	 * @param inputRootFolder folder where application.xlsx file, and spec folder
-	 *                        are located.
-	 * @param javaRootFolder  java source folder where the sources are to be
-	 *                        generated.
-	 * @param javaRootPackage root
+	 * @param inputRootFolder  folder where application.xlsx file, and spec folder
+	 *                         are located.
+	 * @param outputRootFolder source folder under which java and resources folder
+	 *                         is to be created for generating java sources and
+	 *                         other resources
+	 * @param javaRootPackage  root
 	 * @return true if all OK. false in case of any error.
 	 */
-	public static boolean generate(final String inputRootFolder, final String javaRootFolder,
+	public static boolean generate(final String inputRootFolder, final String outputRootFolder,
 			final String javaRootPackage) {
 
 		/**
 		 * we need the folder to end with '/'
 		 */
 		String inputRoot = inputRootFolder.endsWith(FOLDER) ? inputRootFolder : inputRootFolder + FOLDER;
-
-		String javaRoot = javaRootFolder.endsWith(FOLDER) ? javaRootFolder : javaRootFolder + FOLDER;
-		javaRoot += javaRootPackage.replace('.', '/') + FOLDER;
-		Generator gen = new Generator(inputRoot, javaRoot, javaRootPackage);
+		String outputRoot = outputRootFolder.endsWith(FOLDER) ? outputRootFolder : outputRootFolder + FOLDER;
+		Generator gen = new Generator(inputRoot, outputRoot, javaRootPackage);
 		return gen.go();
 	}
 
@@ -240,10 +239,10 @@ public class Generator {
 	private ValueListMap valueLists;
 	private ValueSchemaMap valueSchemas;
 
-	private Generator(String inputRoot, String javaOutputRoot, String packageName) {
+	private Generator(String inputRoot, String outputRoot, String packageName) {
 		this.inputRoot = inputRoot;
-		this.sqlOutputRoot = inputRoot + "dbSqls/";
-		this.javaOutputRoot = javaOutputRoot;
+		this.sqlOutputRoot = outputRoot + "resources/dbSqls/";
+		this.javaOutputRoot = outputRoot + "java/" + packageName.replace('.', '/') + FOLDER;
 		this.packageName = packageName;
 	}
 

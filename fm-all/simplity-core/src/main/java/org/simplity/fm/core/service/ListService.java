@@ -49,7 +49,7 @@ public class ListService extends AbstractService {
 	private static final String OUTPUT_LIST = Conventions.Request.TAG_LIST;
 	private static final String OUTPUT_LISTS = Conventions.Request.TAG_LISTS;
 	private static final String OUTPUT_VALUE = Conventions.Request.TAG_LIST_ENTRY_VALUE;
-	private static final String OUTPUT_TEXT = Conventions.Request.TAG_LIST_ENTRY_TEXT;
+	private static final String OUTPUT_LABEL = Conventions.Request.TAG_LIST_ENTRY_LABEL;
 
 	/**
 	 *
@@ -138,7 +138,7 @@ public class ListService extends AbstractService {
 			data.addName(OUTPUT_VALUE);
 			data.addPrimitive(row[0]);
 
-			data.addName(OUTPUT_TEXT);
+			data.addName(OUTPUT_LABEL);
 			data.addValue(row[1].toString());
 
 			data.endObject();

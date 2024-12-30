@@ -17,7 +17,7 @@ public class ProgramList extends RuntimeList {
 		this.name = NAME;
 		this.listSql = LIST_SQL;
 		this.checkSql = CHECK_SQL;
-		this.valueIsNumeric = true;
+		this.column1IsNumeric = true;
 		this.hasKey = true;
 		this.keyIsNumeric = true;
 	}

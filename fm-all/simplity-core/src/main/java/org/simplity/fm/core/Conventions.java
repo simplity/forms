@@ -200,10 +200,10 @@ public class Conventions {
 		 */
 		public static final String TAG_LIST_ENTRY_VALUE = "value";
 		/**
-		 * field name of text in a list entry. e.g. {"value": 23, "text": "Some District
-		 * Name"
+		 * field name of text in a list entry. e.g. {"value": 23, "label": "Some
+		 * District Name"
 		 */
-		public static final String TAG_LIST_ENTRY_TEXT = "text";
+		public static final String TAG_LIST_ENTRY_LABEL = "label";
 		/**
 		 * number of rows of data (expected or delivered)
 		 */
