@@ -34,7 +34,7 @@ class ChildForm {
 	private static final String C = ", ";
 	private static final String P = "\n\tprivate static final ";
 
-	String linkName;
+	String childName;
 	String childFormName;
 	int minRows;
 	int maxRows;
@@ -50,7 +50,7 @@ class ChildForm {
 	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final int idx) {
 		sbf.append(P).append("ChildMetaData L").append(idx).append(" = new ChildMetaData(");
 
-		sbf.append(Util.quotedString(this.linkName));
+		sbf.append(Util.quotedString(this.childName));
 		sbf.append(C).append(Util.quotedString(this.childFormName));
 		sbf.append(C).append(this.minRows);
 		sbf.append(C).append(this.maxRows);

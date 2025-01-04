@@ -130,8 +130,7 @@ public class Form {
 		 * protected static final String RECORD = "....";
 		 */
 		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
-		sbf.append(") AppManager.getAppInfra().getCompProvider().getRecord(\"").append(this.mainRecordName)
-				.append("\");");
+		sbf.append(") AppManager.getApp().getCompProvider().getRecord(\"").append(this.mainRecordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};

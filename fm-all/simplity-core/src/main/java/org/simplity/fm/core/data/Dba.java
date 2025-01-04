@@ -1187,4 +1187,38 @@ public class Dba {
 		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
 	}
 
+	/**
+	 * set keys from an array of objects
+	 * 
+	 * @param keyValues
+	 * @param fieldValues
+	 * @param ctx
+	 * @return true if all ok. False otherwise. error message would have been added
+	 *         to the ctx
+	 */
+	boolean setKeys(Object[] keyValues, Object[] fieldValues, IServiceContext ctx) {
+		if (this.keyIndexes == null) {
+			logger.error("Table '{}' has no keys, but a setKeys() being attempted. Operation not done", this.nameInDb);
+			ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
+			return false;
+		}
+
+		if (this.keyIndexes.length != keyValues.length) {
+			logger.error("Table '{}' has {} keys, but a setKeys() being attempted with {} keys. Operation not done",
+					this.nameInDb, this.keyIndexes.length, keyValues.length);
+			ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
+			return false;
+		}
+
+		for (int i = 0; i < keyValues.length; i++) {
+			Field field = this.dbFields[this.keyIndexes[i]];
+			final String value = keyValues[i].toString();
+			if (!field.parseIntoRow(value, fieldValues, ctx, "", 0)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 }

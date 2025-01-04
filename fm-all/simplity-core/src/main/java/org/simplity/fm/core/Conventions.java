@@ -258,6 +258,12 @@ public class Conventions {
 		 */
 		public static final char SERVICE_OPER_SEPARATOR = '_';
 
+		/**
+		 * predefined name for dataObjectName for a data service. this should be the
+		 * name of a dbRecord with a single primary key
+		 */
+		public static final String TAG_DATA_OBJECT = "dataObject";
+
 	}
 
 	/**
@@ -390,6 +396,11 @@ public class Conventions {
 		 * predefined name for list service
 		 */
 		public static final String SERVICE_LIST = "_getList";
+
+		/**
+		 * predefined name for data service
+		 */
+		public static final String SERVICE_DATA = "_getData";
 
 		/**
 		 * predefined name for Report Configuration Service service

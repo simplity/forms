@@ -86,6 +86,21 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
+	 * Use this method if the key values are known but not with their names
+	 * 
+	 * Sets the values in the array to the key fields, in that order, after
+	 * validating them.
+	 * 
+	 *
+	 * @param inputObject non-null
+	 * @param ctx         non-null. any validation error is added to it
+	 * @return true if all ok. false if any parse error is added the ctx
+	 */
+	public boolean setkeys(final Object[] keyValues, final IServiceContext ctx) {
+		return this.dba.setKeys(keyValues, this.fieldValues, ctx);
+	}
+
+	/**
 	 * fetch data for this form from a db
 	 *
 	 * @param handle

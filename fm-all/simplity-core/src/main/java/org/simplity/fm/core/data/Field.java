@@ -120,7 +120,7 @@ public class Field {
 		if (defaultValue == null) {
 			this.defaultValue = null;
 		} else {
-			this.defaultValue = valueSchema.parse(defaultValue);
+			this.defaultValue = this.valueType.parse(defaultValue);
 		}
 	}
 

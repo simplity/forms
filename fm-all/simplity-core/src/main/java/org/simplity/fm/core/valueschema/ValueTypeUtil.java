@@ -13,8 +13,7 @@ import java.util.Map;
  */
 public class ValueTypeUtil {
 	/**
-	 * On a need basis, we "guess" the intended vakueType of a object at run
-	 * time
+	 * On a need basis, we "guess" the intended vakueType of a object at run time
 	 */
 
 	private static Map<Class<?>, ValueType> CLASS_TO_VT = new HashMap<>();
@@ -33,10 +32,9 @@ public class ValueTypeUtil {
 
 	/**
 	 *
-	 * @param value
-	 *            non-null value-object
-	 * @return valueType. Text in case the object is not one of the standard
-	 *         types we use to store data
+	 * @param value non-null value-object
+	 * @return valueType. Text in case the object is not one of the standard types
+	 *         we use to store data
 	 */
 	public static ValueType valueTypeOf(Object value) {
 		final ValueType vt = CLASS_TO_VT.get(value.getClass());
@@ -48,10 +46,9 @@ public class ValueTypeUtil {
 
 	/**
 	 *
-	 * @param values
-	 *            non-null value-object
-	 * @return valueTypes. Text in case the object is not one of the standard
-	 *         types we use to store data
+	 * @param values non-null value-object
+	 * @return valueTypes. Text in case the object is not one of the standard types
+	 *         we use to store data
 	 */
 	public static ValueType[] valueTypesOf(Object[] values) {
 		ValueType[] types = new ValueType[values.length];
@@ -64,5 +61,4 @@ public class ValueTypeUtil {
 		}
 		return types;
 	}
-
 }
