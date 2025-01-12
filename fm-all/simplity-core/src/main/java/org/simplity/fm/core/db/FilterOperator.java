@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 package org.simplity.fm.core.db;
+
 import org.simplity.fm.core.Conventions;
+
 /**
  *
  * @author simplity.org
@@ -37,8 +39,8 @@ public enum FilterOperator {
 	/** greater or equal */
 	GreaterOrEqual(Conventions.Filter.GE),
 	/**
-	 * we prefer to call small rather than less because we say greater and not
-	 * more :-)
+	 * we prefer to call small rather than less because we say greater and not more
+	 * :-)
 	 */
 	Smaller(Conventions.Filter.LT),
 	/** we prefer to smaller to less than more :-) */
@@ -51,6 +53,7 @@ public enum FilterOperator {
 	Between(Conventions.Filter.BETWEEN),
 	/** one in the list */
 	In(Conventions.Filter.IN_LIST);
+
 	private String textValue;
 
 	private FilterOperator(String text) {
@@ -58,10 +61,18 @@ public enum FilterOperator {
 	}
 
 	/**
+	 * get the text value of this enumeration: like "=" for Equal
+	 * 
+	 * @return
+	 */
+	public String getText() {
+		return this.textValue;
+	}
+
+	/**
 	 * parse a text into enum
 	 *
-	 * @param text
-	 *            text to be parsed into enum
+	 * @param text text to be parsed into enum
 	 * @return filter condition, or null if there is no filter for this text
 	 */
 	public static FilterOperator parse(String text) {

@@ -25,6 +25,9 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.db.IReadWriteHandle;
+import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.filter.FilterParams;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * Represents an array of <code>DbRecord</code>. This wrapper class is created
@@ -82,6 +85,24 @@ public class DbTable<T extends DbRecord> extends DataTable<DbRecord> {
 	 */
 	public boolean save(final IReadWriteHandle handle) throws SQLException {
 		return this.dbRecord.dba.saveAll(handle, this.rows.toArray(new Object[0][]));
+	}
+
+	/**
+	 * filter rows from the underlying table as per the filter conditions
+	 *
+	 * @param handle       readOnly handle
+	 * @param filterParams required parameters for the filter operation
+	 * @param ctx          In case of any errors in filterParams, they are added to
+	 *                     the service context
+	 * @return true if the filterParams was appropriate and the filter operation was
+	 *         executed. False in case of any error in forming the sql based on the
+	 *         filter parameters Note that returned value of true does not mean that
+	 *         rows were added to the data table
+	 * @throws SQLException
+	 */
+	public boolean filter(final IReadonlyHandle handle, FilterParams filterParams, IServiceContext ctx)
+			throws SQLException {
+		return this.dbRecord.dba.filter(handle, filterParams, this, ctx);
 	}
 
 	/**

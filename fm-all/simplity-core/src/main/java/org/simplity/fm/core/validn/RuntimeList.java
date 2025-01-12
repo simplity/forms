@@ -138,6 +138,7 @@ public class RuntimeList implements IValueList {
 		try {
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				handle.readMany(this.listSql, finalParams, finalTypes, typesForList, list);
+				return true;
 			});
 
 		} catch (final SQLException e) {
@@ -160,10 +161,9 @@ public class RuntimeList implements IValueList {
 			logger.error("Key should have value for list {}", this.name);
 			return false;
 		}
-
-		boolean[] isValid = { false }; // so that lambda function can change this
+		boolean isValid = false;
 		try {
-			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
+			isValid = AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
 				/*
 				 * we may have 1 or 2 params
 				 */
@@ -180,7 +180,7 @@ public class RuntimeList implements IValueList {
 				paramTypes[0] = this.column1IsNumeric ? ValueType.Integer : ValueType.Text;
 
 				Object[] result = new Object[paramTypes.length];
-				isValid[0] = handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);
+				return handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);
 			});
 
 		} catch (final SQLException e) {
@@ -188,7 +188,7 @@ public class RuntimeList implements IValueList {
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 			return false;
 		}
-		return isValid[0];
+		return isValid;
 	}
 
 	/**
@@ -216,6 +216,7 @@ public class RuntimeList implements IValueList {
 					entries.put(row[0].toString() + "|" + row[1].toString(), row[2].toString());
 					return true;
 				});
+				return true;
 			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
@@ -272,6 +273,7 @@ public class RuntimeList implements IValueList {
 					});
 					lists.put(key, list.toArray(new Object[0][]));
 				}
+				return true;
 			});
 
 		} catch (final SQLException e) {

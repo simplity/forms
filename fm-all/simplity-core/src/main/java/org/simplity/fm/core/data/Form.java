@@ -31,6 +31,8 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.filter.FilterParams;
+import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IOutputData;
@@ -226,7 +228,7 @@ public abstract class Form<T extends Record> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
-					return;
+					return false;
 				}
 				/*
 				 * instead of storing data and then serializing it, we have designed this
@@ -240,6 +242,7 @@ public abstract class Form<T extends Record> {
 					child.read(rec, outData, handle);
 				}
 				outData.endObject();
+				return true;
 			});
 		}
 	}
@@ -351,7 +354,14 @@ public abstract class Form<T extends Record> {
 		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
-			final FilterDetails filter = rec.dba.parseFilterRequest(payload, ctx);
+			FilterParams params = JsonUtil.load(payload, FilterParams.class);
+			if (params == null) {
+				logger.error("Input data had errors while parsing it as a FilerRequestJson");
+				ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
+				return;
+			}
+
+			final FilterDetails filter = rec.dba.prepareFilterDetails(params, ctx);
 
 			if (filter == null) {
 				logger.error("Error while parsing filter conditions from the input payload");
@@ -360,11 +370,8 @@ public abstract class Form<T extends Record> {
 
 			final List<Object[]> rows = new ArrayList<>();
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				handle.readWithRowProcessor(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
-						filter.getOutputTypes(), outputRow -> {
-							rows.add(outputRow);
-							return true;
-						});
+				handle.readMany(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
+						filter.getOutputTypes(), rows);
 
 				/*
 				 * instead of storing data and then serializing it, we have designed this
@@ -391,6 +398,7 @@ public abstract class Form<T extends Record> {
 
 				outData.endArray();
 				outData.endObject();
+				return true;
 			});
 		}
 	}

@@ -74,7 +74,8 @@ public class GetReportSettings extends AbstractService {
 		final Object[] paramaValues = { reportName };
 		final List<Object[]> rows = new ArrayList<>();
 		AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-			handle.readMany(SQL, paramaValues, PARAM_TYPES, OUTPUT_TYPES, rows);
+			int n = handle.readMany(SQL, paramaValues, PARAM_TYPES, OUTPUT_TYPES, rows);
+			return n > 0;
 		});
 
 		/**

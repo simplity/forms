@@ -39,11 +39,13 @@ import java.sql.SQLException;
 public interface IDbTransacter {
 
 	/**
-	 * function that manages its own transactions, like commit and roll-back. It
-	 * is also possible to do the read-writes with auto-commits
+	 * function that manages its own transactions, like commit and roll-back. It is
+	 * also possible to do the read-writes with auto-commits
 	 *
 	 * @param handle
+	 * @return true if all ok, false otherwise. Exact meaning of what is allOK is
+	 *         left to the individual implementation
 	 * @throws SQLException
 	 */
-	void transact(ITransactionHandle handle) throws SQLException;
+	boolean transact(ITransactionHandle handle) throws SQLException;
 }

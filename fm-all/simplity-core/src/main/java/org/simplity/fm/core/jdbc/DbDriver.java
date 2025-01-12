@@ -65,27 +65,27 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doReadonlyOperations(final IDbReader reader) throws SQLException {
+	public boolean doReadonlyOperations(final IDbReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
-			doReadOnly(con, reader);
+			return doReadOnly(con, reader);
 		}
 	}
 
 	@Override
-	public void doReadonlyOperations(final String schemaName, final IDbReader reader) throws SQLException {
+	public boolean doReadonlyOperations(final String schemaName, final IDbReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
-			doReadOnly(con, reader);
+			return doReadOnly(con, reader);
 		}
 	}
 
 	@Override
-	public void doReadMetaData(IDbMetaDataReader reader) throws SQLException {
+	public boolean doReadMetaData(IDbMetaDataReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
 			try {
-				reader.read(con.getMetaData());
+				return reader.read(con.getMetaData());
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
@@ -95,11 +95,11 @@ public class DbDriver implements IDbDriver {
 	}
 
 	@Override
-	public void doReadMetaData(String schemaName, IDbMetaDataReader reader) throws SQLException {
+	public boolean doReadMetaData(String schemaName, IDbMetaDataReader reader) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
 			try {
-				reader.read(con.getMetaData());
+				return reader.read(con.getMetaData());
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
@@ -119,34 +119,34 @@ public class DbDriver implements IDbDriver {
 	 * @throws SQLException
 	 */
 	@Override
-	public void doReadWriteOperations(final IDbWriter updater) throws SQLException {
+	public boolean doReadWriteOperations(final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
-			doReadWrite(con, updater);
+			return doReadWrite(con, updater);
 		}
 	}
 
 	@Override
-	public void doReadWriteOperations(final String schemaName, final IDbWriter updater) throws SQLException {
+	public boolean doReadWriteOperations(final String schemaName, final IDbWriter updater) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
-			doReadWrite(con, updater);
+			return doReadWrite(con, updater);
 		}
 	}
 
 	@Override
-	public void doMultipleTransactions(final IDbTransacter transacter) throws SQLException {
+	public boolean doMultipleTransactions(final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection()) {
-			doTransact(con, transacter);
+			return doTransact(con, transacter);
 		}
 	}
 
 	@Override
-	public void doMultipleTransactions(final String schemaName, final IDbTransacter transacter) throws SQLException {
+	public boolean doMultipleTransactions(final String schemaName, final IDbTransacter transacter) throws SQLException {
 		this.checkFactory();
 		try (Connection con = this.factory.getConnection(schemaName)) {
-			doTransact(con, transacter);
+			return doTransact(con, transacter);
 		}
 	}
 
@@ -158,12 +158,12 @@ public class DbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doReadOnly(final Connection con, final IDbReader reader) throws SQLException {
+	private static boolean doReadOnly(final Connection con, final IDbReader reader) throws SQLException {
 
 		final IReadonlyHandle handle = new ReadonlyHandle(con);
 		try {
 			con.setReadOnly(true);
-			reader.read(handle);
+			return reader.read(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
@@ -171,15 +171,16 @@ public class DbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doReadWrite(final Connection con, final IDbWriter updater) throws SQLException {
+	private static boolean doReadWrite(final Connection con, final IDbWriter updater) throws SQLException {
 		final IReadWriteHandle handle = new ReadWriteHandle(con);
 		try {
 			con.setAutoCommit(false);
 			if (updater.readWrite(handle)) {
 				con.commit();
-			} else {
-				con.rollback();
+				return true;
 			}
+			con.rollback();
+			return false;
 
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -193,10 +194,10 @@ public class DbDriver implements IDbDriver {
 		}
 	}
 
-	private static void doTransact(final Connection con, final IDbTransacter transacter) throws SQLException {
+	private static boolean doTransact(final Connection con, final IDbTransacter transacter) throws SQLException {
 		final ITransactionHandle handle = new TransactionHandle(con);
 		try {
-			transacter.transact(handle);
+			return transacter.transact(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Exception thrown by a batch processor. {}, {}", e, e.getMessage());

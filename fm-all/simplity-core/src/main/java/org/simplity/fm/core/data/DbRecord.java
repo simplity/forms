@@ -32,6 +32,8 @@ import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.filter.FilterParams;
+import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IService;
@@ -125,6 +127,21 @@ public abstract class DbRecord extends Record {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
+	}
+
+	/**
+	 * filter rows from the underlying table as per the filter conditions
+	 *
+	 * @param handle       readOnly handle
+	 * @param filterParams required parameters for the filter operation
+	 * @param ctx          In case of any errors in filterParams, they are added to
+	 *                     the service context
+	 * @return number of rows. -1 in case of any errors.
+	 * @throws SQLException
+	 */
+	public long countRows(final IReadonlyHandle handle, FilterParams filterParams, IServiceContext ctx)
+			throws SQLException {
+		return this.dba.countRows(handle, filterParams, ctx);
 	}
 
 	/**
@@ -298,10 +315,12 @@ public abstract class DbRecord extends Record {
 			}
 
 			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				if (!rec.read(handle)) {
+				boolean ok = rec.read(handle);
+				if (!ok) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 				}
+				return ok;
 			});
 
 			if (ctx.allOk()) {
@@ -404,7 +423,14 @@ public abstract class DbRecord extends Record {
 				tableName = Conventions.Request.TAG_LIST;
 			}
 
-			final FilterDetails filter = rec.dba.parseFilterRequest(payload, ctx);
+			FilterParams params = JsonUtil.load(payload, FilterParams.class);
+			if (params == null) {
+				ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
+				logger.error("Input data for filter parameter did not follow the required data structure", ctx);
+				return;
+			}
+
+			final FilterDetails filter = rec.dba.prepareFilterDetails(params, ctx);
 			if (filter == null) {
 				logger.error("Error while parsing filter conditions from the input payload");
 				return;
@@ -412,15 +438,12 @@ public abstract class DbRecord extends Record {
 
 			final List<Object[]> rows = new ArrayList<>();
 
-			AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
-				handle.readWithRowProcessor(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
-						filter.getOutputTypes(), outputRow -> {
-							rows.add(outputRow);
-							return true;
-						});
-
+			boolean readOk = AppManager.getApp().getDbDriver().doReadonlyOperations(handle -> {
+				int n = handle.readMany(filter.getSql(), filter.getParamValues(), filter.getParamTypes(),
+						filter.getOutputTypes(), rows);
+				return n > 0;
 			});
-			if (rows.size() == 0) {
+			if (!readOk) {
 				logger.warn("No rows filtered. Responding with empty list");
 			}
 

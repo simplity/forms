@@ -41,6 +41,7 @@ public class MetaUtil {
 					}
 				}
 			}
+			return true;
 		});
 		return tables.size() - existingRows;
 	}

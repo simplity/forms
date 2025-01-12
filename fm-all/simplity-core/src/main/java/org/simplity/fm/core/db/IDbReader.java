@@ -39,8 +39,10 @@ public interface IDbReader {
 	 * function that reads data from the db
 	 *
 	 * @param handle
+	 * @return true if all ok, false otherwise. Exact meaning of what is allOK is
+	 *         left to the individual implementation
 	 * @throws SQLException
 	 */
-	void read(IReadonlyHandle handle) throws SQLException;
+	boolean read(IReadonlyHandle handle) throws SQLException;
 
 }

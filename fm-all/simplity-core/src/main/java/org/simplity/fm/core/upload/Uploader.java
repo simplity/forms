@@ -42,31 +42,27 @@ public class Uploader {
 	}
 
 	/**
-	 * @param client
-	 *            client for this uploader that supplies input rows
+	 * @param client client for this uploader that supplies input rows
 	 * @param ctx
 	 * @return info about what happened
 	 * @throws SQLException
 	 */
-	public UploadResult upload(final IUploadClient client,
-			final IServiceContext ctx) throws SQLException {
+	public UploadResult upload(final IUploadClient client, final IServiceContext ctx) throws SQLException {
 		final Worker worker = new Worker(client, ctx);
 		AppManager.getApp().getDbDriver().doMultipleTransactions(handle -> {
 
-			worker.transact(handle);
+			return worker.transact(handle);
 		});
 		return worker.getResult();
 	}
 
 	/**
-	 * @param client
-	 *            client for this uploader that supplies input rows
+	 * @param client client for this uploader that supplies input rows
 	 * @param ctx
 	 *
 	 * @return info about what happened
 	 */
-	public UploadResult validate(final IUploadClient client,
-			final IServiceContext ctx) {
+	public UploadResult validate(final IUploadClient client, final IServiceContext ctx) {
 		final Worker worker = new Worker(client, ctx);
 		worker.validate();
 		return worker.getResult();
@@ -80,25 +76,22 @@ public class Uploader {
 		private int nbrRows = 0;
 		private int nbrErrors = 0;
 
-		protected Worker(final IUploadClient client,
-				final IServiceContext ctx) {
+		protected Worker(final IUploadClient client, final IServiceContext ctx) {
 			this.client = client;
 			this.ctx = ctx;
 		}
 
 		protected UploadResult getResult() {
-			return new UploadResult(this.startedAt, this.doneAt, this.nbrRows,
-					this.nbrErrors, this.ctx.getMessages());
+			return new UploadResult(this.startedAt, this.doneAt, this.nbrRows, this.nbrErrors, this.ctx.getMessages());
 		}
 
-		protected void transact(final ITransactionHandle handle)
-				throws SQLException {
+		protected boolean transact(final ITransactionHandle handle) throws SQLException {
 			this.startedAt = Instant.now();
 			while (true) {
 				final Map<String, String> input = this.client.nextRow(this.ctx);
 				if (input == null) {
 					this.doneAt = Instant.now();
-					return;
+					return true;
 				}
 
 				this.nbrRows++;
@@ -115,6 +108,7 @@ public class Uploader {
 					handle.rollback();
 					this.nbrErrors++;
 				}
+				return ok;
 			}
 		}
 

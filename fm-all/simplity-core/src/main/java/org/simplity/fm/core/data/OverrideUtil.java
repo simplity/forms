@@ -105,6 +105,7 @@ public class OverrideUtil {
 					final String[] records = ((String) result[1]).split(COMMA);
 					overs[0] = new Overrides(forms, records);
 				}
+				return ok;
 
 			});
 		} catch (final SQLException e) {
@@ -263,7 +264,7 @@ public class OverrideUtil {
 
 		try {
 			driver.doReadonlyOperations(handle -> {
-				handle.read(READ_REC, values, types, REC_TYPES, texts);
+				return handle.read(READ_REC, values, types, REC_TYPES, texts);
 			});
 		} catch (final SQLException e) {
 

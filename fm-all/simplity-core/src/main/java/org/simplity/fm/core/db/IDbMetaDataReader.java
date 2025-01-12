@@ -40,7 +40,9 @@ public interface IDbMetaDataReader {
 	 * transaction is managed by the called driver, and not this function.
 	 *
 	 * @param metaData
+	 * @return true if all ok, false otherwise. Exact meaning of what is allOK is
+	 *         left to the individual implementation
 	 * @throws SQLException
 	 */
-	void read(DatabaseMetaData metaData) throws SQLException;
+	boolean read(DatabaseMetaData metaData) throws SQLException;
 }

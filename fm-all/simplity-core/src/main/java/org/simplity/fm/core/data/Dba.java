@@ -35,7 +35,9 @@ import org.simplity.fm.core.db.FilterOperator;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.db.IRowProcessor;
-import org.simplity.fm.core.service.IInputArray;
+import org.simplity.fm.core.filter.FilterCondition;
+import org.simplity.fm.core.filter.FilterParams;
+import org.simplity.fm.core.filter.SortBy;
 import org.simplity.fm.core.service.IInputData;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
@@ -317,6 +319,57 @@ public class Dba {
 			copyFromRow(result, this.selectIndexes, row);
 		}
 		return ok;
+	}
+
+	/**
+	 * to be called from the parent Record. not to be called by other classes
+	 * 
+	 * @param handle       readOnly handle
+	 * @param filterParams required parameters for the filter operation
+	 * @param dataTable    to which the filtered rows are to be added
+	 * @param ctx          In case of any errors in filterParams, they are added to
+	 *                     the service context
+	 * @return true if the filterParams was appropriate and the filter operation was
+	 *         executed. False in case of any error in forming the sql based on the
+	 *         filter parameters Note that returned value of true does not mean that
+	 *         rows were added to the data table
+	 * @throws SQLException
+	 */
+	public boolean filter(final IReadonlyHandle handle, final FilterParams filterParams, DataTable<?> dataTable,
+			IServiceContext ctx) throws SQLException {
+
+		FilterDetails fd = this.prepareFilterDetails(filterParams, ctx);
+		if (fd == null) {
+			return false;
+		}
+		handle.readIntoDataTable(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), dataTable);
+
+		return true;
+	}
+
+	private static final ValueType[] COUNT_OUTPUT_TYPES = { ValueType.Integer };
+
+	/**
+	 * to be called from the parent Record. not to be called by other classes
+	 * 
+	 * @param handle       readOnly handle
+	 * @param filterParams required parameters for the filter operation
+	 * @param ctx          In case of any errors in filterParams, they are added to
+	 *                     the service context
+	 * @return number of rows. -1 in case of any errors.
+	 * @throws SQLException
+	 */
+	public long countRows(final IReadonlyHandle handle, final FilterParams filterParams, IServiceContext ctx)
+			throws SQLException {
+
+		FilterDetails fd = this.prepareCountSql(filterParams, ctx);
+		if (fd == null) {
+			return -1;
+		}
+		Object[] counts = new Object[1];
+		handle.read(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), COUNT_OUTPUT_TYPES, counts);
+
+		return (long) counts[0];
 	}
 
 	/**
@@ -690,13 +743,112 @@ public class Dba {
 	}
 
 	/**
-	 *
-	 * @param inputObject JSON
+	 * prepares the filter details required to count rows in the filter-sql
+	 * 
+	 * @param filter parameters that are the input for the filter operation This may
+	 *               be parsed from the input-request-json, or maybe prepared by a
+	 *               server-side service implementation
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error. Error messages are added
 	 *         to the service context
 	 */
-	public FilterDetails parseFilterRequest(final IInputData inputObject, final IServiceContext ctx) {
+	public FilterDetails prepareCountSql(final FilterParams params, final IServiceContext ctx) {
+
+		boolean allOk = true;
+		/*
+		 * create a look-up map of fields by fieldName
+		 */
+		final Map<String, DbField> map = new HashMap<>();
+		for (final DbField field : this.dbFields) {
+			map.put(field.getName(), field);
+		}
+
+		/**
+		 * Build sql, starting with the SELECT clause
+		 */
+		StringBuilder sql = new StringBuilder("SELECT count(*) FROM ");
+		sql.append(this.nameInDb);
+		/*
+		 * filters
+		 */
+		FilterCondition[] filters = params.filters;
+		if (filters == null || filters.length == 0) {
+			logger.warn("Filter request has no conditions. All rows will be filtered");
+			filters = null;
+		}
+
+		final List<Object> values = new ArrayList<>();
+		final List<ValueType> types = new ArrayList<>();
+
+		final StringBuilder wherePart = new StringBuilder();
+		/*
+		 * force a condition on tenant id if required
+		 */
+		if (this.tenantField != null) {
+			wherePart.append("(").append(this.tenantField.getColumnName()).append("=?");
+			values.add(ctx.getTenantId());
+			types.add(ValueType.Integer);
+		}
+
+		if (filters == null) {
+			if (this.tenantField != null) {
+				wherePart.append(")");
+			}
+		} else {
+			final boolean ok = parseConditions(map, filters, ctx, values, types, wherePart);
+			if (!ok) {
+				allOk = false;
+			}
+
+		}
+
+		if (wherePart.length() > 0) {
+			sql.append(" WHERE ").append(wherePart.toString());
+		}
+
+		if (!allOk) {
+			return null;
+		}
+
+		final String sqlText = sql.toString();
+		Object[] paramValues = null;
+		ValueType[] paramTypes = null;
+
+		final int n = values.size();
+
+		/**
+		 * log filter clause with parameters
+		 */
+		logger.info("filter SQL is: {}", sqlText);
+		if (n == 0) {
+			logger.info("WHERE clause has no parameters.");
+		} else {
+
+			final StringBuilder sbf = new StringBuilder();
+			for (int i = 0; i < n; i++) {
+				sbf.append('\n').append(i).append("= ").append(values.get(i));
+			}
+			logger.info("Where parameters : {}", sbf.toString());
+
+			paramValues = values.toArray();
+			paramTypes = types.toArray(new ValueType[0]);
+		}
+		return new FilterDetails(sqlText, paramValues, paramTypes, null, null);
+
+	}
+
+	/**
+	 * prepares the filter details required to filter rows from a database table
+	 * 
+	 * @param filter parameters that are the input for the filter operation This may
+	 *               be parsed from the input-request-json, or maybe prepared by a
+	 *               server-side service implementation
+	 * @param ctx
+	 * @return parsedFilter, or null in case of any error. Error messages are added
+	 *         to the service context
+	 */
+	public FilterDetails prepareFilterDetails(final FilterParams params, final IServiceContext ctx) {
+
 		/*
 		 * create a look-up map of fields by fieldName
 		 */
@@ -708,7 +860,7 @@ public class Dba {
 		/*
 		 * let us start parsing the input, starting with max rows
 		 */
-		int maxRows = (int) inputObject.getInteger(Conventions.Request.TAG_MAX_ROWS);
+		int maxRows = params.maxRows;
 		if (maxRows != 0 && maxRows > 0 && maxRows <= Conventions.Db.MAX_ROWS_TO_FILTER) {
 			logger.info("Client requested a max of {} rows.", maxRows);
 		} else {
@@ -717,15 +869,13 @@ public class Dba {
 		}
 
 		DbField[] outputFields = this.dbFields;
-		logger.info("Record has {} fields", outputFields.length);
 		boolean allOk = true;
 
-		final IInputArray fieldNames = inputObject.getArray(Conventions.Request.TAG_FIELDS);
-		if (fieldNames != null && fieldNames.length() != 0) {
-			logger.info("User has requested {} fields to be selected", fieldNames.length());
-			outputFields = new DbField[fieldNames.length()];
+		final String[] fieldNames = params.fields;
+		if (fieldNames != null && fieldNames.length != 0) {
+			outputFields = new DbField[fieldNames.length];
 			int i = 0;
-			for (String name : fieldNames.toStringArray()) {
+			for (String name : fieldNames) {
 				final DbField f = map.get(name);
 				if (f == null) {
 					reportError("Field " + name
@@ -741,7 +891,6 @@ public class Dba {
 
 		int nbrFields = outputFields.length;
 
-		logger.info("Filter will have {} fields ", nbrFields);
 		/**
 		 * build these two arrays as the SELECT clause is assembled
 		 */
@@ -786,8 +935,8 @@ public class Dba {
 		/*
 		 * filters
 		 */
-		IInputArray filters = inputObject.getArray(Conventions.Request.TAG_FILTERS);
-		if (filters == null || filters.length() == 0) {
+		FilterCondition[] filters = params.filters;
+		if (filters == null || filters.length == 0) {
 			logger.warn("Filter request has no conditions. All rows will be filtered");
 			filters = null;
 		}
@@ -826,13 +975,13 @@ public class Dba {
 		/*
 		 * sort order
 		 */
-		final IInputArray sorts = inputObject.getArray(Conventions.Request.TAG_SORTS);
+		final SortBy[] sorts = params.sorts;
 
 		if (sorts != null) {
 			boolean isFirst = true;
 
-			for (IInputData sortBy : sorts.toDataArray()) {
-				String fieldName = sortBy.getString(Conventions.Request.TAG_SORT_BY_FIELD);
+			for (SortBy sortBy : sorts) {
+				String fieldName = sortBy.field;
 				final DbField field = map.get(fieldName);
 				if (field == null) {
 					reportError("Field " + fieldName + " does not exist in the form/record", ctx);
@@ -853,7 +1002,7 @@ public class Dba {
 					sql.append(columnName);
 				}
 
-				boolean isDescending = sortBy.getBoolean(Conventions.Request.TAG_SORT_BY_DESCENDING);
+				boolean isDescending = sortBy.descending;
 				if (isDescending) {
 					sql.append(" DESC ");
 				}
@@ -898,21 +1047,21 @@ public class Dba {
 		ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 	}
 
-	private static boolean parseConditions(final Map<String, DbField> fields, final IInputArray inputArray,
+	private static boolean parseConditions(final Map<String, DbField> fields, final FilterCondition[] filters,
 			final IServiceContext ctx, final List<Object> values, final List<ValueType> types,
 			final StringBuilder sql) {
 
 		/*
 		 * fairly long inside the loop for each field. But it is just serial code. Hence
 		 * left it that way
-		 */
-		/*
-		 * condition has attributes field, operator, value and optional value2
+		 * 
+		 * For safety, we put a pair of braces around each condition so that the AND
+		 * operation is safe
 		 */
 
 		int i = -1;
 		boolean allOk = true;
-		for (IInputData c : inputArray.toDataArray()) {
+		for (FilterCondition f : filters) {
 			i++;
 
 			if (sql.length() == 0) {
@@ -920,14 +1069,14 @@ public class Dba {
 			} else {
 				sql.append(") AND (");
 			}
-			final String fieldName = c.getString(Conventions.Request.TAG_FILTER_FIELD);
+			final String fieldName = f.field;
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
 				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
 				allOk = false;
 			}
 
-			final String operatorText = c.getString(Conventions.Request.TAG_FILTER_COMPARATOR);
+			final String operatorText = f.comparator;
 			if (operatorText == null || operatorText.isEmpty()) {
 				reportError("filter operator is missing at index " + i, ctx);
 				allOk = false;
@@ -939,7 +1088,7 @@ public class Dba {
 				allOk = false;
 			}
 
-			String value1 = c.getString(Conventions.Request.TAG_FILTER_VALUE);
+			String value1 = f.value;
 			if (value1 == null) {
 				reportError("value is missing for a filter condition at index " + i, ctx);
 				allOk = false;
@@ -947,7 +1096,7 @@ public class Dba {
 
 			String value2 = null;
 			if (opertor == FilterOperator.Between) {
-				value2 = c.getString(Conventions.Request.TAG_FILTER_TO_VALUE);
+				value2 = f.toValue;
 				if (value2 == null) {
 					reportError("toValue is missing for a filter condition at index " + i, ctx);
 					allOk = false;
@@ -970,6 +1119,7 @@ public class Dba {
 				allOk = false;
 				continue;
 			}
+
 			column = field.getColumnName();
 			vt = field.getValueType();
 			String column1 = parseField(value1, fields, vt, ctx);
@@ -1008,6 +1158,7 @@ public class Dba {
 					value2 = value2.toUpperCase();
 				}
 			}
+
 			sql.append(column);
 
 			/*
