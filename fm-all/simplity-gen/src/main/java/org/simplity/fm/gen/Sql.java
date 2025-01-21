@@ -58,7 +58,7 @@ public class Sql {
 	 */
 	private static final String SQL_INSERT = "insert";
 	private static final String SQL_UPDATE = "update";
-	private static final String SQL_WHERE = "where";
+	// private static final String SQL_WHERE = "where";
 
 	/*
 	 * texts to generate java methods. Since these classes are consumed by app
@@ -353,11 +353,11 @@ public class Sql {
 						"read sql must specify readFrom. This is required to synthesise the SELECT-FROM clause of the SQL");
 			}
 
-			final String sqlOperarion = this.sql.substring(0, 5).toLowerCase();
-			if (sqlOperarion.equals(SQL_WHERE) == false) {
-				this.msgs.add(
-						"read sql must start with WHERE clause. SELECT statment will be prefixed to this by the generator.");
-			}
+//			final String sqlOperarion = this.sql.substring(0, 5).toLowerCase();
+//			if (sqlOperarion.equals(SQL_WHERE) == false) {
+//				this.msgs.add(
+//						"read sql must start with WHERE clause. SELECT statement will be prefixed to this by the generator.");
+//			}
 
 			if (this.isToReadMany && this.outputRecord == null) {
 				this.msgs.add(
