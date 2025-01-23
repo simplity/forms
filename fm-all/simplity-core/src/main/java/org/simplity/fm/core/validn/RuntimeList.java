@@ -179,7 +179,11 @@ public class RuntimeList implements IValueList {
 				params[0] = fieldValue;
 				paramTypes[0] = this.column1IsNumeric ? ValueType.Integer : ValueType.Text;
 
-				Object[] result = new Object[paramTypes.length];
+				/**
+				 * we actually want to check if there is at least one row.
+				 */
+
+				Object[] result = new Object[0];
 				return handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);
 			});
 

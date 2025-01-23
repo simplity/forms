@@ -96,6 +96,11 @@ public class Field {
 	private boolean isRequired;
 
 	/**
+	 * if a value list is associated with this field, and it is keyed, then we need
+	 * the name of the key field to get its value from the record
+	 */
+	// private String listKeyFieldName;
+	/**
 	 * cached value list for validations
 	 */
 	private IValueList valueList;
@@ -314,7 +319,13 @@ public class Field {
 			return obj;
 		}
 
-		if (this.valueList.isValid(obj, null, ctx)) {
+		Object keyValue = null;
+		if (this.valueList.isKeyBased()) {
+			// TODO: get the key value. This requires a complete re-factoring
+			return obj;
+		}
+
+		if (this.valueList.isValid(obj, keyValue, ctx)) {
 			return obj;
 		}
 
