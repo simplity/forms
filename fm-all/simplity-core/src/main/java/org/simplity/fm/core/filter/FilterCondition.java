@@ -23,4 +23,23 @@ public class FilterCondition {
 	 * used if the comparator is between
 	 */
 	public String toValue;
+
+	public FilterCondition() {
+	}
+
+	/**
+	 * be careful: All the parameters are strings. Better to set the attributes
+	 * individually
+	 * 
+	 * @param field
+	 * @param comparator
+	 * @param value
+	 * @param toValue
+	 */
+	public FilterCondition(String field, String comparator, String value, String toValue) {
+		this.field = field;
+		this.comparator = comparator;
+		this.value = value;
+		this.toValue = toValue;
+	}
 }

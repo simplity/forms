@@ -294,6 +294,15 @@ public class Conventions {
 
 		/** one of the entries in a list */
 		public static final String IN_LIST = "@";
+		/**
+		 * translates to "is not null" in the database
+		 */
+		public static final String HAS_VALUE = "#";
+		/**
+		 * translates to "is null" in the database
+		 */
+		public static final String HAS_NO_VALUE = "!#";
+
 	}
 
 	/**

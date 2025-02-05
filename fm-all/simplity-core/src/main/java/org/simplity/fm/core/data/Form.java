@@ -31,6 +31,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.filter.FilterDetails;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;

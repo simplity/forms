@@ -30,10 +30,9 @@ import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.db.FilterOperator;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
-import org.simplity.fm.core.filter.FilterCondition;
+import org.simplity.fm.core.filter.FilterDetails;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;
@@ -251,39 +250,6 @@ public abstract class DbRecord extends Record {
 			throw new SQLException(
 					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
-	}
-
-	/**
-	 * create a simple set of filter conditions based on the values found for the
-	 * fields in this record in the supplied record. This is to be used with
-	 * caution, as this API is quite lenient. Any incompatible value is just
-	 * ignored. This should be used only after any user input is validated as per
-	 * the API requirement of the calling method
-	 * 
-	 * @param record   in which to look for values for fields
-	 * @param non-null list to which filter conditions, if any, are added rejected
-	 *                 without any error message
-	 */
-	public void filterConditionsFromAnotherRecord(Record record, List<FilterCondition> conditions) {
-		Object[] inputData = record.fieldValues;
-		for (Field inputField : record.fetchFields()) {
-			String fieldName = inputField.getName();
-			Field field = this.fetchField(fieldName);
-			if (field == null) {
-				continue;
-			}
-
-			Object inputValue = inputData[inputField.getIndex()];
-			if (inputValue != null) {
-				FilterCondition condition = new FilterCondition();
-				condition.comparator = FilterOperator.Equal.getText();
-				condition.field = fieldName;
-				condition.value = inputValue.toString();
-				conditions.add(condition);
-			}
-
-		}
-
 	}
 
 	@Override
@@ -510,6 +476,7 @@ public abstract class DbRecord extends Record {
 	 * @param fieldName
 	 * @return db field specified by this name, or null if there is no such name
 	 */
+	@Override
 	public DbField fetchField(final String fieldName) {
 		return this.dba.getField(fieldName);
 	}

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
+package org.simplity.fm.core.filter;
 
 import org.simplity.fm.core.valueschema.ValueType;
 
@@ -32,7 +32,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * @author simplity.org
  *
  */
-class FilterDetails {
+public class FilterDetails {
 	final private String whereClause;
 	final private Object[] paraamValues;
 	final private ValueType[] paramTypes;
@@ -58,8 +58,8 @@ class FilterDetails {
 	 *                    array
 	 * 
 	 */
-	FilterDetails(final String sql, final Object[] paramValues, ValueType[] paramTypes, final String[] outputNames,
-			final ValueType[] outputTypes) {
+	public FilterDetails(final String sql, final Object[] paramValues, ValueType[] paramTypes,
+			final String[] outputNames, final ValueType[] outputTypes) {
 		this.whereClause = sql;
 		this.paraamValues = paramValues;
 		this.paramTypes = paramTypes;
@@ -67,15 +67,15 @@ class FilterDetails {
 		this.outputTypes = outputTypes;
 	}
 
-	String getSql() {
+	public String getSql() {
 		return this.whereClause;
 	}
 
-	Object[] getParamValues() {
+	public Object[] getParamValues() {
 		return this.paraamValues;
 	}
 
-	ValueType[] getParamTypes() {
+	public ValueType[] getParamTypes() {
 		return this.paramTypes;
 	}
 
@@ -88,11 +88,11 @@ class FilterDetails {
 	 * record that is not a column in the database.
 	 **/
 
-	String[] getOutputNames() {
+	public String[] getOutputNames() {
 		return this.outputNames;
 	}
 
-	ValueType[] getOutputTypes() {
+	public ValueType[] getOutputTypes() {
 		return this.outputTypes;
 	}
 

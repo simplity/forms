@@ -31,11 +31,12 @@ import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.db.FilterOperator;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.db.IRowProcessor;
 import org.simplity.fm.core.filter.FilterCondition;
+import org.simplity.fm.core.filter.FilterDetails;
+import org.simplity.fm.core.filter.FilterOperator;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.filter.SortBy;
 import org.simplity.fm.core.service.IInputData;
@@ -1072,11 +1073,8 @@ public class Dba {
 			final String fieldName = f.field;
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
-				/**
-				 * all fields are anyways optional. What if we just ignore this as "not ours"?
-				 */
-//				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
-//				allOk = false;
+				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
+				allOk = false;
 				continue;
 			}
 
@@ -1086,20 +1084,26 @@ public class Dba {
 				allOk = false;
 			}
 
-			final FilterOperator opertor = FilterOperator.parse(operatorText);
-			if (opertor == null) {
+			final FilterOperator operator = FilterOperator.parse(operatorText);
+			if (operator == null) {
 				reportError(operatorText + " is not a valid filter condition", ctx);
 				allOk = false;
 			}
 
+			logger.info("Operator = " + (operator == null ? "null" : operator.toString()));
 			String value1 = f.value;
 			if (value1 == null) {
-				reportError("value is missing for a filter condition at index " + i, ctx);
-				allOk = false;
+				if (operator == FilterOperator.HasNoValue || operator == FilterOperator.HasValue) {
+					// we are ok. but just to avoid null-checks let us set value to ""
+					value1 = "";
+				} else {
+					reportError("value is missing for a filter condition at index " + i, ctx);
+					allOk = false;
+				}
 			}
 
 			String value2 = null;
-			if (opertor == FilterOperator.Between) {
+			if (operator == FilterOperator.Between) {
 				value2 = f.toValue;
 				if (value2 == null) {
 					reportError("toValue is missing for a filter condition at index " + i, ctx);
@@ -1108,9 +1112,11 @@ public class Dba {
 			}
 
 			/*
-			 * operator == null is unnecessary, but added to avoid null-check-errors
+			 * operator == null as well as value1 == null are redundant. But added to avoid
+			 * null-check-errors
 			 */
-			if (!allOk || opertor == null || value1 == null) {
+
+			if (!allOk || operator == null || value1 == null) {
 				// skip even checking semantic errors because we start building the sql along
 				// with further checks..
 				continue;
@@ -1164,16 +1170,16 @@ public class Dba {
 			 * complex ones first.. we have to append ? to sql, and add type and value to
 			 * the lists for each case
 			 */
-			if ((opertor == FilterOperator.Contains || opertor == FilterOperator.StartsWith)) {
+			if ((operator == FilterOperator.Contains || operator == FilterOperator.StartsWith)) {
 				if (vt != ValueType.Text) {
-					reportError("Condition " + opertor + " is not valid for field " + fieldName
+					reportError("Condition " + operator + " is not valid for field " + fieldName
 							+ " which is of value type " + vt, ctx);
 					allOk = false;
 					continue;
 				}
 				if (column1 != null) {
 					reportError(
-							"Operator " + opertor.name() + " can not be used with a field as the second operand." + vt,
+							"Operator " + operator.name() + " can not be used with a field as the second operand." + vt,
 							ctx);
 					allOk = false;
 					continue;
@@ -1181,7 +1187,7 @@ public class Dba {
 
 				sql.append(LIKE);
 				value1 = escapeLike(value1) + WILD_CARD;
-				if (opertor == FilterOperator.Contains) {
+				if (operator == FilterOperator.Contains) {
 					value1 = WILD_CARD + value1;
 				}
 				values.add(value1);
@@ -1189,10 +1195,10 @@ public class Dba {
 				continue;
 			}
 
-			if (opertor == FilterOperator.In) {
+			if (operator == FilterOperator.In) {
 				if (column1 != null) {
 					reportError(
-							"Operator " + opertor.name() + " can not be used with a field as the second operand." + vt,
+							"Operator " + operator.name() + " can not be used with a field as the second operand." + vt,
 							ctx);
 					allOk = false;
 					continue;
@@ -1235,7 +1241,7 @@ public class Dba {
 				}
 			}
 
-			if (opertor == FilterOperator.Between) {
+			if (operator == FilterOperator.Between) {
 				sql.append(BETWEEN);
 				if (column1 == null) {
 					sql.append(QN);
@@ -1261,6 +1267,16 @@ public class Dba {
 					sql.append(column2);
 				}
 
+				continue;
+			}
+
+			if (operator == FilterOperator.HasValue) {
+				sql.append(" IS NOT NULL ");
+				continue;
+			}
+
+			if (operator == FilterOperator.HasNoValue) {
+				sql.append(" IS NULL ");
 				continue;
 			}
 

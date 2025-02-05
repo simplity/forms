@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.simplity.fm.core.db;
+package org.simplity.fm.core.filter;
 
 import org.simplity.fm.core.Conventions;
 
@@ -52,7 +52,11 @@ public enum FilterOperator {
 	/** between */
 	Between(Conventions.Filter.BETWEEN),
 	/** one in the list */
-	In(Conventions.Filter.IN_LIST);
+	In(Conventions.Filter.IN_LIST),
+	/** translates to "is not null" in an RDBMS */
+	HasValue(Conventions.Filter.HAS_VALUE),
+	/** translates to "is null" in an RDBMS */
+	HasNoValue(Conventions.Filter.HAS_NO_VALUE);
 
 	private String textValue;
 
