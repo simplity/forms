@@ -131,6 +131,21 @@ public class Record implements Cloneable {
 	}
 
 	/**
+	 * 
+	 * @param fieldName
+	 * @return field, or null if field with this name is not defined in the record
+	 */
+	public Field fetchField(String fieldName) {
+		String fn = fieldName.toLowerCase();
+		for (Field field : this.fetchFields()) {
+			if (field.getName().toLowerCase().equals(fn)) {
+				return field;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * @return the fields
 	 */
 	public Field[] fetchFields() {
@@ -164,6 +179,22 @@ public class Record implements Cloneable {
 		} catch (final Exception e) {
 			this.logError(idx);
 		}
+	}
+
+	/**
+	 * set value for a field. Value is silently ignored if the field does not exist
+	 *
+	 * @param fieldName must be a valid index, failing which the operation is
+	 *                  ignored
+	 * @param value     MUST be one of the standard instances viz: String, Long,
+	 *                  Double, Boolean, LocalData, Instant
+	 */
+	public void assignValue(final String fieldName, final Object value) {
+		Field field = this.fetchField(fieldName);
+		if (field == null) {
+			return;
+		}
+		this.fieldValues[field.getIndex()] = value;
 	}
 
 	/**
@@ -202,6 +233,37 @@ public class Record implements Cloneable {
 			this.logError(idx);
 			return null;
 		}
+	}
+
+	/**
+	 * get value of a field at the specified 0-based field index. Null is returned
+	 * if the index is out of range
+	 *
+	 * @param fieldName must be a valid field name, failing which null is returned
+	 * @return null if the fieldName is invalid, or the value is null. Otherwise one
+	 *         of the standard instances viz: String, Long, Double, Boolean,
+	 *         LocalData, Instant
+	 */
+	public Object fetchValue(final String fieldName) {
+		Field field = this.fetchField(fieldName);
+		if (field == null) {
+			return null;
+		}
+		return this.fieldValues[field.getIndex()];
+	}
+
+	/**
+	 * check if a value is specified for a field
+	 *
+	 * @param fieldName must be a valid field name, failing which true is returned
+	 * @return true if the field does not exist or if its value is null
+	 */
+	public boolean isNull(final String fieldName) {
+		Field field = this.fetchField(fieldName);
+		if (field == null) {
+			return true;
+		}
+		return this.fieldValues[field.getIndex()] == null;
 	}
 
 	/**
@@ -652,7 +714,10 @@ public class Record implements Cloneable {
 	public void writeOut(IOutputData outputData) {
 		final String[] names = this.fetchFieldNames();
 		for (int i = 0; i < names.length; i++) {
-			outputData.addNameValuePair(names[i], this.fieldValues[i]);
+			Object value = this.fieldValues[i];
+			if (value != null) {
+				outputData.addNameValuePair(names[i], this.fieldValues[i]);
+			}
 		}
 	}
 

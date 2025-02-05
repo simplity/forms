@@ -321,7 +321,7 @@ public class Field {
 
 		Object keyValue = null;
 		if (this.valueList.isKeyBased()) {
-			// TODO: get the key value. This requires a complete re-factoring
+			// this will be handled by validation at the record level
 			return obj;
 		}
 

@@ -13,22 +13,25 @@ import java.time.LocalDate;
  */
 public interface INullableValue {
 	/**
-	 * sane as checking getValueType() == null
+	 * same as checking getValueType() == null
 	 *
 	 * @return true if the value is null, false otherwise
 	 */
 	boolean isNull();
+
 	/**
 	 *
 	 * @return non-null
 	 */
 	InputValueType getValueType();
+
 	/**
 	 *
 	 * @return can-be null if the value is null.
 	 *         long/double/boolean/String/LocalDate/Instant/IInputArray/IINputData
 	 */
 	Object getValue();
+
 	/**
 	 *
 	 * @return 0 if the actual value is 0, or if it is null or the valueType is
@@ -45,17 +48,19 @@ public interface INullableValue {
 
 	/**
 	 *
-	 * @return non-null string. actual string value if the value type is text.
-	 *         EMpty string if it is null. string-value of the value in case it
-	 *         is non-text. it is null.
+	 * @return non-null string. actual string value if the value type is text. EMpty
+	 *         string if it is null. string-value of the value in case it is
+	 *         non-text. it is null.
 	 */
 	String getString();
+
 	/**
 	 *
 	 * @return 0 if the actual value is 0, or if it is null or the valueType is
 	 *         non-numeric
 	 */
 	double getDecimal();
+
 	/**
 	 *
 	 * @return date if the value is a valid date, else 0-epoch
@@ -72,15 +77,15 @@ public interface INullableValue {
 
 	/**
 	 *
-	 * @return non-null. if this is not actually an array, then an empty array
-	 *         is returned.
+	 * @return non-null. if this is not actually an array, then an empty array is
+	 *         returned.
 	 */
 	IInputArray getArray();
 
 	/**
 	 *
-	 * @return non-null. if this is not actually a a data-object, then an empty
-	 *         data is returned.
+	 * @return non-null. if this is not actually a a data-object, then an empty data
+	 *         is returned.
 	 */
 	IInputData getData();
 }

@@ -1072,8 +1072,12 @@ public class Dba {
 			final String fieldName = f.field;
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
-				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
-				allOk = false;
+				/**
+				 * all fields are anyways optional. What if we just ignore this as "not ours"?
+				 */
+//				reportError("Filter field " + fieldName + " does not exist in the form/record", ctx);
+//				allOk = false;
+				continue;
 			}
 
 			final String operatorText = f.comparator;
@@ -1114,11 +1118,6 @@ public class Dba {
 
 			String column = null;
 			ValueType vt = null;
-			if (field == null) {
-				reportError("Filter field " + fieldName + " is not a column in the table/view", ctx);
-				allOk = false;
-				continue;
-			}
 
 			column = field.getColumnName();
 			vt = field.getValueType();

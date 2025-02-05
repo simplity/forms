@@ -104,6 +104,14 @@ public class DbUtil {
 	 */
 	public static final void setPsParamValues(final PreparedStatement ps, final Object[] values,
 			final ValueType[] valueTypes) throws SQLException {
+		if (values == null || valueTypes == null) {
+			return;
+		}
+		int n = values.length;
+		if (valueTypes.length < n) {
+			throw new ApplicationError("Only " + valueTypes.length + " parameter types supplied for " + n
+					+ " values while invoking dbUril.setPsParamValues()");
+		}
 		for (int i = 0; i < values.length; i++) {
 			setPsParamValue(ps, i + 1, values[i], valueTypes[i]);
 		}
@@ -120,6 +128,14 @@ public class DbUtil {
 	 */
 	public static final void setPsParamValues(final PreparedStatement ps, final Object[] values,
 			final ValueType[] valueTypes, int oneBasedStartingPosition) throws SQLException {
+		if (values == null || valueTypes == null) {
+			return;
+		}
+		int n = values.length;
+		if (valueTypes.length < n) {
+			throw new ApplicationError("Only " + valueTypes.length + " parameter types supplied for " + n
+					+ " values while invoking dbUril.setPsParamValues()");
+		}
 		for (int i = 0; i < values.length; i++) {
 			setPsParamValue(ps, i + oneBasedStartingPosition, values[i], valueTypes[i]);
 		}
@@ -283,6 +299,14 @@ public class DbUtil {
 	 */
 	public static final boolean getValuesFromRs(final ResultSet rs, ValueType[] valueTypes, Object[] values)
 			throws SQLException {
+		if (values == null || valueTypes == null) {
+			return false;
+		}
+		int n = values.length;
+		if (valueTypes.length < n) {
+			throw new ApplicationError("Only " + valueTypes.length + " parameter types supplied for " + n
+					+ " values while invoking dbUtil.getValuesFromRs()");
+		}
 		for (int i = 0; i < values.length; i++) {
 			values[i] = getValueFromRs(rs, i + 1, valueTypes[i]);
 		}
