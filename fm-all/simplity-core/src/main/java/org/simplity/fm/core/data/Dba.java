@@ -31,6 +31,8 @@ import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.AppManager;
+import org.simplity.fm.core.app.IApp;
 import org.simplity.fm.core.db.IReadWriteHandle;
 import org.simplity.fm.core.db.IReadonlyHandle;
 import org.simplity.fm.core.db.IRowProcessor;
@@ -55,6 +57,9 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Dba {
+
+	protected static final Logger logger = LoggerFactory.getLogger(Dba.class);
+
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
 	private static final String BETWEEN = " BETWEEN ";
@@ -64,7 +69,13 @@ public class Dba {
 	private static final String ESCAPED_WILD_CHAR = "\\_";
 	private static final char QN = '?';
 
-	protected static final Logger logger = LoggerFactory.getLogger(Dba.class);
+	private static int DEFAULT_MAX_ROWS = 10000;
+	static {
+		IApp app = AppManager.getApp();
+		if (app != null) {
+			DEFAULT_MAX_ROWS = app.getMaxRowsToExtractFromDb();
+		}
+	}
 	/**
 	 * table/view name in the database
 	 */
@@ -862,10 +873,10 @@ public class Dba {
 		 * let us start parsing the input, starting with max rows
 		 */
 		int maxRows = params.maxRows;
-		if (maxRows != 0 && maxRows > 0 && maxRows <= Conventions.Db.MAX_ROWS_TO_FILTER) {
+		if (maxRows != 0 && maxRows > 0 && maxRows <= DEFAULT_MAX_ROWS) {
 			logger.info("Client requested a max of {} rows.", maxRows);
 		} else {
-			maxRows = Conventions.Db.MAX_ROWS_TO_FILTER;
+			maxRows = DEFAULT_MAX_ROWS;
 			logger.info("As per configuration, a max of {} rows will be selected.", maxRows);
 		}
 

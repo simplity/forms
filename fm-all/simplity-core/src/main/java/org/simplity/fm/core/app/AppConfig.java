@@ -22,8 +22,8 @@ public class AppConfig {
 	/**
 	 * is the app available to non-authenticated users?
 	 *
-	 * true if at least one service can be responded without authentication.
-	 * false if every service requires authentication
+	 * true if at least one service can be responded without authentication. false
+	 * if every service requires authentication
 	 */
 	public boolean guestsOk;
 
@@ -38,11 +38,11 @@ public class AppConfig {
 	public String logoutServiceName;
 
 	/**
-	 * root package name used for this app. like "com.myCompany.myApp". In this
-	 * case records are found with package name "com.myCompany.myApp.gen.rec"
+	 * root package name used for this app. like "com.myCompany.myApp". In this case
+	 * records are found with package name "com.myCompany.myApp.gen.rec"
 	 *
-	 * If this is not specified, then any request for component will result in
-	 * an exception
+	 * If this is not specified, then any request for component will result in an
+	 * exception
 	 */
 	public String appRootPackage;
 
@@ -53,8 +53,7 @@ public class AppConfig {
 	public IAccessController accessController;
 
 	/**
-	 * optional. if not set, any request for db access will result in an
-	 * exception
+	 * optional. if not set, any request for db access will result in an exception
 	 */
 
 	public IDbConnectionFactory dbConnectionFactory;
@@ -90,4 +89,9 @@ public class AppConfig {
 	 */
 	public IServiceContextFactory contextFactory;
 
+	/**
+	 * Max rows, as a safety measure, to be extracted from any query from a DB using
+	 * filter-feature.
+	 */
+	public int maxRowsForFilter = 10000;
 }

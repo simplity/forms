@@ -499,11 +499,6 @@ public class Conventions {
 	 */
 	public class Db {
 		/**
-		 * this is the max number of rows returned to the client on a filter request.
-		 * This is a safety mechanism. TODO: make this configurable
-		 */
-		public static final int MAX_ROWS_TO_FILTER = 10000;
-		/**
 		 * We strongly recommend treating null in db as empty string in the programming
 		 * world, there by reducing possible null-pointer exceptions.
 		 */

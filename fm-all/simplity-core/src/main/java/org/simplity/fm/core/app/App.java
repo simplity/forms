@@ -91,6 +91,7 @@ class App implements IApp {
 	private final ITexter texter;
 	private final IEmailer emailer;
 	private final IServiceContextFactory contextFactory;
+	private int maxRowsForFilter = 10000;
 
 	/**
 	 * configure the app
@@ -103,6 +104,9 @@ class App implements IApp {
 		this.serveGuests = config.guestsOk;
 		this.loginServiceName = config.loginServiceName;
 		this.logoutServiceName = config.loginServiceName;
+		if (config.maxRowsForFilter != 0) {
+			this.maxRowsForFilter = config.maxRowsForFilter;
+		}
 
 		String text = config.appRootPackage;
 
@@ -178,7 +182,7 @@ class App implements IApp {
 
 	@Override
 	public int getMaxRowsToExtractFromDb() {
-		return 0;
+		return this.maxRowsForFilter;
 	}
 
 	@Override
