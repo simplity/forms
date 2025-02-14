@@ -1101,10 +1101,12 @@ public class Dba {
 				allOk = false;
 			}
 
-			logger.info("Operator = " + (operator == null ? "null" : operator.toString()));
+			boolean isNullCheck = operator == FilterOperator.HasNoValue || operator == FilterOperator.HasValue;
+			boolean isBetween = operator == FilterOperator.Between;
+
 			String value1 = f.value;
 			if (value1 == null) {
-				if (operator == FilterOperator.HasNoValue || operator == FilterOperator.HasValue) {
+				if (isNullCheck) {
 					// we are ok. but just to avoid null-checks let us set value to ""
 					value1 = "";
 				} else {
@@ -1113,8 +1115,8 @@ public class Dba {
 				}
 			}
 
-			String value2 = null;
-			if (operator == FilterOperator.Between) {
+			String value2 = "";
+			if (isBetween) {
 				value2 = f.toValue;
 				if (value2 == null) {
 					reportError("toValue is missing for a filter condition at index " + i, ctx);
@@ -1145,7 +1147,7 @@ public class Dba {
 			}
 
 			String column2 = null;
-			if (value2 != null) {
+			if (operator == FilterOperator.Between) {
 				column2 = parseField(value2, fields, vt, ctx);
 				if (column2 != null && column2.isEmpty()) {
 					allOk = false;
@@ -1165,7 +1167,7 @@ public class Dba {
 			 * generated unique text code. We will offer some feature to handle this
 			 * exception
 			 */
-			if (vt == ValueType.Text) {
+			if (vt == ValueType.Text && isNullCheck == false) {
 				column = toUpper(column);
 				column1 = toUpper(column1);
 				column2 = toUpper(column2);
@@ -1252,7 +1254,7 @@ public class Dba {
 				}
 			}
 
-			if (operator == FilterOperator.Between) {
+			if (isBetween) {
 				sql.append(BETWEEN);
 				if (column1 == null) {
 					sql.append(QN);

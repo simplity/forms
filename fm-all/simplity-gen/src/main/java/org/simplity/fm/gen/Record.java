@@ -117,30 +117,27 @@ class Record {
 	}
 
 	public void initExtendedRecord(Map<String, ValueSchema> schemas, Record mainRecord) {
-		/*
-		 * nameInDb, if specified, must be the same as the main-form
-		 */
-		if (this.nameInDb != null) {
-			if (this.nameInDb.equals(mainRecord.nameInDb) == false) {
-				this.addError(
-						"nameInDb is to be specified if this sub-record is to be used for db-operations. However, it can not be different from the one specified in the main record. Sub record {} uses {} as nameInDb while its main record {} uses {} as nameInDb.",
-						this.name, this.nameInDb, this.mainRecordName, mainRecord.nameInDb);
 
-			}
+		int nbrFieldsToCopy = mainRecord.fields.length; // assume all fields.
+		boolean allFields = true;
+		if (this.fieldNames != null && this.fieldNames.length > 0 && !this.fieldNames[0].equals("*")) {
+			nbrFieldsToCopy = this.fieldNames.length;
+			allFields = false;
 		}
-
-		final boolean allFields = this.fieldNames == null
-				|| (this.fieldNames.length == 1 && this.fieldNames[0].equals("*"));
 		int nbrNewFields = this.additionalFields == null ? 0 : this.additionalFields.length;
-		int totalFields = (allFields ? mainRecord.fields.length : this.fieldNames.length) + nbrNewFields;
+		int totalFields = nbrFieldsToCopy + nbrNewFields;
 
 		this.fields = new Field[totalFields];
+
+		/**
+		 * copy existing fields
+		 */
 		if (allFields) {
 			final Field[] flds = mainRecord.fields;
 			for (int i = 0; i < mainRecord.fields.length; i++) {
 				this.fields[i] = flds[i].makeACopy(i);
 			}
-		} else {
+		} else { // it is guaranteed that this.fieldNames is non-empty at this stage
 			for (int i = 0; i < this.fieldNames.length; i++) {
 				String fn = this.fieldNames[i];
 				Field field = mainRecord.fieldsMap.get(fn);
@@ -158,7 +155,7 @@ class Record {
 		 * append any fields specified in this record
 		 */
 		if (nbrNewFields > 0) {
-			int j = this.fieldNames.length;
+			int j = nbrFieldsToCopy;
 			for (int i = 0; i < nbrNewFields; i++, j++) {
 				this.fields[j] = this.additionalFields[i];
 			}
