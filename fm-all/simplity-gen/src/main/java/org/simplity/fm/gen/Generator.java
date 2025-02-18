@@ -75,7 +75,13 @@ public class Generator {
 			generate(args[0], args[1], args[2]);
 			return;
 		}
-		generate(INPUT_ROOT, OUTPUT_ROOT, PACKAGE_NAME);
+		final boolean ok = generate(INPUT_ROOT, OUTPUT_ROOT, PACKAGE_NAME);
+		if (ok) {
+			System.out.println("Source code generated");
+			return;
+		}
+		System.err.print("Errors found while generating sources. Please fix them and try again. ");
+		System.exit(1);
 		// System.err.println(
 		// "Usage : java Generator.class resourceRootFolder tsFormFolder\n or
 		// \n"
