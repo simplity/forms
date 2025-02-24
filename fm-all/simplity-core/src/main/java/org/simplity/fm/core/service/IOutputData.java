@@ -160,6 +160,17 @@ public interface IOutputData {
 	IOutputData addValues(String[] names, Object[] values);
 
 	/**
+	 * to be called inside an object. A member is added as an object/sub-form with
+	 * name-value pairs as its members
+	 *
+	 * @param memberName
+	 *
+	 * @param names      length must match the length of objects in each row
+	 * @param values     primitive values for the names
+	 */
+	IOutputData addRecord(String memberName, String[] names, Object[] values);
+
+	/**
 	 * to be called inside an object. A member is added as an array of rows, each
 	 * row being an object
 	 *

@@ -182,7 +182,7 @@ public class DefaultServiceContext implements IServiceContext {
 	public void setAsResponse(final String[] names, final Object[] values) {
 		if (this.responseSet) {
 			throw new ApplicationError(
-					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
+					"Cannot set fields  as response because some data is already written to the output. Review your design for outputting the right data.");
 		}
 		// this.outData.beginObject();
 		this.outData.addValues(names, values);

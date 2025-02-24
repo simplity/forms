@@ -215,6 +215,12 @@ class GsonOutputData implements IOutputData {
 	}
 
 	@Override
+	public GsonOutputData addRecord(final String memberName, final String[] names, final Object[] values) {
+		this.addName(memberName).beginObject().addValues(names, values).endObject();
+		return this;
+	}
+
+	@Override
 	public GsonOutputData addArray(final String memberName, final String[] names, final Iterable<Object[]> rows) {
 		try {
 			this.writer.name(memberName);

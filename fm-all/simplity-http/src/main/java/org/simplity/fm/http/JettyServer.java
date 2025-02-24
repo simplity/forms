@@ -24,27 +24,22 @@ public class JettyServer extends Server implements IAppServer {
 	/**
 	 * start a Jetty server as a server-wrapper for an APP
 	 *
-	 * @param port
-	 *            to listen on
+	 * @param port        to listen on
 	 * @param app
 	 * @param restAdapter
 	 * @return null in case the Jetty Server could not be started
 	 */
-	public static IAppServer newServer(int port, IApp app,
-			IRestAdapter restAdapter) {
+	public static IAppServer newServer(int port, IApp app, IRestAdapter restAdapter) {
 
 		try {
 			JettyServer server = new JettyServer(port);
 			server.setHandler(new JettyHandler(app, restAdapter));
 			server.start();
 			server.join();
-			JettyHandler.logger.info(
-					"App {} started as a Jetty Server on port {}",
-					app.getName(), port);
+			JettyHandler.logger.info("App {} started as a Jetty Server on port {}", app.getName(), port);
 			return server;
 		} catch (Exception e) {
-			JettyHandler.logger.error("Error while starting Jetty Server. {}",
-					e.getMessage());
+			JettyHandler.logger.error("Error while starting Jetty Server. {}", e.getMessage());
 			return null;
 		}
 	}
@@ -64,22 +59,19 @@ public class JettyServer extends Server implements IAppServer {
 }
 
 class JettyHandler extends AbstractHandler {
-	protected static final Logger logger = LoggerFactory
-			.getLogger(JettyHandler.class);
+	protected static final Logger logger = LoggerFactory.getLogger(JettyHandler.class);
 	private static final int STATUS_METHOD_NOT_ALLOWED = 405;
 	private HttpAgent httpAgent;
 
 	JettyHandler(IApp app, IRestAdapter restAdapter) {
 		this.httpAgent = new HttpAgent(app, restAdapter);
 	}
+
 	@Override
-	public void handle(final String target, final Request baseRequest,
-			final HttpServletRequest request,
-			final HttpServletResponse response)
-			throws IOException, ServletException {
+	public void handle(final String target, final Request baseRequest, final HttpServletRequest request,
+			final HttpServletResponse response) throws IOException, ServletException {
 		final String method = baseRequest.getMethod().toUpperCase();
-		logger.info("Received request path:{} and method {}",
-				baseRequest.getPathInfo(), method);
+		logger.info("\nReceived request path:{} and method {}", baseRequest.getPathInfo(), method);
 		final long start = System.currentTimeMillis();
 		this.httpAgent.setOptions(baseRequest, response);
 
@@ -88,12 +80,11 @@ class JettyHandler extends AbstractHandler {
 		} else if (method.equals("OPTIONS")) {
 			logger.info("Got a pre-flight request. responding generously.. ");
 		} else {
-			logger.error("Rejected a request with method {}",
-					baseRequest.getMethod());
+			logger.error("Rejected a request with method {}", baseRequest.getMethod());
 			response.setStatus(STATUS_METHOD_NOT_ALLOWED);
 		}
 
-		logger.info("Responded in {}ms", System.currentTimeMillis() - start);
+		logger.info("Responded in {}ms\n\n", System.currentTimeMillis() - start);
 		baseRequest.setHandled(true);
 	}
 }
