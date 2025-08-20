@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 /**
  * validation of values for a pair of fields
  */
-public class InterFieldValidation implements IValidation {
+public class InterFieldValidation implements FormDataValidation {
 
 	private static final Logger logger = LoggerFactory.getLogger(InterFieldValidation.class);
 	protected final int index1;
@@ -27,6 +27,17 @@ public class InterFieldValidation implements IValidation {
 	 */
 	protected final String field1ValueToMatch;
 
+	/**
+	 * Constructor for inter-field validation
+	 *
+	 * @param index1         0-based index of the first field
+	 * @param index2         0-based index of the second field
+	 * @param fieldName      name of the field that is to be used for flagging the
+	 *                       error message
+	 * @param messageId
+	 * @param field1Value
+	 * @param validationType
+	 */
 	public InterFieldValidation(int index1, int index2, String fieldName, String messageId, String field1Value,
 			InterFieldValidationType validationType) {
 		this.index1 = index1;
@@ -38,20 +49,18 @@ public class InterFieldValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(Record record, IServiceContext ctx) {
+	public boolean isValid(Record record, ServiceContext ctx) {
 		final Object v1 = record.fetchValue(this.index1);
 		final Object v2 = record.fetchValue(this.index2);
 		final ValueType vt = record.fetchValueTypes()[this.index1];
 		final boolean v1Exists = isSpecified(v1, vt);
 		final boolean v2Exists = isSpecified(v2, vt);
 
-		if (this.field1ValueToMatch != null) {
-			/*
-			 * is this rule applicable?
-			 */
-			if (this.field1ValueToMatch.equals(v1) == false) {
-				return true;
-			}
+		/*
+		 * is this rule applicable?
+		 */
+		if (this.field1ValueToMatch != null && this.field1ValueToMatch.equals(v1) == false) {
+			return true;
 		}
 
 		switch (this.validationType) {
@@ -112,10 +121,10 @@ public class InterFieldValidation implements IValidation {
 			return false;
 
 		case Range:
-			return rangeOk(v1, v2, false, vt);
+			return this.rangeOk(v1, v2, false, vt);
 
 		case RangeOrEqual:
-			return rangeOk(v1, v2, true, vt);
+			return this.rangeOk(v1, v2, true, vt);
 
 		default:
 			throw new ApplicationError("Inter-field Validation " + this.validationType.name() + " is not handled ");
@@ -124,6 +133,7 @@ public class InterFieldValidation implements IValidation {
 
 	}
 
+	@SuppressWarnings({ "boxing" })
 	private boolean rangeOk(Object value1, Object value2, boolean equalOk, ValueType vt) {
 		if (value1 == null || value2 == null) {
 			return false;

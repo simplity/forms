@@ -1,31 +1,10 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.ServiceContext;
 
 /**
  * when the valid values for a field depends on the vale of its key-field. like
@@ -33,7 +12,7 @@ import org.simplity.fm.core.service.IServiceContext;
  *
  * @author simplity.org
  */
-public class DependentListValidation implements IValidation {
+public class DependentListValidation implements FormDataValidation {
 	private final String listName;
 	private final int fieldIndex;
 	private final int parentFieldIndex;
@@ -61,7 +40,7 @@ public class DependentListValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final Record record, final IServiceContext ctx) {
+	public boolean isValid(final Record record, final ServiceContext ctx) {
 		final Object fieldValue = record.fetchValue(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;
@@ -71,7 +50,7 @@ public class DependentListValidation implements IValidation {
 			return true;
 		}
 
-		final IValueList vl = AppManager.getApp().getCompProvider()
+		final ValueList vl = AppManager.getApp().getCompProvider()
 				.getValueList(this.listName);
 		if (vl == null) {
 			return true;

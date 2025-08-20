@@ -3,8 +3,8 @@ package org.simplity.fm.core.filter;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.json.JsonUtil;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.ServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +37,13 @@ public class FilterParams {
 
 	/**
 	 * parse filter parameters from a payload
-	 * 
+	 *
 	 * @param input
 	 * @param ctx   optional serviceCOntext. If present, an error message is added
 	 *              in case of parse error;
-	 * @return
+	 * @return parse FilterParams, or null if there is a parse error
 	 */
-	public static FilterParams parse(IInputData input, IServiceContext ctx) {
+	public static FilterParams parse(InputData input, ServiceContext ctx) {
 		try {
 			return JsonUtil.load(input, FilterParams.class);
 		} catch (Exception e) {

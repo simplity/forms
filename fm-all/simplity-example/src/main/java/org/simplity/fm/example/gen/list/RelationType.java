@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * RelationType
  */
 
-public class RelationType extends ValueList {
+public class RelationType extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Mother", "Mother"}, 
 		{"Father", "Father"}, 

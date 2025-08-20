@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
@@ -30,15 +9,15 @@ import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.db.ReadonlyHandle;
 import org.simplity.fm.core.filter.FilterDetails;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IOutputData;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.OutputData;
+import org.simplity.fm.core.service.Service;
+import org.simplity.fm.core.service.ServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +94,7 @@ public abstract class Form<T extends Record> {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void readChildForms(final Object[] rawData, final IOutputData outData, final IReadonlyHandle handle)
+	public void readChildForms(final Object[] rawData, final OutputData outData, final ReadonlyHandle handle)
 			throws SQLException {
 		if (this.childForms != null) {
 			for (final ChildForm<?> child : Form.this.childForms) {
@@ -131,7 +110,7 @@ public abstract class Form<T extends Record> {
 	 * @param ctx         non-null. any validation error is added to it
 	 * @return true record with parsed values. null if any input fails validation.
 	 */
-	public boolean parseKeys(final IInputData inputObject, final IServiceContext ctx) {
+	public boolean parseKeys(final InputData inputObject, final ServiceContext ctx) {
 		if (!this.isDb) {
 			logger.error("This form is based on {} that is not a DbRecord. Keys can not be parsed");
 			return false;
@@ -145,7 +124,7 @@ public abstract class Form<T extends Record> {
 	 * @return a service for this operation on the form. null if the operation is
 	 *         not allowed.
 	 */
-	public IService getService(final IoType operation) {
+	public Service getService(final IoType operation) {
 		if (!this.operations[operation.ordinal()]) {
 			logger.info("{} operation is not allowed on record {}", operation, this.name);
 			return null;
@@ -197,7 +176,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData inputPayload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData inputPayload) throws Exception {
 			final Record rec = Form.this.record;
 			rec.parse(inputPayload, this.operation == IoType.Create, ctx, null, 0);
 			if (ctx.allOk()) {
@@ -218,7 +197,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			if (!Form.this.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
 				return;
@@ -235,7 +214,7 @@ public abstract class Form<T extends Record> {
 				 * instead of storing data and then serializing it, we have designed this
 				 * service to serialize data then-and-there
 				 */
-				final IOutputData outData = ctx.getOutputData();
+				final OutputData outData = ctx.getOutputData();
 				outData.beginObject();
 				outData.addValues(rec.fetchFieldNames(), rec.fieldValues);
 
@@ -255,7 +234,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -286,7 +265,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, false, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -319,7 +298,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
@@ -352,7 +331,7 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
 			FilterParams params = JsonUtil.load(payload, FilterParams.class);
@@ -378,7 +357,7 @@ public abstract class Form<T extends Record> {
 				 * instead of storing data and then serializing it, we have designed this
 				 * service to serialize data then-and-there
 				 */
-				final IOutputData outData = ctx.getOutputData();
+				final OutputData outData = ctx.getOutputData();
 				outData.beginObject();
 				outData.addName(Conventions.Request.TAG_LIST);
 				outData.beginArray();
@@ -415,7 +394,7 @@ public abstract class Form<T extends Record> {
 	 * @param ctx
 	 */
 	@SuppressWarnings("unchecked")
-	public void override(final IServiceContext ctx) {
+	public void override(final ServiceContext ctx) {
 		final String recordName = this.record.fetchName();
 		this.record = (T) AppManager.getApp().getCompProvider().getRecord(recordName, ctx);
 		if (this.childForms != null) {

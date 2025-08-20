@@ -1,32 +1,11 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.service.ServiceContext;
+import org.simplity.fm.core.validn.ValueList;
 import org.simplity.fm.core.valueschema.ValueSchema;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
@@ -103,7 +82,7 @@ public class Field {
 	/**
 	 * cached value list for validations
 	 */
-	private IValueList valueList;
+	private ValueList valueList;
 
 	/**
 	 * Field with minimum attributes
@@ -241,7 +220,7 @@ public class Field {
 	 * @param rowNbr     used for reporting error is this is part of table
 	 * @return true if all ok. false if an error message is added to the context
 	 */
-	public boolean parseIntoRow(final String fieldValue, final Object[] row, final IServiceContext ctx,
+	public boolean parseIntoRow(final String fieldValue, final Object[] row, final ServiceContext ctx,
 			final String tableName, final int rowNbr) {
 
 		String value = fieldValue == null ? null : fieldValue.trim();
@@ -271,7 +250,8 @@ public class Field {
 	 * @param idx
 	 * @return object of the right type. or null if the value is invalid
 	 */
-	public Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
+	@SuppressWarnings("boxing")
+	public Object parse(final String inputValue, final ServiceContext ctx, final String tableName, final int idx) {
 		Object obj = null;
 		if (this.valueSchema == null) {
 			obj = this.valueType.parse(inputValue);
@@ -307,15 +287,13 @@ public class Field {
 			return parsedList.textValue;
 		}
 
-		if (this.valueList == null) {
-			return obj;
-		}
 		/*
 		 * numeric 0 is generally considered as "not entered". This is handled by
 		 * allowing 0 as part of dataType definition. One issue is when this is a
 		 * valueList. Let us handle that specifically
 		 */
-		if (this.getValueType().equals(ValueType.Integer) && this.isRequired == false && ((Long) obj) == 0) {
+		if ((this.valueList == null)
+				|| (this.getValueType().equals(ValueType.Integer) && this.isRequired == false && (Long) obj == 0)) {
 			return obj;
 		}
 
@@ -334,7 +312,7 @@ public class Field {
 		return null;
 	}
 
-	private void addError(IServiceContext ctx, String tableName, int idx) {
+	private void addError(ServiceContext ctx, String tableName, int idx) {
 		if (ctx != null) {
 			ctx.addMessage(Message.newValidationError(this, tableName, idx));
 		}

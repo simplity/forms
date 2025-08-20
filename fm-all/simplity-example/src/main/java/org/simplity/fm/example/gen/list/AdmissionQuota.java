@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * AdmissionQuota
  */
 
-public class AdmissionQuota extends ValueList {
+public class AdmissionQuota extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"CET", "CET"}, 
 		{"COMEDK", "COMEDK"}, 

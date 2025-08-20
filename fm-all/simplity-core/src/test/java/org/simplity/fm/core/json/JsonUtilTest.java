@@ -9,22 +9,22 @@ import java.io.Reader;
 
 import org.junit.jupiter.api.Test;
 import org.simplity.fm.core.IoUtil;
-import org.simplity.fm.core.service.IInputArray;
-import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.InputArray;
+import org.simplity.fm.core.service.InputData;
 import org.slf4j.LoggerFactory;
 
 class JsonUtilTest {
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(JsonUtilTest.class);
 	private static final String RES_NAME = "qry/qry.json";
-	private IInputData[] tests;
-	private IInputData testData;
+	private InputData[] tests;
+	private InputData testData;
 
 	JsonUtilTest() {
 		try (Reader reader = IoUtil.getReader(RES_NAME)) {
-			IInputData data = JsonUtil.newInputData(reader);
+			InputData data = JsonUtil.newInputData(reader);
 			this.tests = data.getArray("tests").toDataArray();
 			this.testData = data.getData("testData");
-		} catch (IOException e) {//
+		} catch (IOException | JsonException e) {//
 		}
 
 	}
@@ -41,13 +41,13 @@ class JsonUtilTest {
 	}
 
 	private void testInvalidMemberNames() {
-		IInputData testCase = this.tests[0];
+		InputData testCase = this.tests[0];
 		String testName = testCase.getString("name");
 		logger.info("Running Test Case : {}", testName);
 		/*
 		 * when member names are valid, query does not fetch the value
 		 */
-		IInputData data = testCase.getData("data");
+		InputData data = testCase.getData("data");
 		for (String memberName : data.getMemberNames()) {
 			String desc = data.getString(memberName);
 			String qryResult = JsonUtil.qryString(data, memberName);
@@ -57,10 +57,10 @@ class JsonUtilTest {
 	}
 
 	private void testValidMemberNames() {
-		IInputData testCase = this.tests[1];
+		InputData testCase = this.tests[1];
 		String testName = testCase.getString("name");
 		logger.info("Running Test Case : {}", testName);
-		IInputData data = testCase.getData("data");
+		InputData data = testCase.getData("data");
 		for (String memberName : data.getMemberNames()) {
 			String desc = data.getString(memberName);
 			assertEquals(JsonUtil.qryString(data, memberName), desc, "\"" + memberName + "\": " + desc);
@@ -69,12 +69,12 @@ class JsonUtilTest {
 	}
 
 	private void testValidQueries() {
-		IInputData testCase = this.tests[2];
+		InputData testCase = this.tests[2];
 		String testName = testCase.getString("name");
 		logger.info("Running Test Case : {}", testName);
-		IInputArray arr = testCase.getArray("data");
+		InputArray arr = testCase.getArray("data");
 
-		for (IInputData aTest : arr.toDataArray()) {
+		for (InputData aTest : arr.toDataArray()) {
 			logger.info(aTest.toString());
 			String qry = aTest.getString("qry");
 			String typ = aTest.getString("type");
@@ -83,19 +83,20 @@ class JsonUtilTest {
 	}
 
 	private void testInvalidQueries() {
-		IInputData testCase = this.tests[3];
+		InputData testCase = this.tests[3];
 		String testName = testCase.getString("name");
 		logger.info("Running Test Case : {}", testName);
-		IInputArray arr = testCase.getArray("data");
-		for (IInputData aTest : arr.toDataArray()) {
+		InputArray arr = testCase.getArray("data");
+		for (InputData aTest : arr.toDataArray()) {
 			String qry = aTest.getString("qry");
 			String typ = aTest.getString("type");
 			String desc = aTest.getString("desc");
-			Object qryResult = qryPrimitiveByType(qry, typ);
+			Object qryResult = this.qryPrimitiveByType(qry, typ);
 			assertNull(qryResult, "Qry: \"" + qry + "\" reason: " + desc);
 		}
 	}
 
+	@SuppressWarnings("boxing")
 	private Object qryPrimitiveByType(String qry, String typ) {
 		String s = JsonUtil.qryString(this.testData, qry);
 		if (s == null) {
@@ -136,7 +137,8 @@ class JsonUtilTest {
 
 	private static final String VALUE = "value";
 
-	private void assertMatch(String qry, String typ, IInputData data) {
+	@SuppressWarnings("boxing")
+	private void assertMatch(String qry, String typ, InputData data) {
 		/**
 		 * how do we prove that a primitive member does not exist?? because,
 		 * queryBoolen() will return false!! We will use queryString() and then infer...

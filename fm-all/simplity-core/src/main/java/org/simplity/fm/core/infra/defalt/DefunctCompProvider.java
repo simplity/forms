@@ -1,36 +1,15 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.infra.defalt;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.infra.ICompProvider;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.fn.FunctionDefinition;
+import org.simplity.fm.core.infra.CompProvider;
+import org.simplity.fm.core.service.Service;
+import org.simplity.fm.core.service.ServiceContext;
+import org.simplity.fm.core.validn.ValueList;
 import org.simplity.fm.core.valueschema.ValueSchema;
 
 /**
@@ -38,7 +17,7 @@ import org.simplity.fm.core.valueschema.ValueSchema;
  * @author simplity.org
  *
  */
-public class DefunctCompProvider implements ICompProvider {
+public class DefunctCompProvider implements CompProvider {
 	private static void error() {
 		throw new ApplicationError("The app is not configured to provide components.");
 	}
@@ -56,19 +35,19 @@ public class DefunctCompProvider implements ICompProvider {
 	}
 
 	@Override
-	public IValueList getValueList(final String listId) {
+	public ValueList getValueList(final String listId) {
 		error();
 		return null;
 	}
 
 	@Override
-	public IService getService(final String serviceName, final IServiceContext ctx) {
+	public Service getService(final String serviceName, final ServiceContext ctx) {
 		error();
 		return null;
 	}
 
 	@Override
-	public IFunction getFunction(final String functionName) {
+	public FunctionDefinition getFunction(final String functionName) {
 		error();
 		return null;
 	}
@@ -80,7 +59,7 @@ public class DefunctCompProvider implements ICompProvider {
 	}
 
 	@Override
-	public Record getRecord(final String recordName, final IServiceContext ctx) {
+	public Record getRecord(final String recordName, final ServiceContext ctx) {
 		error();
 		return null;
 	}
@@ -92,7 +71,7 @@ public class DefunctCompProvider implements ICompProvider {
 	}
 
 	@Override
-	public Form<?> getForm(final String formId, final IServiceContext ctx) {
+	public Form<?> getForm(final String formId, final ServiceContext ctx) {
 		error();
 		return null;
 	}

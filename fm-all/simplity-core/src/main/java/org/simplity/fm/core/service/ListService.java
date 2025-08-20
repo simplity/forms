@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.service;
 
 import java.util.Map;
@@ -27,7 +6,7 @@ import java.util.Map;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.validn.ValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,20 +42,20 @@ public class ListService extends AbstractService {
 		super(Conventions.App.SERVICE_LIST);
 	}
 
-	private static void reportError(final IServiceContext ctx, String msg) {
+	private static void reportError(final ServiceContext ctx, String msg) {
 		ctx.getOutputData().addName(OUTPUT_LIST).beginArray().endArray();
 		ctx.addMessage(Message.newError(msg));
 	}
 
 	@Override
-	public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+	public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 		final String listName = payload.getString(INPUT_LIST);
 		if (listName == null || listName.isEmpty()) {
 			reportError(ctx, Conventions.MessageId.LIST_NAME_REQUIRED);
 			return;
 		}
 
-		final IValueList list = AppManager.getApp().getCompProvider().getValueList(listName);
+		final ValueList list = AppManager.getApp().getCompProvider().getValueList(listName);
 		if (list == null) {
 			reportError(ctx, Conventions.MessageId.LIST_NOT_CONFIGURED);
 			return;
@@ -113,12 +92,12 @@ public class ListService extends AbstractService {
 		} else if (result.length == 0) {
 			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
-		IOutputData data = ctx.getOutputData();
+		OutputData data = ctx.getOutputData();
 		data.addName(OUTPUT_LIST);
 		emitRows(data, result);
 	}
 
-	private static void writeOut(IOutputData data, Map<String, Object[][]> allLists) {
+	private static void writeOut(OutputData data, Map<String, Object[][]> allLists) {
 		data.addName(OUTPUT_LISTS);
 		data.beginObject();
 		if (allLists != null) {
@@ -130,7 +109,7 @@ public class ListService extends AbstractService {
 		data.endObject();
 	}
 
-	private static void emitRows(final IOutputData data, final Object[][] rows) {
+	private static void emitRows(final OutputData data, final Object[][] rows) {
 		data.beginArray();
 		for (final Object[] row : rows) {
 			data.beginObject();

@@ -7,7 +7,7 @@ import java.sql.Types;
 import java.util.Map;
 
 import org.simplity.fm.core.data.DataTable;
-import org.simplity.fm.core.db.IDbDriver;
+import org.simplity.fm.core.db.DbDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class MetaUtil {
 	 * @return number of tables/views
 	 * @throws SQLException
 	 */
-	public static final int getTableDetails(final IDbDriver driver, final Map<String, TableMetaRecord> tables,
+	public static final int getTableDetails(final DbDriver driver, final Map<String, TableMetaRecord> tables,
 			final Map<String, DataTable<ColumnMetaRecord>> columnsOfTable) throws SQLException {
 		int existingRows = tables.size();
 		driver.doReadMetaData(metaData -> {

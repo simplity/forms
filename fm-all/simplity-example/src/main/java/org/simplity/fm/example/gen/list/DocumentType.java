@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * DocumentType
  */
 
-public class DocumentType extends ValueList {
+public class DocumentType extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Marks Card", "Marks Card"}, 
 		{"Certificate", "Ceritifcate (e.g: Birth Certificate etc)"}, 

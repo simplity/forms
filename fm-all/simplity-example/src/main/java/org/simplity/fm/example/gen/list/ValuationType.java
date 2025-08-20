@@ -2,7 +2,7 @@ package org.simplity.fm.example.gen.list;
 
 import java.util.HashMap;
 import org.simplity.fm.core.validn.KeyedValueList;
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * ValuationType
@@ -33,7 +33,7 @@ public class ValuationType extends KeyedValueList {
 		this.name = NAME;
 		this.values = new HashMap<>();
 		for (int i = 0; i < KEYS.length;i++) {
-			this.values.put(KEYS[i], new ValueList(KEYS[i], VALUES[i]));
+			this.values.put(KEYS[i], new SimpleValueList(KEYS[i], VALUES[i]));
 		}
 	}
 }

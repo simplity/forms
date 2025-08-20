@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
@@ -31,18 +10,18 @@ import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.app.IApp;
-import org.simplity.fm.core.db.IReadWriteHandle;
-import org.simplity.fm.core.db.IReadonlyHandle;
-import org.simplity.fm.core.db.IRowProcessor;
+import org.simplity.fm.core.db.ReadWriteHandle;
+import org.simplity.fm.core.db.ReadonlyHandle;
+import org.simplity.fm.core.db.RowProcessor;
 import org.simplity.fm.core.filter.FilterCondition;
 import org.simplity.fm.core.filter.FilterDetails;
 import org.simplity.fm.core.filter.FilterOperator;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.filter.SortBy;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +50,7 @@ public class Dba {
 
 	private static int DEFAULT_MAX_ROWS = 10000;
 	static {
-		IApp app = AppManager.getApp();
+		App app = AppManager.getApp();
 		if (app != null) {
 			DEFAULT_MAX_ROWS = app.getMaxRowsToExtractFromDb();
 		}
@@ -315,7 +294,7 @@ public class Dba {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	boolean read(final IReadonlyHandle handle, final Object[] row) throws SQLException {
+	boolean read(final ReadonlyHandle handle, final Object[] row) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Get);
 		}
@@ -347,8 +326,8 @@ public class Dba {
 	 *         rows were added to the data table
 	 * @throws SQLException
 	 */
-	public boolean filter(final IReadonlyHandle handle, final FilterParams filterParams, DataTable<?> dataTable,
-			IServiceContext ctx) throws SQLException {
+	public boolean filter(final ReadonlyHandle handle, final FilterParams filterParams, DataTable<?> dataTable,
+			ServiceContext ctx) throws SQLException {
 
 		FilterDetails fd = this.prepareFilterDetails(filterParams, ctx);
 		if (fd == null) {
@@ -371,7 +350,8 @@ public class Dba {
 	 * @return number of rows. -1 in case of any errors.
 	 * @throws SQLException
 	 */
-	public long countRows(final IReadonlyHandle handle, final FilterParams filterParams, IServiceContext ctx)
+	@SuppressWarnings("boxing")
+	public long countRows(final ReadonlyHandle handle, final FilterParams filterParams, ServiceContext ctx)
 			throws SQLException {
 
 		FilterDetails fd = this.prepareCountSql(filterParams, ctx);
@@ -397,17 +377,15 @@ public class Dba {
 	 *                        the query
 	 * @throws SQLException
 	 */
-	void forEach(final IReadonlyHandle handle, final String where, final Object[] parameterValues,
-			final ValueType[] parameterTypes, final IRowProcessor rowProcessor) throws SQLException {
+	void forEach(final ReadonlyHandle handle, final String where, final Object[] parameterValues,
+			final ValueType[] parameterTypes, final RowProcessor rowProcessor) throws SQLException {
 
-		String sql = this.selectClause;
+		StringBuilder sql = new StringBuilder().append(this.selectClause);
 		if (where != null) {
-			sql += this.selectClause + ' ' + where;
+			sql.append(this.selectClause).append(' ').append(where);
 		}
 
-		handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes, rowProcessor);
-
-		return;
+		handle.readWithRowProcessor(sql.toString(), parameterValues, parameterTypes, this.selectTypes, rowProcessor);
 	}
 
 	/**
@@ -421,7 +399,8 @@ public class Dba {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	boolean insert(final IReadWriteHandle handle, final Object[] rowToInsert) throws SQLException {
+	@SuppressWarnings("boxing")
+	boolean insert(final ReadWriteHandle handle, final Object[] rowToInsert) throws SQLException {
 		if (this.insertIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
@@ -461,7 +440,7 @@ public class Dba {
 	 *         update
 	 * @throws SQLException
 	 */
-	boolean update(final IReadWriteHandle handle, final Object[] rowToUpdate) throws SQLException {
+	boolean update(final ReadWriteHandle handle, final Object[] rowToUpdate) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
@@ -482,7 +461,7 @@ public class Dba {
 	 * @return true if it is indeed deleted. false otherwise
 	 * @throws SQLException
 	 */
-	boolean delete(final IReadWriteHandle handle, final Object[] rowToDelete) throws SQLException {
+	boolean delete(final ReadWriteHandle handle, final Object[] rowToDelete) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Delete);
 		}
@@ -504,7 +483,7 @@ public class Dba {
 	 *         to commit/roll-back the transaction
 	 * @throws SQLException
 	 */
-	boolean save(final IReadWriteHandle handle, final Object[] fieldValues) throws SQLException {
+	boolean save(final ReadWriteHandle handle, final Object[] fieldValues) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
@@ -512,7 +491,6 @@ public class Dba {
 		boolean ok = this.update(handle, fieldValues);
 		if (!ok) {
 			ok = this.insert(handle, fieldValues);
-			;
 		}
 
 		return ok;
@@ -529,7 +507,7 @@ public class Dba {
 	 *         can be used to commit/roll-back the transaction
 	 * @throws SQLException
 	 */
-	boolean saveAll(final IReadWriteHandle handle, final Object[][] rows) throws SQLException {
+	boolean saveAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
@@ -558,7 +536,7 @@ public class Dba {
 	 *         insert.
 	 * @throws SQLException
 	 */
-	boolean insertAll(final IReadWriteHandle handle, final Object[][] rows) throws SQLException {
+	boolean insertAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
@@ -590,7 +568,7 @@ public class Dba {
 	 *         failed to update
 	 * @throws SQLException
 	 */
-	boolean updateAll(final IReadWriteHandle handle, final Object[][] rows) throws SQLException {
+	boolean updateAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
@@ -613,14 +591,12 @@ public class Dba {
 	 * @param forInsert
 	 * @return true if all ok. false if any error message is added to the context
 	 */
-	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
+	public boolean validate(final Object[] data, final boolean forInsert, final ServiceContext ctx,
 			final String tableName, final int rowNbr) {
 		boolean ok = true;
 		for (final DbField field : this.dbFields) {
-			if (field != null) {
-				if (!field.validate(data, forInsert, ctx, tableName, rowNbr)) {
-					ok = false;
-				}
+			if ((field != null) && !field.validate(data, forInsert, ctx, tableName, rowNbr)) {
+				ok = false;
 			}
 		}
 		return ok;
@@ -652,7 +628,7 @@ public class Dba {
 	 * @param ctx
 	 * @return
 	 */
-	boolean parseKeys(final IInputData inputObject, final Object[] fieldValues, final IServiceContext ctx) {
+	boolean parseKeys(final InputData inputObject, final Object[] fieldValues, final ServiceContext ctx) {
 
 		if (this.tenantField != null) {
 			fieldValues[this.tenantField.getIndex()] = ctx.getTenantId();
@@ -748,6 +724,7 @@ public class Dba {
 		return params;
 	}
 
+	@SuppressWarnings("boxing")
 	private void copyKeys(Object[][] rows, long[] keys) {
 		for (int i = 0; i < rows.length; i++) {
 			rows[i][this.generatedKeyIdx] = keys[i];
@@ -757,14 +734,14 @@ public class Dba {
 	/**
 	 * prepares the filter details required to count rows in the filter-sql
 	 * 
-	 * @param filter parameters that are the input for the filter operation This may
-	 *               be parsed from the input-request-json, or maybe prepared by a
-	 *               server-side service implementation
+	 * @param params filter parameters that are the input for the filter operation
+	 *               This may be parsed from the input-request-json, or maybe
+	 *               prepared by a server-side service implementation
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error. Error messages are added
 	 *         to the service context
 	 */
-	public FilterDetails prepareCountSql(final FilterParams params, final IServiceContext ctx) {
+	public FilterDetails prepareCountSql(final FilterParams params, final ServiceContext ctx) {
 
 		boolean allOk = true;
 		/*
@@ -852,14 +829,15 @@ public class Dba {
 	/**
 	 * prepares the filter details required to filter rows from a database table
 	 * 
-	 * @param filter parameters that are the input for the filter operation This may
-	 *               be parsed from the input-request-json, or maybe prepared by a
-	 *               server-side service implementation
+	 * @param params filter parameters that are the input for the filter operation
+	 *               This may be parsed from the input-request-json, or maybe
+	 *               prepared by a server-side service implementation
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error. Error messages are added
 	 *         to the service context
 	 */
-	public FilterDetails prepareFilterDetails(final FilterParams params, final IServiceContext ctx) {
+	@SuppressWarnings("boxing")
+	public FilterDetails prepareFilterDetails(final FilterParams params, final ServiceContext ctx) {
 
 		/*
 		 * create a look-up map of fields by fieldName
@@ -1054,14 +1032,13 @@ public class Dba {
 
 	}
 
-	private static void reportError(final String error, final IServiceContext ctx) {
+	private static void reportError(final String error, final ServiceContext ctx) {
 		logger.error(error);
 		ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));
 	}
 
 	private static boolean parseConditions(final Map<String, DbField> fields, final FilterCondition[] filters,
-			final IServiceContext ctx, final List<Object> values, final List<ValueType> types,
-			final StringBuilder sql) {
+			final ServiceContext ctx, final List<Object> values, final List<ValueType> types, final StringBuilder sql) {
 
 		/*
 		 * fairly long inside the loop for each field. But it is just serial code. Hence
@@ -1183,7 +1160,7 @@ public class Dba {
 			 * complex ones first.. we have to append ? to sql, and add type and value to
 			 * the lists for each case
 			 */
-			if ((operator == FilterOperator.Contains || operator == FilterOperator.StartsWith)) {
+			if (operator == FilterOperator.Contains || operator == FilterOperator.StartsWith) {
 				if (vt != ValueType.Text) {
 					reportError("Condition " + operator + " is not valid for field " + fieldName
 							+ " which is of value type " + vt, ctx);
@@ -1328,7 +1305,7 @@ public class Dba {
 	 * ctx
 	 * 
 	 */
-	private static String parseField(String value, Map<String, DbField> fields, ValueType vt, IServiceContext ctx) {
+	private static String parseField(String value, Map<String, DbField> fields, ValueType vt, ServiceContext ctx) {
 		int lastPosn = value.length() - 1;
 		if (value.startsWith("${") == false || value.charAt(lastPosn) != '}') {
 			return null;
@@ -1375,7 +1352,8 @@ public class Dba {
 	 * @return true if all ok. False otherwise. error message would have been added
 	 *         to the ctx
 	 */
-	boolean setKeys(Object[] keyValues, Object[] fieldValues, IServiceContext ctx) {
+	@SuppressWarnings("boxing")
+	boolean setKeys(Object[] keyValues, Object[] fieldValues, ServiceContext ctx) {
 		if (this.keyIndexes == null) {
 			logger.error("Table '{}' has no keys, but a setKeys() being attempted. Operation not done", this.nameInDb);
 			ctx.addMessage(Message.newError(Conventions.MessageId.INVALID_DATA));

@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core;
 
 /**
@@ -30,6 +9,9 @@ package org.simplity.fm.core;
  */
 public class Conventions {
 
+	/**
+	 * message ids used by the framework.
+	 */
 	public static class MessageId {
 
 		/**
@@ -94,6 +76,18 @@ public class Conventions {
 		 * header name with which token is sent
 		 */
 		public static final String HEADER_AUTH = "Authorization";
+		/**
+		 * standard headers to be set for HTTP response.
+		 */
+		public static final String[][] STANDARD_HEADERS = { { "Vary", "Origin" }, // for caches
+				{ "Access-Control-Allow-Origin", "*" }, { "Access-Control-Allow-Credentials", "false" }, // we do not
+				{ "Access-Control-Allow-Methods", "POST, GET, OPTIONS" },
+				{ "Access-Control-Allow-Headers", "content-type, " + HEADER_SERVICE + ", " + HEADER_AUTH },
+				{ "Access-Control-Max-Age", "1728" }, // 24 hours
+				{ "Connection", "Keep-Alive" }, { "Cache-Control", "no-cache, no-store, must-revalidate" },
+				{ "Expires", "11111110" }, // some future date
+				{ "Accept", "application/json" } };
+
 		/**
 		 * various headers that we respond back with
 		 */
@@ -224,7 +218,15 @@ public class Conventions {
 		 * filter sort order. "sorts" : [{"field":"field1", "descending": true...}
 		 */
 		public static final String TAG_SORTS = "sorts";
+		/**
+		 * field/tag name for field to be sorted on
+		 */
 		public static final String TAG_SORT_BY_FIELD = "field";
+
+		/**
+		 * if set to true, then the sort is in descending order. Defaults to false, to
+		 * sort it ascending.
+		 */
 		public static final String TAG_SORT_BY_DESCENDING = "descending";
 		/**
 		 * fields to be included in the selected rows for a filter request
@@ -234,6 +236,9 @@ public class Conventions {
 		 * field/tag name for filter condition
 		 */
 		public static final String TAG_FILTER_FIELD = "field";
+		/**
+		 * field/tag name for filter comparator
+		 */
 		public static final String TAG_FILTER_COMPARATOR = "comparator";
 		/**
 		 * field/tag name for filter value

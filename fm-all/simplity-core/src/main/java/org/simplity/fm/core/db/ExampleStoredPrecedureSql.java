@@ -15,9 +15,9 @@ import org.simplity.fm.core.valueschema.ValueType;
 public class ExampleStoredPrecedureSql extends StoredProcedure {
 	private static final String PROC_NAME = "example_stored_procedure";
 	private static final ValueType RET_TYPE = ValueType.Text;
-	private static final Class<?>[] SP_OUT_CLASSES = new Class<?>[]{
-			/* AppSpecificRecord.classes or nulls */};
-	private static final Field[] IN_FIELDS = new Field[]{};
+	private static final Class<?>[] SP_OUT_CLASSES = {
+			/* AppSpecificRecord.classes or nulls */ };
+	private static final Field[] IN_FIELDS = {};
 	private static final ValueType[] OUT_TYPES = null;
 
 	/**
@@ -35,6 +35,7 @@ public class ExampleStoredPrecedureSql extends StoredProcedure {
 	/**
 	 * @param value
 	 */
+	@SuppressWarnings("boxing")
 	public void setXXX(boolean value) {
 		this.inputValues[0] = value;
 	}
@@ -52,8 +53,7 @@ public class ExampleStoredPrecedureSql extends StoredProcedure {
 	 */
 
 	@Override
-	public boolean read(IReadonlyHandle handle, Record record)
-			throws SQLException {
+	public boolean read(ReadonlyHandle handle, Record record) throws SQLException {
 		return super.read(handle, record);
 	}
 

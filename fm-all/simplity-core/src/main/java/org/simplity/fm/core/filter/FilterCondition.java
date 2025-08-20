@@ -24,13 +24,16 @@ public class FilterCondition {
 	 */
 	public String toValue;
 
+	/**
+	 * default constructor
+	 */
 	public FilterCondition() {
 	}
 
 	/**
 	 * be careful: All the parameters are strings. Better to set the attributes
 	 * individually
-	 * 
+	 *
 	 * @param field
 	 * @param comparator
 	 * @param value

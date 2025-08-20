@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.valueschema;
 
 import java.time.Instant;
@@ -50,10 +29,11 @@ public enum ValueType {
 	 * whole number
 	 */
 	Integer {
+		@SuppressWarnings("boxing")
 		@Override
 		public Long doParse(final String value) {
 			try {
-				return (Long.parseLong(value));
+				return Long.parseLong(value);
 			} catch (final Exception e) {
 				try {
 					/*
@@ -64,16 +44,9 @@ public enum ValueType {
 					 * why was it not valid lng but a valid decimal?
 					 */
 					final int idx = value.indexOf('.');
-					if (idx == -1) {
+					if ((idx == -1) || (idx > 19)) {
 						/*
-						 * it was a long that was longer than long!
-						 */
-						return null;
-					}
-					if (idx > 19) {
-						/*
-						 * valid decimal, but has more than 19 digits. cannot be
-						 * accepted as long
+						 * valid decimal, but has more than 19 digits. cannot be accepted as long
 						 */
 						return null;
 					}
@@ -94,6 +67,7 @@ public enum ValueType {
 	 * whole number
 	 */
 	Decimal {
+		@SuppressWarnings("boxing")
 		@Override
 		public Double doParse(final String value) {
 			try {
@@ -112,16 +86,17 @@ public enum ValueType {
 	 * boolean
 	 */
 	Boolean {
+		@SuppressWarnings("boxing")
 		@Override
 		public Boolean doParse(final String value) {
 			switch (value.toLowerCase()) {
-			case "1" :
-			case "true" :
+			case "1":
+			case "true":
 				return true;
-			case "0" :
-			case "false" :
+			case "0":
+			case "false":
 				return false;
-			default :
+			default:
 				return null;
 			}
 		}
@@ -153,8 +128,8 @@ public enum ValueType {
 	},
 
 	/**
-	 * an instant of time. will show up as different date/time .based on the
-	 * locale. Likely candidate to represent most "date-time" fields
+	 * an instant of time. will show up as different date/time .based on the locale.
+	 * Likely candidate to represent most "date-time" fields
 	 */
 	Timestamp {
 		@Override
@@ -176,9 +151,8 @@ public enum ValueType {
 	/**
 	 * parse this value type from a string
 	 *
-	 * @param value
-	 *            non-null to ensure that the caller can figure out whether the
-	 *            parse failed or not.
+	 * @param value non-null to ensure that the caller can figure out whether the
+	 *              parse failed or not.
 	 *
 	 * @return parsed value of this type. null if value the value could not be
 	 *         parsed to the desired type
@@ -190,10 +164,9 @@ public enum ValueType {
 	protected abstract Object doParse(String value);
 
 	/**
-	 * @param value
-	 *            can be null.
-	 * @return true if the value is null, or is an instance of the right type.
-	 *         false otherwise.
+	 * @param value can be null.
+	 * @return true if the value is null, or is an instance of the right type. false
+	 *         otherwise.
 	 */
 	public boolean isRighType(final Object value) {
 		if (value == null) {

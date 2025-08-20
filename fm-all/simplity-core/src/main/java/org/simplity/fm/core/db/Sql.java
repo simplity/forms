@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.db;
 
 import java.sql.SQLException;
@@ -98,7 +77,7 @@ public abstract class Sql {
 	 * @return true if read was successful. false if nothing was read
 	 * @throws SQLException
 	 */
-	protected boolean read(final IReadonlyHandle handle, Record outputRecord) throws SQLException {
+	protected boolean read(final ReadonlyHandle handle, Record outputRecord) throws SQLException {
 
 		this.checkValues();
 		final Object[] row = new Object[outputRecord.length()];
@@ -119,7 +98,7 @@ public abstract class Sql {
 	 * @param outputRecord into which extracted data is extracted into
 	 * @throws SQLException thrown when any SQL exception, OR when no rows are found
 	 */
-	protected void readOrFail(final IReadonlyHandle handle, Record outputRecord) throws SQLException {
+	protected void readOrFail(final ReadonlyHandle handle, Record outputRecord) throws SQLException {
 		if (!this.read(handle, outputRecord)) {
 			fail();
 		}
@@ -133,7 +112,7 @@ public abstract class Sql {
 	 * @param dataTable to which the rows will be appended.
 	 * @throws SQLException
 	 */
-	protected void readMany(final IReadonlyHandle handle, DataTable<Record> dataTable) throws SQLException {
+	protected void readMany(final ReadonlyHandle handle, DataTable<Record> dataTable) throws SQLException {
 		this.checkValues();
 		handle.readIntoDataTable(this.sqlText, this.inputValues, this.inputTypes, dataTable);
 	}
@@ -150,7 +129,7 @@ public abstract class Sql {
 	 * }
 	 * </code>
 	 */
-	protected boolean read(final IReadonlyHandle handle, Record inputRecord, Record outputRecord) throws SQLException {
+	protected boolean read(final ReadonlyHandle handle, Record inputRecord, Record outputRecord) throws SQLException {
 
 		return handle.readIntoRecord(this.sqlText, inputRecord, outputRecord);
 	}
@@ -163,7 +142,7 @@ public abstract class Sql {
 	 * @throws SQLException thrown when any SQL exception, OR when no rows are
 	 *                      filtered
 	 */
-	protected void readOrFail(final IReadonlyHandle handle, Record inputRecord, Record outputRecord)
+	protected void readOrFail(final ReadonlyHandle handle, Record inputRecord, Record outputRecord)
 			throws SQLException {
 		if (!this.read(handle, inputRecord, outputRecord)) {
 			fail();
@@ -173,7 +152,7 @@ public abstract class Sql {
 	/**
 	 * concrete class uses this to readMany with params of specific concrete class
 	 */
-	protected void readMany(final IReadonlyHandle handle, Record inputRecord, DataTable<Record> dataTable)
+	protected void readMany(final ReadonlyHandle handle, Record inputRecord, DataTable<Record> dataTable)
 			throws SQLException {
 
 		handle.readIntoDataTable(this.sqlText, inputRecord, dataTable);
@@ -192,7 +171,7 @@ public abstract class Sql {
 	 * }
 	 * </code>
 	 */
-	protected boolean readIn(final IReadonlyHandle handle, Record inputRecord) throws SQLException {
+	protected boolean readIn(final ReadonlyHandle handle, Record inputRecord) throws SQLException {
 
 		Object[] row = new Object[this.outputTypes.length];
 		final boolean ok = handle.read(this.sqlText, inputRecord.fetchRawData(), inputRecord.fetchValueTypes(),
@@ -211,7 +190,7 @@ public abstract class Sql {
 	 * @throws SQLException thrown when any SQL exception, OR when no rows are
 	 *                      filtered
 	 */
-	protected void readInOrFail(final IReadonlyHandle handle, Record inputRecord) throws SQLException {
+	protected void readInOrFail(final ReadonlyHandle handle, Record inputRecord) throws SQLException {
 		if (!this.readIn(handle, inputRecord)) {
 			fail();
 		}
@@ -227,7 +206,7 @@ public abstract class Sql {
 	 * @return true if read was successful. false if nothing was read
 	 * @throws SQLException
 	 */
-	protected boolean readIn(final IReadonlyHandle handle) throws SQLException {
+	protected boolean readIn(final ReadonlyHandle handle) throws SQLException {
 
 		this.checkValues();
 
@@ -248,14 +227,14 @@ public abstract class Sql {
 	 * @param outputRecord into which extracted data is extracted into
 	 * @throws SQLException thrown when any SQL exception, OR when no rows are found
 	 */
-	protected void readInOrFail(final IReadonlyHandle handle) throws SQLException {
+	protected void readInOrFail(final ReadonlyHandle handle) throws SQLException {
 		if (!this.readIn(handle)) {
 			fail();
 		}
 	}
 
 	// write methods with input record //
-	protected int write(final IReadWriteHandle handle, Record record) throws SQLException {
+	protected int write(final ReadWriteHandle handle, Record record) throws SQLException {
 		return handle.writeFromRecord(this.sqlText, record);
 	}
 
@@ -267,7 +246,7 @@ public abstract class Sql {
 	 * @return non-zero number of affected rows.
 	 * @throws SQLException if number of affected rows 0, or on any sql exception
 	 */
-	protected int writeOrFail(final IReadWriteHandle handle, Record record) throws SQLException {
+	protected int writeOrFail(final ReadWriteHandle handle, Record record) throws SQLException {
 		final int n = handle.writeFromRecord(this.sqlText, record);
 		if (n > 0) {
 			return n;
@@ -282,7 +261,7 @@ public abstract class Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	protected int writeMany(final IReadWriteHandle handle, DataTable<Record> table) throws SQLException {
+	protected int writeMany(final ReadWriteHandle handle, DataTable<Record> table) throws SQLException {
 		return handle.writeFromDataTable(this.sqlText, table);
 	}
 
@@ -295,7 +274,7 @@ public abstract class Sql {
 	 * @return number of rows affected
 	 * @throws SQLException
 	 */
-	protected int write(final IReadWriteHandle handle) throws SQLException {
+	protected int write(final ReadWriteHandle handle) throws SQLException {
 		this.checkValues();
 		return handle.write(this.sqlText, this.inputValues, this.inputTypes);
 	}
@@ -307,7 +286,7 @@ public abstract class Sql {
 	 * @param handle
 	 * @throws SQLException if no rows are affected, or any sql error
 	 */
-	protected int writeOrFail(final IReadWriteHandle handle) throws SQLException {
+	protected int writeOrFail(final ReadWriteHandle handle) throws SQLException {
 		final int n = this.write(handle);
 		if (n > 0) {
 			return n;

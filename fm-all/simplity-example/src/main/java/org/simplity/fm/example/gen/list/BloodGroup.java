@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * BloodGroup
  */
 
-public class BloodGroup extends ValueList {
+public class BloodGroup extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"O -ve", "O -ve"}, 
 		{"O +ve", "O +ve"}, 

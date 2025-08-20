@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * ValuationRoundList
  */
 
-public class ValuationRoundList extends ValueList {
+public class ValuationRoundList extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"1", "Initial"}, 
 		{"2", "Revaluation"}, 

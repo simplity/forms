@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.gen;
 
 import java.time.Instant;
@@ -39,10 +18,10 @@ import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.RecordMetaData;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.validn.FormDataValidation;
 import org.simplity.fm.core.validn.InterFieldValidationType;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
@@ -413,7 +392,7 @@ class Record {
 		Util.emitImport(sbf, LocalDate.class);
 		Util.emitImport(sbf, ValueType.class);
 		Util.emitImport(sbf, Instant.class);
-		Util.emitImport(sbf, IInputData.class);
+		Util.emitImport(sbf, InputData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, RecordMetaData.class);
 		if (isDb) {
@@ -424,8 +403,8 @@ class Record {
 		} else {
 			Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
 		}
-		Util.emitImport(sbf, IValidation.class);
-		Util.emitImport(sbf, IServiceContext.class);
+		Util.emitImport(sbf, FormDataValidation.class);
+		Util.emitImport(sbf, ServiceContext.class);
 		Util.emitImport(sbf, List.class);
 
 		/*

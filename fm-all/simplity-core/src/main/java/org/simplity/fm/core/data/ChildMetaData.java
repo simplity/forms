@@ -1,37 +1,16 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.db.IReadWriteHandle;
-import org.simplity.fm.core.db.IReadonlyHandle;
-import org.simplity.fm.core.service.IInputArray;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IOutputData;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.db.ReadWriteHandle;
+import org.simplity.fm.core.db.ReadonlyHandle;
+import org.simplity.fm.core.service.InputArray;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.OutputData;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,8 +192,8 @@ public class ChildMetaData {
 	 * @return true if read was ok. false in in case of any validation error
 	 * @throws SQLException
 	 */
-	public boolean read(final DbRecord parentRec, final Form<?> form, final IOutputData outData,
-			final IReadonlyHandle handle) throws SQLException {
+	public boolean read(final DbRecord parentRec, final Form<?> form, final OutputData outData,
+			final ReadonlyHandle handle) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;
@@ -285,8 +264,8 @@ public class ChildMetaData {
 	 *         case, the transaction is to be rolled back;
 	 * @throws SQLException
 	 */
-	public boolean save(final DbRecord parentRec, final Form<?> form, final IInputData inputObject,
-			final IReadWriteHandle handle, final IServiceContext ctx) throws SQLException {
+	public boolean save(final DbRecord parentRec, final Form<?> form, final InputData inputObject,
+			final ReadWriteHandle handle, final ServiceContext ctx) throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();
 			return false;
@@ -294,7 +273,7 @@ public class ChildMetaData {
 
 		final DbRecord thisRecord = (DbRecord) form.record;
 		if (this.isTable) {
-			final IInputArray arr = inputObject.getArray(this.childName);
+			final InputArray arr = inputObject.getArray(this.childName);
 			if (arr == null) {
 				if (this.minRows == 0) {
 					logger.info("Input not received, but it is optional. No data saved for linked form.");
@@ -311,7 +290,7 @@ public class ChildMetaData {
 				return false;
 			}
 
-			IInputData[] childRecs = arr.toDataArray();
+			InputData[] childRecs = arr.toDataArray();
 			for (int idx = 0; idx < childRecs.length; idx++) {
 				if (!thisRecord.parse(childRecs[idx], true, ctx, this.childFormName, idx)) {
 					return false;
@@ -323,7 +302,7 @@ public class ChildMetaData {
 			return true;
 		}
 
-		final IInputData obj = inputObject.getData(this.childName);
+		final InputData obj = inputObject.getData(this.childName);
 		if (obj == null) {
 			if (this.minRows > 0) {
 				ctx.addMessage(Message.newFieldError(this.childName, Conventions.MessageId.VALUE_REQUIRED, ""));
@@ -350,7 +329,7 @@ public class ChildMetaData {
 	 * @return true if all OK.
 	 * @throws SQLException
 	 */
-	public boolean delete(final IReadWriteHandle handle, final DbRecord parentRec, final Form<?> form)
+	public boolean delete(final ReadWriteHandle handle, final DbRecord parentRec, final Form<?> form)
 			throws SQLException {
 		if (!this.isDbLink) {
 			this.noDb();

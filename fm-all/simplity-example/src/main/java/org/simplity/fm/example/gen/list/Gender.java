@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * Gender
  */
 
-public class Gender extends ValueList {
+public class Gender extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Male", "Male"}, 
 		{"Female", "Female"}, 

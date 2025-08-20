@@ -155,7 +155,7 @@ public class ValueList implements IInitializer {
 	private void emitJavaKeyed(StringBuilder sbf, final String clsName) {
 		Util.emitImport(sbf, HashMap.class);
 		Util.emitImport(sbf, org.simplity.fm.core.validn.KeyedValueList.class);
-		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
+		Util.emitImport(sbf, org.simplity.fm.core.validn.SimpleValueList.class);
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
 		sbf.append("\npublic class ").append(clsName).append(" extends KeyedValueList {");
@@ -216,7 +216,7 @@ public class ValueList implements IInitializer {
 	}
 
 	private void emitJavaSimple(StringBuilder sbf, final String clsName) {
-		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
+		Util.emitImport(sbf, org.simplity.fm.core.validn.SimpleValueList.class);
 
 		sbf.append("\n\n/**\n * ").append(clsName).append("\n */");
 		sbf.append("\n\npublic class ").append(Util.toClassName(this.name)).append(" extends ValueList {");

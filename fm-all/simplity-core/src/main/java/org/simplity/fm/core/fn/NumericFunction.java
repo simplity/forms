@@ -1,29 +1,8 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.fn;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
 
 /**
@@ -31,7 +10,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * type, to be doubly sure of future needs !!
  *
  */
-public abstract class NumericFunction implements IFunction {
+public abstract class NumericFunction implements FunctionDefinition {
 
 	/**
 	 * -1 implies var-args.
@@ -46,8 +25,7 @@ public abstract class NumericFunction implements IFunction {
 	/**
 	 * called by sub-classes
 	 *
-	 * @param n
-	 *            -1 if it is var arg
+	 * @param n -1 if it is var arg
 	 */
 	protected final void setNbrArgs(final int n) {
 		this.nbrArgs = n;
@@ -73,11 +51,13 @@ public abstract class NumericFunction implements IFunction {
 		return this.nbrArgs == -1;
 	}
 
+	@SuppressWarnings("boxing")
 	@Override
-	public final Object parseAndEval(final IServiceContext ctx, final String... params) {
+	public final Object parseAndEval(final ServiceContext ctx, final String... params) {
 		return this.calculate(this.parse(params));
 	}
 
+	@SuppressWarnings("boxing")
 	@Override
 	public final Object eval(final Object... args) {
 
@@ -97,8 +77,7 @@ public abstract class NumericFunction implements IFunction {
 	/**
 	 * calculate the numeric result based on the numeric arguments.
 	 *
-	 * @param args
-	 *            guaranteed to contain compatible length and values.
+	 * @param args guaranteed to contain compatible length and values.
 	 * @return result
 	 */
 	public final double calculate(final double[] args) {

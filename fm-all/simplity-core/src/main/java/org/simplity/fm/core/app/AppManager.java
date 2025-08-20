@@ -28,7 +28,7 @@ public class AppManager {
 	// private static final ThreadLocal<IApp> currentApp = new ThreadLocal<>();
 	// private static final Map<String, IApp>allApps = new HashMap<>();
 
-	private static App currentApp;
+	private static DefaultApp currentApp;
 
 	/**
 	 * create a new App instance with the given configuration details. WIll always
@@ -39,7 +39,7 @@ public class AppManager {
 	 * @return app non-null instance. Throws Application Error in case of any issue
 	 *         with the configuration
 	 */
-	public static IApp newAppInstance(AppConfig config) {
+	public static App newAppInstance(AppConfig config) {
 
 		/**
 		 * we are not yet ready with multi-app design
@@ -61,7 +61,7 @@ public class AppManager {
 		// throw new ApplicationError(DUP_NAME);
 		// }
 		try {
-			App app = new App(config);
+			DefaultApp app = new DefaultApp(config);
 			currentApp = app;
 
 			return app;
@@ -79,7 +79,7 @@ public class AppManager {
 	 * @return app instance that is associated with this thread of execution. null
 	 *         if no app is initiated
 	 */
-	public static IApp getApp() {
+	public static App getApp() {
 		return currentApp;
 	}
 }

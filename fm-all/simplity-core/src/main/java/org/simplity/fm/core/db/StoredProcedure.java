@@ -27,7 +27,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  * @author org.simplity
  *
  */
-public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
+public abstract class StoredProcedure extends Sql implements SpOutputProcessor {
 
 	/*
 	 * method that is triggering the call-back
@@ -138,7 +138,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	 */
 
 	@Override
-	protected boolean read(final IReadonlyHandle handle, Record outRec) throws SQLException {
+	protected boolean read(final ReadonlyHandle handle, Record outRec) throws SQLException {
 
 		this.checkValues();
 
@@ -149,14 +149,14 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected void readOrFail(final IReadonlyHandle handle, Record outRec) throws SQLException {
+	protected void readOrFail(final ReadonlyHandle handle, Record outRec) throws SQLException {
 		if (!this.read(handle, outRec)) {
 			throw new SQLException("At least one row was expected, but non found");
 		}
 	}
 
 	@Override
-	protected void readMany(final IReadonlyHandle handle, DataTable<Record> dataTable) throws SQLException {
+	protected void readMany(final ReadonlyHandle handle, DataTable<Record> dataTable) throws SQLException {
 
 		this.checkValues();
 
@@ -168,7 +168,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	// read methods with input record and output record //
 
 	@Override
-	protected boolean read(final IReadonlyHandle handle, Record inRec, Record outRec) throws SQLException {
+	protected boolean read(final ReadonlyHandle handle, Record inRec, Record outRec) throws SQLException {
 
 		this.operation = READ_ONE;
 		this.receivedRecord = outRec;
@@ -177,14 +177,14 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected void readOrFail(final IReadonlyHandle handle, Record inRec, Record outputRecord) throws SQLException {
+	protected void readOrFail(final ReadonlyHandle handle, Record inRec, Record outputRecord) throws SQLException {
 		if (!this.read(handle, inRec, outputRecord)) {
 			throw new SQLException("At least one row was expected, but non found");
 		}
 	}
 
 	@Override
-	protected void readMany(final IReadonlyHandle handle, Record inRec, DataTable<Record> dataTable)
+	protected void readMany(final ReadonlyHandle handle, Record inRec, DataTable<Record> dataTable)
 			throws SQLException {
 
 		this.operation = READ_MANY;
@@ -193,7 +193,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected boolean readIn(final IReadonlyHandle handle, Record inRec) throws SQLException {
+	protected boolean readIn(final ReadonlyHandle handle, Record inRec) throws SQLException {
 
 		this.operation = READ_ONE;
 		handle.callStoredProcedure(this.sqlText, inRec, null, this);
@@ -201,14 +201,14 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected void readInOrFail(final IReadonlyHandle handle, Record inRec) throws SQLException {
+	protected void readInOrFail(final ReadonlyHandle handle, Record inRec) throws SQLException {
 		if (!this.readIn(handle, inRec)) {
 			throw new SQLException("Expected one row, but none found");
 		}
 	}
 
 	@Override
-	protected boolean readIn(final IReadonlyHandle handle) throws SQLException {
+	protected boolean readIn(final ReadonlyHandle handle) throws SQLException {
 
 		this.checkValues();
 
@@ -219,14 +219,14 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected void readInOrFail(final IReadonlyHandle handle) throws SQLException {
+	protected void readInOrFail(final ReadonlyHandle handle) throws SQLException {
 		if (!this.readIn(handle)) {
 			throw new SQLException("At least one row was expected, but non found");
 		}
 	}
 
 	@Override
-	protected int write(final IReadWriteHandle handle, Record inRec) throws SQLException {
+	protected int write(final ReadWriteHandle handle, Record inRec) throws SQLException {
 
 		this.operation = WRITE;
 		handle.callStoredProcedure(this.sqlText, inRec, null, this);
@@ -234,7 +234,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected int writeOrFail(final IReadWriteHandle handle, Record inRec) throws SQLException {
+	protected int writeOrFail(final ReadWriteHandle handle, Record inRec) throws SQLException {
 		final int n = this.write(handle, inRec);
 		if (n == 0) {
 			fail();
@@ -243,7 +243,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected int write(final IReadWriteHandle handle) throws SQLException {
+	protected int write(final ReadWriteHandle handle) throws SQLException {
 		this.checkValues();
 
 		this.operation = WRITE;
@@ -252,7 +252,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	}
 
 	@Override
-	protected int writeOrFail(final IReadWriteHandle handle) throws SQLException {
+	protected int writeOrFail(final ReadWriteHandle handle) throws SQLException {
 		final int n = this.write(handle);
 		if (n == 0) {
 			fail();
@@ -270,7 +270,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	 *         if the procedure is designed for it, or null if none of these
 	 * @throws SQLException
 	 */
-	protected Object callSp(IReadonlyHandle handle, Record inRec) throws SQLException {
+	protected Object callSp(ReadonlyHandle handle, Record inRec) throws SQLException {
 
 		this.resetResultFields();
 		/**
@@ -290,7 +290,7 @@ public abstract class StoredProcedure extends Sql implements IProcessSpOutput {
 	 *
 	 * @throws SQLException
 	 */
-	protected Object callSp(IReadonlyHandle handle) throws SQLException {
+	protected Object callSp(ReadonlyHandle handle) throws SQLException {
 
 		this.checkValues();
 		this.resetResultFields();

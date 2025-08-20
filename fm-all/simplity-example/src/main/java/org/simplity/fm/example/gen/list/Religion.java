@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * Religion
  */
 
-public class Religion extends ValueList {
+public class Religion extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Hindu", "Hindu"}, 
 		{"Muslim", "Muslim"}, 

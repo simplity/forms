@@ -5,11 +5,16 @@ package org.simplity.fm.core.json;
  * encountered while parsing a JSON
  *
  */
-class JsonException extends Exception {
+public class JsonException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	JsonException(String errorMessage) {
+	/**
+	 * default constructor
+	 *
+	 * @param errorMessage
+	 */
+	public JsonException(String errorMessage) {
 		super(errorMessage);
 	}
 

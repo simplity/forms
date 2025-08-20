@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * AccountStatus
  */
 
-public class AccountStatus extends ValueList {
+public class AccountStatus extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Active", "Active"}, 
 		{"Suspended", "Suspended"}, 

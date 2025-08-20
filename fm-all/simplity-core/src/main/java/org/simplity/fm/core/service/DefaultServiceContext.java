@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.service;
 
 import java.io.Reader;
@@ -32,9 +11,9 @@ import java.util.Map;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.DefaultUserContext;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
-import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.data.RecordOverride;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +25,16 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class DefaultServiceContext implements IServiceContext {
+public class DefaultServiceContext implements ServiceContext {
 	protected static Logger logger = LoggerFactory.getLogger(DefaultServiceContext.class);
 
-	protected final IOutputData outData;
-	protected final UserContext currentUtx;
+	protected final OutputData outData;
+	protected final DefaultUserContext currentUtx;
 	protected final Object userId;
 	protected final List<Message> messages = new ArrayList<>();
 
 	protected int nbrErrors = 0;
-	protected UserContext newUtx;
+	protected DefaultUserContext newUtx;
 	protected boolean responseSet;
 	protected boolean resetSession;
 	/*
@@ -68,7 +47,8 @@ public class DefaultServiceContext implements IServiceContext {
 	 * @param session can be null
 	 * @param outData non-null
 	 */
-	public DefaultServiceContext(final UserContext session, final IOutputData outData) {
+	@SuppressWarnings("boxing")
+	public DefaultServiceContext(final DefaultUserContext session, final OutputData outData) {
 		this.outData = outData;
 		this.currentUtx = session;
 		/*
@@ -100,7 +80,7 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public IOutputData getOutputData() {
+	public OutputData getOutputData() {
 		return this.outData;
 	}
 
@@ -191,18 +171,18 @@ public class DefaultServiceContext implements IServiceContext {
 	}
 
 	@Override
-	public UserContext getCurrentUserContext() {
+	public DefaultUserContext getCurrentUserContext() {
 		this.checkCtx();
 		return this.currentUtx;
 	}
 
 	@Override
-	public UserContext getNewUserContext() {
+	public DefaultUserContext getNewUserContext() {
 		return this.newUtx;
 	}
 
 	@Override
-	public void setNewUserContext(final UserContext utx) {
+	public void setNewUserContext(final DefaultUserContext utx) {
 		this.newUtx = utx;
 	}
 

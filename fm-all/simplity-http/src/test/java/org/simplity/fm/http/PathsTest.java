@@ -8,7 +8,7 @@ import java.io.Reader;
 
 import org.simplity.fm.core.IoUtil;
 import org.simplity.fm.core.json.JsonUtil;
-import org.simplity.fm.core.service.IInputData;
+import org.simplity.fm.core.service.InputData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,15 +20,15 @@ import org.slf4j.LoggerFactory;
 public class PathsTest {
 	private static final Logger logger = LoggerFactory.getLogger(PathsTest.class);
 	private static final String RES_NAME = "paths.json";
-	private IInputData invalidPaths;
-	private IInputData validPathsWithErrors;
-	private IInputData pathsWithPrefixes;
-	private IInputData testPaths;
-	private IInputData testData;
+	private InputData invalidPaths;
+	private InputData validPathsWithErrors;
+	private InputData pathsWithPrefixes;
+	private InputData testPaths;
+	private InputData testData;
 
 	PathsTest() {
 		try (Reader reader = IoUtil.getReader(RES_NAME)) {
-			IInputData data = JsonUtil.newInputData(reader);
+			InputData data = JsonUtil.newInputData(reader);
 			this.invalidPaths = data.getData("invalidPaths");
 			this.validPathsWithErrors = data.getData("validPathsWithErrors");
 			this.pathsWithPrefixes = data.getData("pathsWithPrefixes");
@@ -75,13 +75,13 @@ public class PathsTest {
 	private void shouldExtractFieldsAndMapService() {
 		RestAdapter paths = RestAdapter.fromInputData(this.testPaths);
 		this.testData.getMemberNames().forEach(key -> {
-			IInputData data = JsonUtil.newInputData();
-			IInputData attrs = this.testData.getData(key);
+			InputData data = JsonUtil.newInputData();
+			InputData attrs = this.testData.getData(key);
 			String path = attrs.getString("path");
 			logger.info("testing path: {}", path);
 			String method = attrs.getString("method");
 			String service = attrs.getString("service");
-			IInputData expectedData = attrs.getData("data");
+			InputData expectedData = attrs.getData("data");
 
 			String result = paths.parsePath(path, method, data);
 			if (service.isEmpty()) {

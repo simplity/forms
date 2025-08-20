@@ -3,7 +3,7 @@ package org.simplity.fm.example.gen;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.simplity.fm.core.IValueSchemas;
+import org.simplity.fm.core.ValueSchemas;
 import org.simplity.fm.core.valueschema.ValueSchema;
 import org.simplity.fm.core.valueschema.TextSchema;
 import org.simplity.fm.core.valueschema.IntegerSchema;
@@ -15,7 +15,7 @@ import org.simplity.fm.core.valueschema.TimestampSchema;
 /**
  * class that has static attributes for all value schemas defined for this project. It also extends <code>DataTypes</code>
  */ 
-public class DefinedValueSchemas implements IValueSchemas {
+public class DefinedValueSchemas implements ValueSchemas {
 	public static final BooleanSchema bool = new BooleanSchema("bool","invalidBool");
 	public static final DecimalSchema grade = new DecimalSchema("grade","invalidGrade",0L,100L,2);
 	public static final DateSchema date = new DateSchema("date","invalidDate",73000,73000);

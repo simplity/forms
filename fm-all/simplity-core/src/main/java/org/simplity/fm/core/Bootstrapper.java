@@ -1,29 +1,8 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core;
 
 import org.simplity.fm.core.app.AppConfig;
-import org.simplity.fm.core.infra.IDbConnectionFactory;
+import org.simplity.fm.core.infra.DbConnectionFactory;
 import org.simplity.fm.core.infra.defalt.JdbcConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +45,7 @@ public class Bootstrapper {
 	 * @param driverName
 	 */
 	@SuppressWarnings("unused")
-	private static IDbConnectionFactory dbSetupWithConString() {
+	private static DbConnectionFactory dbSetupWithConString() {
 		final String conString = "Get it from wherever you are to get it, but never hard code in the code here";
 		final String driverName = "driver name for the vendor/provider of JDBC you are using";
 		logger.info(
@@ -81,7 +60,7 @@ public class Bootstrapper {
 	 * @param dataSourceName
 	 */
 	@SuppressWarnings("unused")
-	private static IDbConnectionFactory dbSetupWithDataSource() {
+	private static DbConnectionFactory dbSetupWithDataSource() {
 		final String dataSourceName = "the designated JNDI name as per the documentation of the container/framework that provides this service";
 		logger.info("Setting up db with dataSource name = {}", dataSourceName);
 		return JdbcConnectionFactory.getFactory(dataSourceName);
@@ -93,12 +72,12 @@ public class Bootstrapper {
 	 * @param factory
 	 */
 	@SuppressWarnings("unused")
-	private static IDbConnectionFactory dbSetupWithCustomFctory() {
+	private static DbConnectionFactory dbSetupWithCustomFctory() {
 		/*
 		 * write the code to get the factory, whichever you are supposed to get
 		 * it..
 		 */
-		final IDbConnectionFactory factory = null;
+		final DbConnectionFactory factory = null;
 		// logger.info("Setting up db with a custom connection factory class
 		// {}", factory.getClass().getName());
 		return factory;

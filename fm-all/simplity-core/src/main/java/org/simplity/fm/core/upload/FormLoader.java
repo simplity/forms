@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.upload;
 
 import java.sql.SQLException;
@@ -27,8 +6,8 @@ import java.util.Map;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.db.ITransactionHandle;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.db.TransactionHandle;
+import org.simplity.fm.core.service.ServiceContext;
 
 /**
  *
@@ -45,7 +24,7 @@ class FormLoader {
 	/**
 	 * array of value providers corresponding to the fields in this form
 	 */
-	private final IValueProvider[] valueProviders;
+	private final InputValueProvider[] valueProviders;
 
 	private final int keyIdx;
 
@@ -60,7 +39,7 @@ class FormLoader {
 	 * @param valueProviders         must have exactly the right number and in the
 	 *                               same order for the form fields
 	 */
-	FormLoader(final DbRecord record, final String generatedKeyOutputName, final IValueProvider[] valueProviders) {
+	FormLoader(final DbRecord record, final String generatedKeyOutputName, final InputValueProvider[] valueProviders) {
 		this.record = record;
 		this.generatedKeyOutputName = generatedKeyOutputName;
 		this.valueProviders = valueProviders;
@@ -80,14 +59,14 @@ class FormLoader {
 	 * @return true of all ok. false otherwise, in which case ctx will have the
 	 *         errors
 	 */
-	boolean validate(final Map<String, String> values, final IServiceContext ctx) {
+	boolean validate(final Map<String, String> values, final ServiceContext ctx) {
 		return this.parseInput(values, ctx);
 
 	}
 
-	private boolean parseInput(final Map<String, String> values, final IServiceContext ctx) {
+	private boolean parseInput(final Map<String, String> values, final ServiceContext ctx) {
 		int idx = -1;
-		for (final IValueProvider vp : this.valueProviders) {
+		for (final InputValueProvider vp : this.valueProviders) {
 			idx++;
 			if (vp != null) {
 				this.record.assignValue(idx, vp.getValue(values, ctx));
@@ -107,7 +86,7 @@ class FormLoader {
 	 *         errors
 	 * @throws SQLException
 	 */
-	boolean loadData(final Map<String, String> values, final ITransactionHandle handle, final IServiceContext ctx)
+	boolean loadData(final Map<String, String> values, final TransactionHandle handle, final ServiceContext ctx)
 			throws SQLException {
 		if (!this.parseInput(values, ctx)) {
 			return false;

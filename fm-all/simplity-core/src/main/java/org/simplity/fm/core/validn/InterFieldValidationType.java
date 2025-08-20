@@ -1,5 +1,8 @@
 package org.simplity.fm.core.validn;
 
+/**
+ * Enum representing different types of inter-field validation rules.
+ */
 public enum InterFieldValidationType {
 	/**
 	 * either both fields have values or both are empty

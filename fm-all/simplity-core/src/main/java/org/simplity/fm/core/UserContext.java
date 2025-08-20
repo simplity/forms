@@ -1,181 +1,99 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.io.Reader;
+import java.io.Writer;
 
-import org.simplity.fm.core.data.OverrideUtil;
-import org.simplity.fm.core.data.OverrideUtil.Overrides;
 import org.simplity.fm.core.data.RecordOverride;
 
 /**
- * data that is to be cached for a logged-in user that is used across service
- * requests. This is a base class that the actual Apps extend to make this
- * useful
+ * Contains user specific data that services may use. It may also accumulate
+ * certain data during the course of a user-session in an online (interactive)
+ * environment like an online app.
  *
  * @author simplity.org
  *
  */
-public class UserContext {
-
-	/**
-	 * userId for whom this context is created. not-null non-empty. If this is for a
-	 * guest, the proposed design is that the app has the concept of a guest.
-	 */
-	protected final long userId;
-
-	/**
-	 * tenant id, if the app has such a concept
-	 */
-	protected Object tenantId;
-
-	/**
-	 * if form/records are overridden for this
-	 */
-	protected String overrideId;
-	/**
-	 * name of forms that are overridden in this context
-	 */
-	protected Set<String> formOverrides;
-	/**
-	 * name of records that are overridden in this context
-	 */
-	protected Set<String> recordOverrides;
-	/**
-	 * pending jobs that the user has asked for, but not delivered yet
-	 */
-	protected Set<String> jobs;
+public interface UserContext {
 
 	/**
 	 *
-	 * @param userId
+	 * @param key
+	 * @return object associated with this key, null if no such key, or the
+	 *         value is null
 	 */
-	public UserContext(final long userId) {
-		this.userId = userId;
-	}
+	Object getValue(String key);
 
 	/**
+	 * put an name-value pair in the context
 	 *
-	 * @return the ID of the user to whom this session belongs to
+	 * @param key
+	 *            non-null
+	 * @param value
+	 *            null has same effect as removing it. hence remove not
+	 *            provided.
 	 */
-	public long getUserId() {
-		return this.userId;
-	}
+	void setValue(String key, Object value);
 
 	/**
-	 *
-	 * @return null if this app is not multi-tenant, or if it is not set
+	 * @return non-null user on whose behalf this service is requested. Note
+	 *         that this id COULD be different from the userId used by the
+	 *         client-facing UserContext. For example, the app may use a mail-id
+	 *         as userId for logging in, but may use a numeric userId internally
+	 *         as the unique userId. In this case UserContext uses mail-id
+	 *         (string) as userId while ServiceCOntext uses internalId (long) as
+	 *         userId. <br />
+	 *         Also, If a service is allowed for non-registered users, the app
+	 *         may use a a specific (hard-coded) userId for any session for such
+	 *         a user
 	 */
-	public Object getTenantId() {
-		return this.tenantId;
-	}
+	Object getUserId();
 
 	/**
-	 *
-	 * @param id non-null, the right type, typically long
+	 * @param recordName
+	 * @return id with which this record is over-ridden. null if it is not
+	 *         overridden
 	 */
-	public void setTenantId(Object id) {
-		this.tenantId = id;
-	}
-
-	/**
-	 * to be invoked by the extended class to cache the form/record overrides
-	 */
-	protected void setOverrides(final String id) {
-		final Overrides overs = OverrideUtil.getOverides(id);
-		if (overs == null) {
-			return;
-		}
-
-		this.overrideId = id;
-		this.formOverrides = new HashSet<>();
-		for (final String s : overs.forms) {
-			this.formOverrides.add(s);
-		}
-
-		this.recordOverrides = new HashSet<>();
-		for (final String s : overs.records) {
-			this.recordOverrides.add(s);
-		}
-	}
+	String getRecordOverrideId(String recordName);
 
 	/**
 	 *
 	 * @param recordName
-	 * @return null if this is not if overridden in the current context. overrideId
-	 *         if present.
-	 *
+	 * @return instance of recordOverride meta-data
 	 */
-	public String getRecordOverrideId(final String recordName) {
-		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
-			return this.overrideId;
-		}
-		return null;
-	}
+	RecordOverride getRecordOverride(String recordName);
 
 	/**
-	 *
 	 * @param formName
-	 * @return id with which this form is overridden. null if it is not overridden.
+	 * @return id with which this form is over-ridden. null if it is not
+	 *         overridden
 	 */
-	public String getFormOverrideId(final String formName) {
-		if (this.formOverrides != null && this.formOverrides.contains(formName)) {
-			return this.overrideId;
-		}
-		return null;
-	}
+	String getFormOverrideId(String formName);
 
 	/**
-	 * get the record override for this record in this context
+	 * serialize and write for persistence
 	 *
-	 * @param recordName
-	 * @return record override, or null if it is not found
+	 * @param writer
 	 */
-	public RecordOverride getRecordOverride(final String recordName) {
-		return OverrideUtil.getRecord(this.overrideId, recordName);
-	}
+	void persist(Writer writer);
 
 	/**
-	 * save a jobId in the context
 	 *
-	 * @param jobId must be a valid jobId returned by the JobManager
+	 * @param reader
+	 * @return true if loaded successfully. false in case of any issue. Error
+	 *         message would have been added in case of any failure
 	 */
-	public void addJob(final String jobId) {
-		if (this.jobs == null) {
-			this.jobs = new HashSet<>();
-		}
-		this.jobs.add(jobId);
-	}
+	boolean load(Reader reader);
 
 	/**
-	 * remove the jobId from this list once it is taken care of..
 	 *
 	 * @param jobId
 	 */
-	public void removeJob(final String jobId) {
-		if (this.jobs != null) {
-			this.jobs.remove(jobId);
-		}
-	}
+	void addJob(final String jobId);
+
+	/**
+	 *
+	 * @param jobId
+	 */
+	void removeJob(final String jobId);
 }

@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.infra.defalt;
 
 import java.sql.Connection;
@@ -29,7 +8,7 @@ import java.sql.SQLException;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
-import org.simplity.fm.core.infra.IDbConnectionFactory;
+import org.simplity.fm.core.infra.DbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class JdbcConnectionFactory implements IDbConnectionFactory {
+public class JdbcConnectionFactory implements DbConnectionFactory {
 	private static final Logger logger = LoggerFactory.getLogger(JdbcConnectionFactory.class);
 
 	/**
@@ -52,7 +31,7 @@ public class JdbcConnectionFactory implements IDbConnectionFactory {
 	 * @return factory that can be used to get connection to a default schema. null
 	 *         in case the credentials could not be used to get a sample connection
 	 */
-	public static IDbConnectionFactory getFactory(String conString, String driverClassName) {
+	public static DbConnectionFactory getFactory(String conString, String driverClassName) {
 		IFactory f = getCsFactory(conString, driverClassName);
 		if (f == null) {
 			return null;
@@ -68,7 +47,7 @@ public class JdbcConnectionFactory implements IDbConnectionFactory {
 	 * @return factory that can be used to get connection to a default schema. null
 	 *         in case the credentials could not be used to get a sample connection
 	 */
-	public static IDbConnectionFactory getFactory(String dataSourceName) {
+	public static DbConnectionFactory getFactory(String dataSourceName) {
 		IFactory f = getDsFactory(dataSourceName, null);
 		if (f == null) {
 			return null;
@@ -84,7 +63,7 @@ public class JdbcConnectionFactory implements IDbConnectionFactory {
 	 * @return factory that can be used to get connection to a default schema. null
 	 *         in case the credentials could not be used to get a sample connection
 	 */
-	public static IDbConnectionFactory getFactory(DataSource dataSource) {
+	public static DbConnectionFactory getFactory(DataSource dataSource) {
 		IFactory f = getDsFactory(null, dataSource);
 		if (f == null) {
 			return null;

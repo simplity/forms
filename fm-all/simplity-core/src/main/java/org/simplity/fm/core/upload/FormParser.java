@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.upload;
 
 import java.util.Map;
@@ -30,8 +9,8 @@ import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.infra.ICompProvider;
+import org.simplity.fm.core.fn.FunctionDefinition;
+import org.simplity.fm.core.infra.CompProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,30 +42,26 @@ import com.google.gson.JsonObject;
  *
  */
 class FormParser {
-	private static final Logger logger = LoggerFactory
-			.getLogger(FormParser.class);
+	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	private final ICompProvider compProvider = AppManager.getApp()
-			.getCompProvider();
+	private final CompProvider compProvider = AppManager.getApp().getCompProvider();
 	/*
 	 * what is defined in this processor
 	 */
 	private final Map<String, String> params;
 	private final Map<String, Map<String, String>> valueLists;
 	private final Set<String> listsRequiringKey;
-	private final Map<String, IFunction> functions;
+	private final Map<String, FunctionDefinition> functions;
 
 	/*
 	 * we are going to parse these
 	 */
 	private DbRecord record;
 	private String generatedKeyOutputName;
-	private IValueProvider[] valueProviders;
+	private InputValueProvider[] valueProviders;
 
-	FormParser(final Map<String, String> params,
-			final Map<String, Map<String, String>> valueLists,
-			final Set<String> listsRequiringKey,
-			final Map<String, IFunction> functions) {
+	FormParser(final Map<String, String> params, final Map<String, Map<String, String>> valueLists,
+			final Set<String> listsRequiringKey, final Map<String, FunctionDefinition> functions) {
 		this.params = params;
 		this.valueLists = valueLists;
 		this.listsRequiringKey = listsRequiringKey;
@@ -97,8 +72,7 @@ class FormParser {
 
 		JsonElement ele = json.get(Conventions.Upload.TAG_FORM);
 		if (ele == null || !ele.isJsonPrimitive()) {
-			logger.error("{} is required for an form mapper",
-					Conventions.Upload.TAG_FORM);
+			logger.error("{} is required for an form mapper", Conventions.Upload.TAG_FORM);
 			return null;
 		}
 
@@ -117,19 +91,16 @@ class FormParser {
 		this.record = (DbRecord) rec;
 		ele = json.get(Conventions.Upload.TAG_GENERATED_KEY);
 		if (ele != null) {
-			if (ele.isJsonPrimitive()) {
-				this.generatedKeyOutputName = ele.getAsString().trim();
-			} else {
-				logger.error("{} has an invalid value",
-						Conventions.Upload.TAG_GENERATED_KEY);
+			if (!ele.isJsonPrimitive()) {
+				logger.error("{} has an invalid value", Conventions.Upload.TAG_GENERATED_KEY);
 				return null;
 			}
+			this.generatedKeyOutputName = ele.getAsString().trim();
 		}
 
 		ele = json.get(Conventions.Upload.TAG_FIELDS);
 		if (ele == null || !ele.isJsonObject()) {
-			logger.error("form mapper has {} attribute missing or invalid",
-					Conventions.Upload.TAG_FIELDS);
+			logger.error("form mapper has {} attribute missing or invalid", Conventions.Upload.TAG_FIELDS);
 			return null;
 		}
 
@@ -137,32 +108,28 @@ class FormParser {
 			return null;
 		}
 
-		return new FormLoader(this.record, this.generatedKeyOutputName,
-				this.valueProviders);
+		return new FormLoader(this.record, this.generatedKeyOutputName, this.valueProviders);
 	}
 
 	private boolean parseFields(final JsonObject json) {
-		this.valueProviders = new IValueProvider[this.record.length()];
+		this.valueProviders = new InputValueProvider[this.record.length()];
 		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 
 			final String fieldName = entry.getKey();
 			final Field field = this.record.fetchField(fieldName);
 
 			if (field == null) {
-				logger.error("{} is not a valid field name in the form {}",
-						fieldName, this.record.fetchName());
+				logger.error("{} is not a valid field name in the form {}", fieldName, this.record.fetchName());
 				return false;
 			}
 
 			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
-				logger.error("Field {} in the form {} has an invalid value",
-						fieldName, this.record.fetchName());
+				logger.error("Field {} in the form {} has an invalid value", fieldName, this.record.fetchName());
 				return false;
 			}
 
-			final IValueProvider vp = this.parseVp(ele.getAsString().trim(),
-					true);
+			final InputValueProvider vp = this.parseVp(ele.getAsString().trim(), true);
 			if (vp == null) {
 				return false;
 			}
@@ -171,20 +138,20 @@ class FormParser {
 		return true;
 	}
 
-	private IValueProvider parseVp(final String value, final boolean fnOk) {
+	private InputValueProvider parseVp(final String value, final boolean fnOk) {
 		if (value == null || value.isEmpty()) {
-			return new ValueProvider(null, "");
+			return new VariableValueProvider(null, "");
 		}
 
 		final char c = value.charAt(0);
 		final String text = value.substring(1);
 
 		if (c == Conventions.Upload.TYPE_VAR) {
-			return new ValueProvider(text, null);
+			return new VariableValueProvider(text, null);
 		}
 
 		if (c == Conventions.Upload.TYPE_CONST) {
-			return new ValueProvider(null, text);
+			return new VariableValueProvider(null, text);
 		}
 
 		if (c == Conventions.Upload.TYPE_PARAM) {
@@ -195,7 +162,7 @@ class FormParser {
 						text);
 				return null;
 			}
-			return new ValueProvider(null, t);
+			return new VariableValueProvider(null, t);
 		}
 
 		boolean isFn = true;
@@ -203,30 +170,28 @@ class FormParser {
 			isFn = false;
 		} else if (c != Conventions.Upload.TYPE_FN) {
 			/*
-			 * first char is not a special character. so the whole input is
-			 * constant
+			 * first char is not a special character. so the whole input is constant
 			 */
-			return new ValueProvider(null, value);
+			return new VariableValueProvider(null, value);
 		}
 		/*
-		 * we are left with fn and lookup both use parameters. both are of the
-		 * form name(p1, p2..)
+		 * we are left with fn and lookup both use parameters. both are of the form
+		 * name(p1, p2..)
 		 */
 		if (!fnOk) {
-			logger.error(
-					"{} is an invalid paramater. Parameter of a function/lookup can not be function/lookup again.",
+			logger.error("{} is an invalid paramater. Parameter of a function/lookup can not be function/lookup again.",
 					value);
 			return null;
 		}
 
 		final String nam = parseName(text);
-		final IValueProvider[] vps = this.parseParams(text);
+		final InputValueProvider[] vps = this.parseParams(text);
 		if (nam == null || vps == null || vps.length == 0) {
 			return null;
 		}
 
 		if (isFn) {
-			final IFunction fn = this.functions.get(nam);
+			final FunctionDefinition fn = this.functions.get(nam);
 			if (fn == null) {
 				logger.error("{} is not declared as a function", nam);
 				return null;
@@ -241,22 +206,19 @@ class FormParser {
 		}
 
 		final int nbr = vps.length;
-		final IValueProvider vp1 = vps[0];
-		IValueProvider vp2 = null;
+		final InputValueProvider vp1 = vps[0];
+		InputValueProvider vp2 = null;
 		final boolean isKeyed = this.listsRequiringKey.contains(nam);
 		if (isKeyed) {
-			if (nbr == 2) {
-				vp2 = vps[1];
-			} else {
-				logger.error(
-						"look up {} is used with {} params. It should use 2 parameters as it is a keyed-list",
-						nam, nbr);
+			if (nbr != 2) {
+				logger.error("look up {} is used with {} params. It should use 2 parameters as it is a keyed-list", nam,
+						"" + nbr);
 				return null;
 			}
+			vp2 = vps[1];
 		} else if (nbr > 1) {
-			logger.error(
-					"look up {} is used with {} params. It should use only one param as it is not a keyd list",
-					nam, nbr);
+			logger.error("look up {} is used with {} params. It should use only one param as it is not a keyd list",
+					nam, "" + nbr);
 			return null;
 		}
 
@@ -264,8 +226,7 @@ class FormParser {
 	}
 
 	/*
-	 * text is possibly of the form " abcd ( a, b, c)  " we have to return
-	 * "abcd"
+	 * text is possibly of the form " abcd ( a, b, c)  " we have to return "abcd"
 	 */
 	private static String parseName(final String text) {
 		final int idx = text.indexOf('(');
@@ -279,16 +240,14 @@ class FormParser {
 	}
 
 	private static void invalidFn(final String fn) {
-		logger.error(
-				"{} is not a valid function/lookup. expect text of the form fname(p1,p2,..)",
-				fn);
+		logger.error("{} is not a valid function/lookup. expect text of the form fname(p1,p2,..)", fn);
 	}
 
 	/*
-	 * text is possibly of the form " abcd ( =a, $b, #c)  " we have to return
-	 * array of three IvalueProviders
+	 * text is possibly of the form " abcd ( =a, $b, #c)  " we have to return array
+	 * of three IvalueProviders
 	 */
-	private IValueProvider[] parseParams(final String text) {
+	private InputValueProvider[] parseParams(final String text) {
 		// look for (
 		int idx = text.indexOf('(');
 		if (idx == -1) {
@@ -305,7 +264,7 @@ class FormParser {
 			return null;
 		}
 
-		if (s.length() != (idx + 1)) {
+		if (s.length() != idx + 1) {
 			logger.error("not ending with ')'");
 			invalidFn(text);
 			return null;
@@ -314,16 +273,15 @@ class FormParser {
 		s = s.substring(1, idx).trim(); // s="=a, $b, #c"
 
 		if (s.isEmpty()) {
-			logger.error(
-					"Fn/lookup has no parameters. We expect at least one parameter");
+			logger.error("Fn/lookup has no parameters. We expect at least one parameter");
 			invalidFn(text);
 			return null;
 		}
 
 		final String[] arr = s.split(",");
-		final IValueProvider[] result = new IValueProvider[arr.length];
+		final InputValueProvider[] result = new InputValueProvider[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			final IValueProvider vp = this.parseVp(arr[i].trim(), false);
+			final InputValueProvider vp = this.parseVp(arr[i].trim(), false);
 			if (vp == null) {
 				return null;
 			}

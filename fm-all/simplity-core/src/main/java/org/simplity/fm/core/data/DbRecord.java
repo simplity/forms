@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
@@ -30,15 +9,15 @@ import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.db.IReadWriteHandle;
-import org.simplity.fm.core.db.IReadonlyHandle;
+import org.simplity.fm.core.db.ReadWriteHandle;
+import org.simplity.fm.core.db.ReadonlyHandle;
 import org.simplity.fm.core.filter.FilterDetails;
 import org.simplity.fm.core.filter.FilterParams;
 import org.simplity.fm.core.json.JsonUtil;
 import org.simplity.fm.core.service.AbstractService;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.Service;
+import org.simplity.fm.core.service.ServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +45,7 @@ public abstract class DbRecord extends Record {
 	}
 
 	@Override
-	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx,
+	public boolean parse(final InputData inputObject, final boolean forInsert, final ServiceContext ctx,
 			final String tableName, final int rowNbr) {
 		if (!super.parse(inputObject, forInsert, ctx, tableName, rowNbr)) {
 			return false;
@@ -84,7 +63,7 @@ public abstract class DbRecord extends Record {
 	 * @param ctx         non-null. any validation error is added to it
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
-	public boolean parseKeys(final IInputData inputObject, final IServiceContext ctx) {
+	public boolean parseKeys(final InputData inputObject, final ServiceContext ctx) {
 		return this.dba.parseKeys(inputObject, this.fieldValues, ctx);
 	}
 
@@ -95,11 +74,11 @@ public abstract class DbRecord extends Record {
 	 * validating them.
 	 * 
 	 *
-	 * @param inputObject non-null
-	 * @param ctx         non-null. any validation error is added to it
+	 * @param keyValues inputObject non-null
+	 * @param ctx       non-null. any validation error is added to it
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
-	public boolean setkeys(final Object[] keyValues, final IServiceContext ctx) {
+	public boolean setkeys(final Object[] keyValues, final ServiceContext ctx) {
 		return this.dba.setKeys(keyValues, this.fieldValues, ctx);
 	}
 
@@ -112,7 +91,7 @@ public abstract class DbRecord extends Record {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean read(final IReadonlyHandle handle) throws SQLException {
+	public boolean read(final ReadonlyHandle handle) throws SQLException {
 		return this.dba.read(handle, this.fieldValues);
 	}
 
@@ -124,7 +103,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void readOrFail(final IReadonlyHandle handle) throws SQLException {
+	public void readOrFail(final ReadonlyHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
@@ -140,7 +119,7 @@ public abstract class DbRecord extends Record {
 	 * @return number of rows. -1 in case of any errors.
 	 * @throws SQLException
 	 */
-	public long countRows(final IReadonlyHandle handle, FilterParams filterParams, IServiceContext ctx)
+	public long countRows(final ReadonlyHandle handle, FilterParams filterParams, ServiceContext ctx)
 			throws SQLException {
 		return this.dba.countRows(handle, filterParams, ctx);
 	}
@@ -154,7 +133,7 @@ public abstract class DbRecord extends Record {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	public boolean insert(final IReadWriteHandle handle) throws SQLException {
+	public boolean insert(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.insert(handle, this.fieldValues);
 	}
 
@@ -166,7 +145,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void insertOrFail(final IReadWriteHandle handle) throws SQLException {
+	public void insertOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Insert failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -182,7 +161,7 @@ public abstract class DbRecord extends Record {
 	 *         update
 	 * @throws SQLException
 	 */
-	public boolean update(final IReadWriteHandle handle) throws SQLException {
+	public boolean update(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.update(handle, this.fieldValues);
 	}
 
@@ -194,7 +173,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void updateOrFail(final IReadWriteHandle handle) throws SQLException {
+	public void updateOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Update failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -209,7 +188,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it was indeed saved
 	 * @throws SQLException
 	 */
-	public boolean save(final IReadWriteHandle handle) throws SQLException {
+	public boolean save(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.save(handle, this.fieldValues);
 	}
 
@@ -217,7 +196,7 @@ public abstract class DbRecord extends Record {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void saveOrFail(final IReadWriteHandle handle) throws SQLException {
+	public void saveOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Save failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -233,7 +212,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean delete(final IReadWriteHandle handle) throws SQLException {
+	public boolean delete(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.delete(handle, this.fieldValues);
 	}
 
@@ -245,7 +224,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void deleteOrFail(final IReadWriteHandle handle) throws SQLException {
+	public void deleteOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -274,7 +253,7 @@ public abstract class DbRecord extends Record {
 	 * @return service if this record is designed for this operation. null
 	 *         otherwise.
 	 */
-	public IService getService(final IoType operation, final String serviceName) {
+	public Service getService(final IoType operation, final String serviceName) {
 		if (!this.dba.operationAllowed(operation)) {
 			logger.info("{} operation is not allowed on record {}", operation, this.fetchName());
 			return null;
@@ -308,7 +287,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
@@ -338,7 +317,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -364,7 +343,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, false, ctx, null, 0)) {
 				logger.error("Error while validating data from the input payload");
@@ -390,7 +369,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
@@ -417,7 +396,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final IInputData payload) throws Exception {
+		public void serve(final ServiceContext ctx, final InputData payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			String tableName = payload.getString(Conventions.Request.TAG_TABLE_NAME);
 			if (tableName == null || tableName.isEmpty()) {
@@ -449,23 +428,6 @@ public abstract class DbRecord extends Record {
 			}
 
 			ctx.setAsResponse(tableName, filter.getOutputNames(), rows);
-			return;
-			/**
-			 * TODO: If some fields in record are not DbFields, then the output row does not
-			 * match the fields in the record. By default, client may expect values for all
-			 * fields in the record, should we use "all-fields" and "dbFields" as the column
-			 * names?
-			 * 
-			 * Note:
-			 * 
-			 * 1. In any case, we respond back in JSON, and hence the order of fields is
-			 * irrelevant
-			 * 
-			 * 2. Even if we were to add all fields, the non-DbFields will have undefined as
-			 * their value.
-			 * 
-			 * Hence we will simply send only the selected fields.
-			 */
 		}
 
 	}

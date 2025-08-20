@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.validn;
 
 import java.sql.SQLException;
@@ -30,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.service.IServiceContext;
+import org.simplity.fm.core.service.ServiceContext;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class RuntimeList implements IValueList {
+public class RuntimeList implements ValueList {
 	protected static final Logger logger = LoggerFactory.getLogger(RuntimeList.class);
 	private static final ValueType[] TYPES_FOR_ALL_ENTRIES = { ValueType.Text, ValueType.Text, ValueType.Text };
 	private static final ValueType[] TYPES_FOR_KEYS = { ValueType.Text };
@@ -81,8 +60,9 @@ public class RuntimeList implements IValueList {
 		return this.hasKey;
 	}
 
+	@SuppressWarnings("boxing")
 	@Override
-	public Object[][] getList(final Object key, final IServiceContext ctx) {
+	public Object[][] getList(final Object key, final ServiceContext ctx) {
 		Object tenantId = ctx.getTenantId();
 		long numericKey = 0;
 		if (this.hasKey) {
@@ -147,7 +127,7 @@ public class RuntimeList implements IValueList {
 			return null;
 		}
 
-		Object[][] emptyList = new Object[0][];
+		Object[][] emptyList = {};
 		if (list.size() == 0) {
 			logger.warn("No data found for list {} with key {}", this.name, key);
 			return emptyList;
@@ -156,7 +136,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+	public boolean isValid(final Object fieldValue, final Object keyValue, final ServiceContext ctx) {
 		if (this.hasKey && keyValue == null) {
 			logger.error("Key should have value for list {}", this.name);
 			return false;
@@ -183,7 +163,7 @@ public class RuntimeList implements IValueList {
 				 * we actually want to check if there is at least one row.
 				 */
 
-				Object[] result = new Object[0];
+				Object[] result = {};
 				return handle.read(this.checkSql, params, paramTypes, TYPES_FOR_VALIDATION, result);
 			});
 
@@ -203,7 +183,7 @@ public class RuntimeList implements IValueList {
 	 * @return map to get id from name
 	 */
 	@Override
-	public Map<String, String> getAllEntries(final IServiceContext ctx) {
+	public Map<String, String> getAllEntries(final ServiceContext ctx) {
 
 		final Map<String, String> entries = new HashMap<>();
 
@@ -229,8 +209,9 @@ public class RuntimeList implements IValueList {
 		return entries;
 	}
 
+	@SuppressWarnings("boxing")
 	@Override
-	public Map<String, Object[][]> getAllLists(IServiceContext ctx) {
+	public Map<String, Object[][]> getAllLists(ServiceContext ctx) {
 		if (this.allKeysSql == null) {
 			return null;
 		}

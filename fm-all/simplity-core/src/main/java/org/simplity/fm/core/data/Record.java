@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.data;
 
 import java.time.Instant;
@@ -31,11 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.service.IInputArray;
-import org.simplity.fm.core.service.IInputData;
-import org.simplity.fm.core.service.IOutputData;
-import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.service.InputArray;
+import org.simplity.fm.core.service.InputData;
+import org.simplity.fm.core.service.OutputData;
+import org.simplity.fm.core.service.ServiceContext;
+import org.simplity.fm.core.validn.FormDataValidation;
 import org.simplity.fm.core.valueschema.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +98,7 @@ public class Record implements Cloneable {
 	 *
 	 * @return the validations
 	 */
-	public IValidation[] fetchValidaitons() {
+	public FormDataValidation[] fetchValidaitons() {
 		return this.metaData.getValidations();
 	}
 
@@ -319,6 +298,7 @@ public class Record implements Cloneable {
 	 * @return true if field exists, and is of integer type. false otherwise, and
 	 *         the value is not set
 	 */
+	@SuppressWarnings("boxing")
 	protected boolean assignLongValue(final int idx, final long value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
@@ -446,6 +426,7 @@ public class Record implements Cloneable {
 	 * @return value of the field as boolean. false if no such field, or the
 	 * @param idx field is null,or the field is not boolean.
 	 */
+	@SuppressWarnings("boxing")
 	protected boolean fetchBoolValue(final int idx) {
 		Object obj = this.fetchValue(idx);
 		if (obj == null) {
@@ -470,6 +451,7 @@ public class Record implements Cloneable {
 	 * @return true if field exists, and is of boolean type. false otherwise, and
 	 *         the value is not set
 	 */
+	@SuppressWarnings("boxing")
 	protected boolean assignBoolValue(final int idx, final boolean value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
@@ -525,6 +507,7 @@ public class Record implements Cloneable {
 	 * @return true if field exists, and is of double type. false otherwise, and the
 	 *         value is not set
 	 */
+	@SuppressWarnings("boxing")
 	protected boolean assignDecimlValue(final int idx, final double value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
@@ -608,6 +591,7 @@ public class Record implements Cloneable {
 		return false;
 	}
 
+	@SuppressWarnings("boxing")
 	private void logError(final int idx) {
 		logger.error("Invalid index {} used for setting value in a record with {} values", idx,
 				this.metaData.getFields().length);
@@ -622,7 +606,7 @@ public class Record implements Cloneable {
 	 * @param ctx
 	 * @return true if all ok. false if any error message is added to the context
 	 */
-	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx) {
+	public boolean parse(final InputData inputObject, final boolean forInsert, final ServiceContext ctx) {
 		return this.parse(inputObject, forInsert, ctx, null, 0);
 	}
 
@@ -641,7 +625,7 @@ public class Record implements Cloneable {
 	 * @param rowNbr      relevant if tablaeName is not-null.
 	 * @return true if all ok. false if any error message is added to the context
 	 */
-	public boolean parse(final IInputData inputObject, final boolean forInsert, final IServiceContext ctx,
+	public boolean parse(final InputData inputObject, final boolean forInsert, final ServiceContext ctx,
 			final String tableName, final int rowNbr) {
 		boolean ok = true;
 		for (final Field field : this.metaData.getFields()) {
@@ -651,9 +635,9 @@ public class Record implements Cloneable {
 			}
 		}
 
-		final IValidation[] vals = this.metaData.getValidations();
+		final FormDataValidation[] vals = this.metaData.getValidations();
 		if (vals != null) {
-			for (final IValidation vln : vals) {
+			for (final FormDataValidation vln : vals) {
 				if (vln.isValid(this, ctx) == false) {
 					logger.error("field {} failed an inter-field validation associated with it", vln.getFieldName());
 					ok = false;
@@ -673,25 +657,24 @@ public class Record implements Cloneable {
 	 * @param ctx
 	 * @return list of parsed data rows. null in case of any error.
 	 */
-	public List<? extends Record> parseTable(final IInputData inputObject, final String memberName,
-			final boolean forInsert, final IServiceContext ctx) {
+	public List<? extends Record> parseTable(final InputData inputObject, final String memberName,
+			final boolean forInsert, final ServiceContext ctx) {
 		final List<Record> list = new ArrayList<>();
-		final IInputArray arr = inputObject.getArray(memberName);
+		final InputArray arr = inputObject.getArray(memberName);
 		if (arr == null) {
 			logger.info("No data received for table named ", memberName);
 			return list;
 		}
 
-		for (IInputData ele : arr.toDataArray()) {
+		for (InputData ele : arr.toDataArray()) {
 			final Record rec = this.newInstance();
-			if (rec.parse(ele, forInsert, ctx, memberName, 0)) {
-				list.add(rec);
-			} else {
+			if (!rec.parse(ele, forInsert, ctx, memberName, 0)) {
 				list.clear(); // indicate error condition
 				break;
 			}
+			list.add(rec);
 		}
-		;
+
 		/*
 		 * empty list means we encountered some error
 		 */
@@ -711,7 +694,7 @@ public class Record implements Cloneable {
 	 * 
 	 * @param outputData
 	 */
-	public void writeOut(IOutputData outputData) {
+	public void writeOut(OutputData outputData) {
 		final String[] names = this.fetchFieldNames();
 		for (int i = 0; i < names.length; i++) {
 			Object value = this.fieldValues[i];
@@ -721,7 +704,12 @@ public class Record implements Cloneable {
 		}
 	}
 
-	public void writeOutAsMember(IOutputData outputData) {
+	/**
+	 * add this as a member of an object that is already started.
+	 *
+	 * @param outputData
+	 */
+	public void writeOutAsMember(OutputData outputData) {
 		outputData.addName(this.fetchName()).beginObject();
 		this.writeOut(outputData);
 		outputData.endObject();
@@ -737,7 +725,7 @@ public class Record implements Cloneable {
 	 * 
 	 * @param ctx
 	 */
-	public void setAsResponse(IServiceContext ctx) {
+	public void setAsResponse(ServiceContext ctx) {
 		this.writeOut(ctx.getOutputData());
 	}
 
@@ -802,7 +790,7 @@ public class Record implements Cloneable {
 	 *
 	 * @param ctx
 	 */
-	public void override(final IServiceContext ctx) {
+	public void override(final ServiceContext ctx) {
 		final RecordOverride over = ctx.getRecordOverride(this.fetchName());
 		this.metaData.override(over);
 	}

@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * DomicileState
  */
 
-public class DomicileState extends ValueList {
+public class DomicileState extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"Karnataka", "Karnataka"}, 
 		{"Non-Karnataka", "Non-Karnataka"}, 

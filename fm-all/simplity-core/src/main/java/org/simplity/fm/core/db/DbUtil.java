@@ -32,6 +32,7 @@ public class DbUtil {
 	 * @param valueType not null can be null, in which case it is treated as text
 	 * @throws SQLException
 	 */
+	@SuppressWarnings("boxing")
 	public static final void setPsParamValue(final PreparedStatement ps, final int position, final Object value,
 			final ValueType valueType) throws SQLException {
 
@@ -168,6 +169,7 @@ public class DbUtil {
 	 * @return retrieved object value. can be null
 	 * @throws SQLException
 	 */
+	@SuppressWarnings("boxing")
 	public static final Object getValueFromRs(final ResultSet rs, final int position, ValueType valueType)
 			throws SQLException {
 		switch (valueType) {
@@ -233,6 +235,7 @@ public class DbUtil {
 	 * @return retrieved object value. can be null
 	 * @throws SQLException
 	 */
+	@SuppressWarnings("boxing")
 	public static final Object getValueFromCs(final CallableStatement cs, final int position, ValueType valueType)
 			throws SQLException {
 		switch (valueType) {
@@ -318,7 +321,7 @@ public class DbUtil {
 	 *
 	 * @param rs         non-null
 	 * @param valueTypes non-null
-	 * @param output     rows are put into this list.
+	 * @param rows       output rows are put into this list.
 	 * @return number of rows extracted
 	 * @throws SQLException
 	 */
@@ -344,7 +347,7 @@ public class DbUtil {
 	 * @return number of rows processed.
 	 * @throws SQLException
 	 */
-	public static final int processRowsFromRs(final ResultSet rs, ValueType[] valueTypes, IRowProcessor processor)
+	public static final int processRowsFromRs(final ResultSet rs, ValueType[] valueTypes, RowProcessor processor)
 			throws SQLException {
 		int nbr = 0;
 		while (rs.next()) {
@@ -428,7 +431,6 @@ public class DbUtil {
 
 		default:
 			throwIt(valueType);
-			return;
 		}
 
 	}

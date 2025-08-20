@@ -1,32 +1,11 @@
-/*
- * Copyright (c) 2020 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.infra.defalt;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.simplity.fm.core.UserContext;
-import org.simplity.fm.core.infra.ISessionCache;
+import org.simplity.fm.core.DefaultUserContext;
+import org.simplity.fm.core.infra.SessionCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,12 +15,12 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class DefaultSessionCacher implements ISessionCache {
+public class DefaultSessionCacher implements SessionCache {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultSessionCacher.class);
-	private final Map<String, UserContext> sessions = new HashMap<>();
+	private final Map<String, DefaultUserContext> sessions = new HashMap<>();
 
 	@Override
-	public void put(final String id, final UserContext session) {
+	public void put(final String id, final DefaultUserContext session) {
 		if (id == null) {
 			logger.error("Caching not possible for a null key.");
 		} else if (session == null) {
@@ -52,7 +31,7 @@ public class DefaultSessionCacher implements ISessionCache {
 	}
 
 	@Override
-	public UserContext get(final String id) {
+	public DefaultUserContext get(final String id) {
 		if (id == null) {
 			logger.error("key is to be non-null for a get().");
 			return null;
@@ -61,7 +40,7 @@ public class DefaultSessionCacher implements ISessionCache {
 	}
 
 	@Override
-	public UserContext remove(final String id) {
+	public DefaultUserContext remove(final String id) {
 		if (id == null) {
 			logger.error("key is to be non-null for a remove().");
 			return null;

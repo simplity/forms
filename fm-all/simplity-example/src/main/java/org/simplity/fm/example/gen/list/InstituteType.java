@@ -1,12 +1,12 @@
 package org.simplity.fm.example.gen.list;
 
-import org.simplity.fm.core.validn.ValueList;
+import org.simplity.fm.core.validn.SimpleValueList;
 
 /**
  * InstituteType
  */
 
-public class InstituteType extends ValueList {
+public class InstituteType extends SimpleValueList {
 	private static final Object[][] VALUES = { 
 		{"DSERTPS", "Karnataka State Syllabus Primary School"}, 
 		{"DSERTPHS", "Karnataka State Syllabus Higher School"}, 

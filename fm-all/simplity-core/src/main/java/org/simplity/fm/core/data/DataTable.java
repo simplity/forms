@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.db.IRowProcessor;
-import org.simplity.fm.core.service.IOutputData;
+import org.simplity.fm.core.db.RowProcessor;
+import org.simplity.fm.core.service.OutputData;
 import org.simplity.fm.core.valueschema.ValueType;
 
 /**
@@ -18,7 +18,7 @@ import org.simplity.fm.core.valueschema.ValueType;
  *
  * @param <T>
  */
-public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
+public class DataTable<T extends Record> implements Iterable<T>, RowProcessor {
 	private final T record;
 	private final Constructor<T> constructor;
 	protected List<Object[]> rows = new ArrayList<>();
@@ -106,7 +106,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	 * @param outData
 	 * @throws IOException
 	 */
-	public void writeOut(final IOutputData outData) throws IOException {
+	public void writeOut(final OutputData outData) throws IOException {
 		outData.beginArray();
 		for (final T rec : this) {
 			outData.beginObject();
@@ -118,12 +118,12 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 
 	/**
 	 * write out as name:[{..}, {...}....]
-	 * 
+	 *
 	 * @param memberName
 	 * @param outputData
 	 * @throws IOException
 	 */
-	public void writeOutAsMember(final String memberName, final IOutputData outputData) throws IOException {
+	public void writeOutAsMember(final String memberName, final OutputData outputData) throws IOException {
 		outputData.addName(memberName);
 		this.writeOut(outputData);
 	}
@@ -131,7 +131,7 @@ public class DataTable<T extends Record> implements Iterable<T>, IRowProcessor {
 	@Override
 	public Iterator<T> iterator() {
 		final List<Object[]> r = this.rows;
-		return new Iterator<T>() {
+		return new Iterator<>() {
 			private int idx = 0;
 
 			@Override

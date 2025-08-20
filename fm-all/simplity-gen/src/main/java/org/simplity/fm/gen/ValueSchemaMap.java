@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IValueSchemas;
+import org.simplity.fm.core.ValueSchemas;
 import org.simplity.fm.core.valueschema.BooleanSchema;
 import org.simplity.fm.core.valueschema.DateSchema;
 import org.simplity.fm.core.valueschema.DecimalSchema;
@@ -89,7 +89,7 @@ public class ValueSchemaMap {
 		Util.emitImport(sbf, Map.class);
 		sbf.append("\n");
 
-		Util.emitImport(sbf, IValueSchemas.class);
+		Util.emitImport(sbf, ValueSchemas.class);
 		Util.emitImport(sbf, org.simplity.fm.core.valueschema.ValueSchema.class);
 		Util.emitImport(sbf, TextSchema.class);
 		Util.emitImport(sbf, IntegerSchema.class);

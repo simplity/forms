@@ -1,25 +1,4 @@
-/*
- * Copyright (c) 2019 simplity.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+// SPDX-License-Identifier: MIT
 package org.simplity.fm.core.upload;
 
 import java.util.HashMap;
@@ -29,10 +8,10 @@ import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.app.AppManager;
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.infra.ICompProvider;
-import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.fn.FunctionDefinition;
+import org.simplity.fm.core.infra.CompProvider;
+import org.simplity.fm.core.service.ServiceContext;
+import org.simplity.fm.core.validn.ValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +27,12 @@ public class UploaderParser {
 	protected static final Logger logger = LoggerFactory
 			.getLogger(UploaderParser.class);
 
-	private final ICompProvider compProvider = AppManager.getApp()
+	private final CompProvider compProvider = AppManager.getApp()
 			.getCompProvider();
 	private final Map<String, String> params = new HashMap<>();
 	private final Map<String, Map<String, String>> valueLists = new HashMap<>();
 	private final Set<String> listsRequiringKey = new HashSet<>();
-	private final Map<String, IFunction> functions = new HashMap<>();
+	private final Map<String, FunctionDefinition> functions = new HashMap<>();
 
 	FormLoader[] inserts;
 
@@ -65,7 +44,7 @@ public class UploaderParser {
 	 * @return null in case of any error. Error messages, if any are logged and
 	 *         not returned in any form to the caller
 	 */
-	public Uploader parse(final JsonObject json, final IServiceContext ctx) {
+	public Uploader parse(final JsonObject json, final ServiceContext ctx) {
 
 		JsonElement ele = json.get(Conventions.Upload.TAG_PARAMS);
 		if (ele != null) {
@@ -136,7 +115,7 @@ public class UploaderParser {
 				return false;
 			}
 			final String nam = ele.getAsString().trim();
-			final IFunction fn = this.compProvider.getFunction(nam);
+			final FunctionDefinition fn = this.compProvider.getFunction(nam);
 			if (fn == null) {
 				logger.error(
 						"{} not defiined as a function in this application",
@@ -149,7 +128,7 @@ public class UploaderParser {
 	}
 
 	private boolean parseLookups(final JsonObject json,
-			final IServiceContext ctx) {
+			final ServiceContext ctx) {
 		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 			final String attr = entry.getKey().trim();
 			final JsonElement ele = entry.getValue();
@@ -230,8 +209,8 @@ public class UploaderParser {
 	}
 
 	private boolean parseSystemList(final String lukupName,
-			final String sysName, final IServiceContext ctx) {
-		final IValueList vl = this.compProvider.getValueList(sysName);
+			final String sysName, final ServiceContext ctx) {
+		final ValueList vl = this.compProvider.getValueList(sysName);
 		if (vl == null) {
 			logger.error(
 					"{} is not defined as ValueList in this app. Verify your application config file.",
