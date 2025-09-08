@@ -30,9 +30,9 @@ public class ValueSchemaMap {
 	/**
 	 * we use _text, _boolean etc.. as valueSchema for internal use when we know
 	 * that we don't have to validate a value, but we need to specify a valueSchema
-	 * 
+	 *
 	 * create default valueSchema for each valueType
-	 * 
+	 *
 	 * @return map that is initialized with default ones
 	 */
 	private static Map<String, ValueSchema> mapWithDefaults() {
@@ -72,7 +72,7 @@ public class ValueSchemaMap {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param rootFolder
 	 * @param packageName
 	 */
@@ -103,7 +103,7 @@ public class ValueSchemaMap {
 		sbf.append(
 				"\n\n/**\n * class that has static attributes for all value schemas defined for this project. It also extends <code>DataTypes</code>");
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(clsName).append(" implements IValueSchemas {");
+		sbf.append("\npublic class ").append(clsName).append(" implements ValueSchemas {");
 
 		if (this.valueSchemas == null) {
 			this.valueSchemas = new HashMap<>();

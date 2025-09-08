@@ -300,21 +300,28 @@ public class Dba {
 		}
 
 		// sql parameters from row-data
-		Object[] params = copyFromRow(row, this.whereIndexes, null);
+		final Object[] params = copyFromRow(row, this.whereIndexes, null);
 
-		Object[] result = new Object[this.selectTypes.length];
-		final boolean ok = handle.read(this.selectClause + ' ' + this.whereClause, params, this.whereTypes,
-				this.selectTypes, result);
-		// copy selected fields into row-data
-		if (ok) {
-			copyFromRow(result, this.selectIndexes, row);
+		final Object[] result = new Object[this.selectTypes.length];
+		final String sql = this.selectClause + ' ' + this.whereClause;
+		try {
+			final boolean ok = handle.read(sql, params, this.whereTypes, this.selectTypes, result);
+			// copy selected fields into row-data
+			if (ok) {
+				copyFromRow(result, this.selectIndexes, row);
+			}
+			return ok;
+		} catch (SQLException e) {
+			emitError(sql, params, e);
+			logger.error("Error while reading with prepared statement:\n {}\n with params: {}\n Error: {}", sql,
+					Arrays.toString(params), e.getMessage());
+			throw e;
 		}
-		return ok;
 	}
 
 	/**
 	 * to be called from the parent Record. not to be called by other classes
-	 * 
+	 *
 	 * @param handle       readOnly handle
 	 * @param filterParams required parameters for the filter operation
 	 * @param dataTable    to which the filtered rows are to be added
@@ -333,16 +340,25 @@ public class Dba {
 		if (fd == null) {
 			return false;
 		}
-		handle.readIntoDataTable(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), dataTable);
-
+		try {
+			handle.readIntoDataTable(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), dataTable);
+		} catch (SQLException e) {
+			emitError(fd.getSql(), fd.getParamValues(), e);
+			throw e;
+		}
 		return true;
+	}
+
+	private static void emitError(String sql, Object[] params, Exception e) {
+		logger.error("Error while running prepared statement:\n {}\n with params: {}\n Error: {}", sql,
+				Arrays.toString(params), e.getMessage());
 	}
 
 	private static final ValueType[] COUNT_OUTPUT_TYPES = { ValueType.Integer };
 
 	/**
 	 * to be called from the parent Record. not to be called by other classes
-	 * 
+	 *
 	 * @param handle       readOnly handle
 	 * @param filterParams required parameters for the filter operation
 	 * @param ctx          In case of any errors in filterParams, they are added to
@@ -359,7 +375,12 @@ public class Dba {
 			return -1;
 		}
 		Object[] counts = new Object[1];
-		handle.read(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), COUNT_OUTPUT_TYPES, counts);
+		try {
+			handle.read(fd.getSql(), fd.getParamValues(), fd.getParamTypes(), COUNT_OUTPUT_TYPES, counts);
+		} catch (SQLException e) {
+			emitError(fd.getSql(), fd.getParamValues(), e);
+			throw e;
+		}
 
 		return (long) counts[0];
 	}
@@ -380,12 +401,17 @@ public class Dba {
 	void forEach(final ReadonlyHandle handle, final String where, final Object[] parameterValues,
 			final ValueType[] parameterTypes, final RowProcessor rowProcessor) throws SQLException {
 
-		StringBuilder sql = new StringBuilder().append(this.selectClause);
+		final StringBuilder sbf = new StringBuilder().append(this.selectClause);
 		if (where != null) {
-			sql.append(this.selectClause).append(' ').append(where);
+			sbf.append(this.selectClause).append(' ').append(where);
 		}
-
-		handle.readWithRowProcessor(sql.toString(), parameterValues, parameterTypes, this.selectTypes, rowProcessor);
+		final String sql = sbf.toString();
+		try {
+			handle.readWithRowProcessor(sql, parameterValues, parameterTypes, this.selectTypes, rowProcessor);
+		} catch (SQLException e) {
+			emitError(sql, parameterValues, e);
+			throw e;
+		}
 	}
 
 	/**
@@ -412,7 +438,15 @@ public class Dba {
 		}
 
 		final long[] generatedKeys = new long[1];
-		int n = handle.insertWithKeyGeneration(this.insertClause, params, this.insertTypes, this.generatedColumnName,
+		int n = 0;
+		try {
+			n = handle.insertWithKeyGeneration(this.insertClause, params, this.insertTypes, this.generatedColumnName,
+					generatedKeys);
+		} catch (SQLException e) {
+			emitError(this.insertClause, params, e);
+			throw e;
+		}
+		n = handle.insertWithKeyGeneration(this.insertClause, params, this.insertTypes, this.generatedColumnName,
 				generatedKeys);
 		if (n == 0) {
 			return false;
@@ -447,7 +481,14 @@ public class Dba {
 
 		final Object[] params = copyFromRow(rowToUpdate, this.updateIndexes, null);
 
-		return handle.write(this.updateClause, params, this.updateTypes) > 0;
+		int n = 0;
+		try {
+			handle.write(this.updateClause, params, this.updateTypes);
+		} catch (SQLException e) {
+			emitError(this.updateClause, params, e);
+			throw e;
+		}
+		return n > 0;
 
 	}
 
@@ -467,7 +508,16 @@ public class Dba {
 		}
 
 		final Object[] params = copyFromRow(rowToDelete, this.keyIndexes, null);
-		return handle.write(this.deleteClause, params, this.keyTypes) > 0;
+		int n = 0;
+		final String sql = this.deleteClause + ' ' + this.whereClause;
+		try {
+			n = handle.write(sql, params, this.keyTypes);
+		} catch (SQLException e) {
+			emitError(sql, params, e);
+			throw e;
+		}
+
+		return n > 0;
 
 	}
 
@@ -545,15 +595,20 @@ public class Dba {
 		final Object[][] paramValues = copyFromRows(rows, this.insertIndexes);
 		int nbrInserted = 0;
 
-		if (this.generatedColumnName == null) {
-			nbrInserted = handle.writeMany(this.insertClause, paramValues, this.insertTypes);
-		} else {
-			final long[] generatedKeys = new long[nbrRows];
-			nbrInserted = handle.insertWithKeyGenerations(this.insertClause, paramValues, this.insertTypes,
-					this.generatedColumnName, generatedKeys);
-			if (nbrInserted > 0) {
-				this.copyKeys(rows, generatedKeys);
+		try {
+			if (this.generatedColumnName == null) {
+				nbrInserted = handle.writeMany(this.insertClause, paramValues, this.insertTypes);
+			} else {
+				final long[] generatedKeys = new long[nbrRows];
+				nbrInserted = handle.insertWithKeyGenerations(this.insertClause, paramValues, this.insertTypes,
+						this.generatedColumnName, generatedKeys);
+				if (nbrInserted > 0) {
+					this.copyKeys(rows, generatedKeys);
+				}
 			}
+		} catch (SQLException e) {
+			emitError(this.insertClause, paramValues, e);
+			throw e;
 		}
 		return nbrInserted == nbrRows;
 	}
@@ -576,7 +631,13 @@ public class Dba {
 		int nbrRows = rows.length;
 		final Object[][] updateValues = copyFromRows(rows, this.updateIndexes);
 
-		int n = handle.writeMany(this.updateClause, updateValues, this.updateTypes);
+		int n = 0;
+		try {
+			n = handle.writeMany(this.updateClause, updateValues, this.updateTypes);
+		} catch (SQLException e) {
+			emitError(this.updateClause, updateValues, e);
+			throw e;
+		}
 		return n == nbrRows;
 	}
 
@@ -595,7 +656,7 @@ public class Dba {
 			final String tableName, final int rowNbr) {
 		boolean ok = true;
 		for (final DbField field : this.dbFields) {
-			if ((field != null) && !field.validate(data, forInsert, ctx, tableName, rowNbr)) {
+			if (field != null && !field.validate(data, forInsert, ctx, tableName, rowNbr)) {
 				ok = false;
 			}
 		}
@@ -733,7 +794,7 @@ public class Dba {
 
 	/**
 	 * prepares the filter details required to count rows in the filter-sql
-	 * 
+	 *
 	 * @param params filter parameters that are the input for the filter operation
 	 *               This may be parsed from the input-request-json, or maybe
 	 *               prepared by a server-side service implementation
@@ -828,7 +889,7 @@ public class Dba {
 
 	/**
 	 * prepares the filter details required to filter rows from a database table
-	 * 
+	 *
 	 * @param params filter parameters that are the input for the filter operation
 	 *               This may be parsed from the input-request-json, or maybe
 	 *               prepared by a server-side service implementation
@@ -1043,7 +1104,7 @@ public class Dba {
 		/*
 		 * fairly long inside the loop for each field. But it is just serial code. Hence
 		 * left it that way
-		 * 
+		 *
 		 * For safety, we put a pair of braces around each condition so that the AND
 		 * operation is safe
 		 */
@@ -1134,12 +1195,12 @@ public class Dba {
 
 			/*
 			 * we do all our string comparisons as case-insensitive.
-			 * 
+			 *
 			 * This is because, in the business context 'case' of a letter has no meaning,
 			 * but used for formatting.
-			 * 
+			 *
 			 * e.g. John is john, and is also JOHN.
-			 * 
+			 *
 			 * TODO: Of course, this argument is not valid for a field that is a computer
 			 * generated unique text code. We will offer some feature to handle this
 			 * exception
@@ -1285,7 +1346,7 @@ public class Dba {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param name can be null, in which case null is returned
 	 * @return SQL text syntax to get the upper-case value of this column
 	 */
@@ -1298,12 +1359,12 @@ public class Dba {
 
 	/**
 	 * returns null string if this is not of the form ${name}.
-	 * 
+	 *
 	 * column name if the field valid.
-	 * 
+	 *
 	 * Empty string if the field invalid. Appropriate error message is pushed to the
 	 * ctx
-	 * 
+	 *
 	 */
 	private static String parseField(String value, Map<String, DbField> fields, ValueType vt, ServiceContext ctx) {
 		int lastPosn = value.length() - 1;
@@ -1345,7 +1406,7 @@ public class Dba {
 
 	/**
 	 * set keys from an array of objects
-	 * 
+	 *
 	 * @param keyValues
 	 * @param fieldValues
 	 * @param ctx

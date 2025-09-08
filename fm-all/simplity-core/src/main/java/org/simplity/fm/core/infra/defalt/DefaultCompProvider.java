@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.Message;
-import org.simplity.fm.core.Messages;
 import org.simplity.fm.core.ValueSchemas;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Form;
@@ -50,7 +48,6 @@ public class DefaultCompProvider implements CompProvider {
 	private final String serviceRoot;
 	private final String customListRoot;
 	private final String fnRoot;
-	private final Messages messages;
 	private final Map<String, Form<?>> forms = new HashMap<>();
 	private final Map<String, Record> records = new HashMap<>();
 	private final Map<String, ValueList> lists = new HashMap<>();
@@ -70,7 +67,6 @@ public class DefaultCompProvider implements CompProvider {
 		final String genRoot = root + Conventions.App.FOLDER_NAME_GEN + DOT;
 
 		this.dataTypes = locateSchemas(genRoot);
-		this.messages = locateMessages(genRoot);
 		this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
 		this.recordRoot = genRoot + Conventions.App.FOLDER_NAME_RECORD + DOT;
 		this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
@@ -94,17 +90,6 @@ public class DefaultCompProvider implements CompProvider {
 			return (ValueSchemas) Class.forName(cls).getConstructor().newInstance();
 		} catch (final Exception e) {
 			logger.error("Unable to locate class {}  as IDataTypes", cls);
-			return null;
-		}
-	}
-
-	private static Messages locateMessages(String genRoot) {
-		String cls = genRoot + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
-		try {
-			return (Messages) Class.forName(cls).getConstructor().newInstance();
-		} catch (final Exception e) {
-			logger.warn("Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts",
-					cls);
 			return null;
 		}
 	}
@@ -170,11 +155,6 @@ public class DefaultCompProvider implements CompProvider {
 			return null;
 		}
 
-	}
-
-	@Override
-	public Message getMessage(final String messageId) {
-		return this.messages.getMessage(messageId);
 	}
 
 	@Override

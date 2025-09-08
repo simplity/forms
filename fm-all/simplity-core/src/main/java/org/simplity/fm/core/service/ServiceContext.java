@@ -6,6 +6,7 @@ import java.io.Writer;
 
 import org.simplity.fm.core.DefaultUserContext;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.data.RecordOverride;
 
 /**
@@ -19,8 +20,8 @@ public interface ServiceContext {
 
 	/**
 	 *
-	 * @return true if the service context is associated with a serviceContext,
-	 *         false otherwise.
+	 * @return true if the service context is associated with a user context. false
+	 *         otherwise.
 	 */
 	boolean hasUserContext();
 
@@ -121,7 +122,7 @@ public interface ServiceContext {
 	 * once with success. any subsequent call will result an ApplicationError()
 	 * exception. Also, this cannot be called after a call to getSerializer() is
 	 * called.
-	 * 
+	 *
 	 * Response will be like {name: value, ....}
 	 *
 	 * @param names
@@ -135,7 +136,7 @@ public interface ServiceContext {
 	 * only once with success. any subsequent call will result an ApplicationError()
 	 * exception. Also, this cannot be called after a call to getSerializer() is
 	 * called.
-	 * 
+	 *
 	 * Response will be like {listName: [[...]...]}
 	 *
 	 * @param listName
@@ -150,7 +151,7 @@ public interface ServiceContext {
 	 * only once with success. any subsequent call will result an ApplicationError()
 	 * exception. Also, this cannot be called after a call to getSerializer() is
 	 * called.
-	 * 
+	 *
 	 * Response will be like {listName: [[...]...]}
 	 *
 	 * @param listName
@@ -227,17 +228,24 @@ public interface ServiceContext {
 	boolean load(Reader reader);
 
 	/**
-	 * 
+	 *
 	 * @return the origin of the request. This is the IP address if the request is
 	 *         through HTTP. null if this is not relevant
 	 */
 	String getRequestOrigin();
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @return session id, if the request is made in a conversational mode. null
 	 *         otherwise
 	 */
 	String getSessionId();
+
+	/**
+	 * App instance to which this context belongs
+	 *
+	 * @return app instance
+	 */
+	App getApp();
 }

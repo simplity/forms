@@ -14,6 +14,8 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.DefaultUserContext;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
+import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppManager;
 import org.simplity.fm.core.data.RecordOverride;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,5 +248,10 @@ public class DefaultServiceContext implements ServiceContext {
 	public void addMessages(Message[] msgs) {
 		this.addMessages(Arrays.asList(msgs));
 
+	}
+
+	@Override
+	public App getApp() {
+		return AppManager.getApp();
 	}
 }

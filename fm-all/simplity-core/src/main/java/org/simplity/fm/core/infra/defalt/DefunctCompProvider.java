@@ -2,7 +2,6 @@
 package org.simplity.fm.core.infra.defalt;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.fn.FunctionDefinition;
@@ -48,12 +47,6 @@ public class DefunctCompProvider implements CompProvider {
 
 	@Override
 	public FunctionDefinition getFunction(final String functionName) {
-		error();
-		return null;
-	}
-
-	@Override
-	public Message getMessage(final String messageId) {
 		error();
 		return null;
 	}

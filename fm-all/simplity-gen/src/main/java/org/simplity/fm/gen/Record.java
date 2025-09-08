@@ -87,7 +87,7 @@ class Record {
 	Set<IoType> allowedIos;
 
 	/**
-	 * 
+	 *
 	 * @return name of the main/parent record from which the fields for this record
 	 *         are to be copied to. null if this is not a sub-record
 	 */
@@ -167,7 +167,6 @@ class Record {
 			if (existing != null) {
 				this.addError("Field {} is a duplicate in record {}", field.name, this.name);
 
-				;
 			}
 
 			if (field.listName != null) {
@@ -184,7 +183,6 @@ class Record {
 						field.nameInDb);
 				ft = FieldType.OptionalData;
 
-				;
 			}
 
 			switch (ft) {
@@ -193,7 +191,6 @@ class Record {
 					this.addError("{} is defined as a generated primary key, but {} is also defined as a primary key.",
 							keyList.get(0).name, field.name);
 
-					;
 				} else {
 					keyList.add(field);
 				}
@@ -204,14 +201,12 @@ class Record {
 					this.addError("Only one generated key please. Found {} as well as {} as generated primary keys.",
 							field.name, keyList.get(0).name);
 
-					;
 				} else {
 					if (keyList.size() > 0) {
 						this.addError(
 								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
 								field.name, keyList.get(0).name);
 
-						;
 						keyList.clear();
 					}
 					keyList.add(field);
@@ -225,7 +220,6 @@ class Record {
 							"Tenant key field MUST use valueSchema of tenantKey. Field {} which is marked as tenant key is of data type {}",
 							field.name, field.valueSchema);
 
-					;
 				}
 				if (this.tenantField == null) {
 					this.tenantField = field;
@@ -233,7 +227,6 @@ class Record {
 					this.addError("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
 							this.tenantField.name);
 
-					;
 				}
 				break;
 
@@ -244,7 +237,6 @@ class Record {
 					this.addError("Only one field to be used as createdAt but {} and {} are marked", field.name,
 							createdAt.name);
 
-					;
 				}
 				break;
 
@@ -255,7 +247,6 @@ class Record {
 					this.addError("Only one field to be used as createdBy but {} and {} are marked", field.name,
 							createdBy.name);
 
-					;
 				}
 				break;
 
@@ -269,7 +260,6 @@ class Record {
 					this.addError("{} and {} are both defined as lastModifiedAt!!", field.name,
 							this.timestampField.name);
 
-					;
 				}
 				break;
 
@@ -280,7 +270,6 @@ class Record {
 					this.addError("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
 							modifiedBy.name);
 
-					;
 				}
 				break;
 
@@ -356,12 +345,10 @@ class Record {
 			}
 		}
 
-		if (this.keyFields == null) {
-			if (this.allowedIos.contains(IoType.Get) || this.allowedIos.contains(IoType.Delete)
-					|| this.allowedIos.contains(IoType.Update)) {
-				this.addError("Key field/s are required for read/get, crate/insert or delete operations");
+		if (this.keyFields == null && (this.allowedIos.contains(IoType.Get) || this.allowedIos.contains(IoType.Delete)
+				|| this.allowedIos.contains(IoType.Update))) {
+			this.addError("Key field/s are required for read/get, crate/insert or delete operations");
 
-			}
 		}
 	}
 
@@ -378,12 +365,12 @@ class Record {
 		 *
 		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
-		String pck = javaPackage + ".rec";
+		StringBuilder pck = new StringBuilder().append(javaPackage).append(".rec");
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
-			pck += '.' + qual;
+			pck.append('.').append(qual);
 		}
-		sbf.append("package ").append(pck).append(";\n");
+		sbf.append("package ").append(pck.toString()).append(";\n");
 
 		final boolean isDb = this.nameInDb != null && this.nameInDb.isEmpty() == false;
 		/*
@@ -444,7 +431,7 @@ class Record {
 		if (isDb) {
 			this.emitDbSpecific(sbf);
 		} else {
-			emitNonDbSpecific(sbf);
+			this.emitNonDbSpecific(sbf);
 		}
 
 		/*
@@ -458,7 +445,7 @@ class Record {
 		 */
 		sbf.append("\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<").append(this.className);
 		sbf.append(
-				"> parseTable(final IInputData inputData, String memberName, final boolean forInsert, final IServiceContext ctx) {");
+				"> parseTable(final InputData inputData, String memberName, final boolean forInsert, final ServiceContext ctx) {");
 		sbf.append("\n\t\treturn (List<").append(this.className)
 				.append(">) super.parseTable(inputData, memberName, forInsert, ctx);\n\t}");
 
@@ -558,7 +545,7 @@ class Record {
 	}
 
 	private void emitJavaValidations(final StringBuilder sbf) {
-		sbf.append("\n\tprivate static final IValidation[] VALIDS = {");
+		sbf.append("\n\tprivate static final FormDataValidation[] VALIDS = {");
 		final int n = sbf.length();
 		final String sufix = ",\n\t\t";
 		if (this.interFieldValidations != null) {
@@ -787,12 +774,12 @@ class Record {
 		final String c = Util.toClassName(this.name);
 		final String recCls = c + "Record";
 		final String cls = c + "Table";
-		String pck = generatedPackage + ".rec";
+		StringBuilder pck = new StringBuilder().append(generatedPackage).append(".rec");
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
-			pck += '.' + qual;
+			pck.append('.').append(qual);
 		}
-		sbf.append("package ").append(pck).append(";\n");
+		sbf.append("package ").append(pck.toString()).append(";\n");
 
 		/*
 		 * imports

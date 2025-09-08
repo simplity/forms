@@ -19,35 +19,23 @@ public interface UserContext {
 	/**
 	 *
 	 * @param key
-	 * @return object associated with this key, null if no such key, or the
-	 *         value is null
+	 * @return object associated with this key, null if no such key, or the value is
+	 *         null
 	 */
 	Object getValue(String key);
 
 	/**
 	 * put an name-value pair in the context
 	 *
-	 * @param key
-	 *            non-null
-	 * @param value
-	 *            null has same effect as removing it. hence remove not
-	 *            provided.
+	 * @param key   non-null
+	 * @param value null has same effect as removing it. hence remove not provided.
 	 */
 	void setValue(String key, Object value);
 
 	/**
-	 * @return non-null user on whose behalf this service is requested. Note
-	 *         that this id COULD be different from the userId used by the
-	 *         client-facing UserContext. For example, the app may use a mail-id
-	 *         as userId for logging in, but may use a numeric userId internally
-	 *         as the unique userId. In this case UserContext uses mail-id
-	 *         (string) as userId while ServiceCOntext uses internalId (long) as
-	 *         userId. <br />
-	 *         Also, If a service is allowed for non-registered users, the app
-	 *         may use a a specific (hard-coded) userId for any session for such
-	 *         a user
+	 * @return non-null user on whose behalf this service is requested.
 	 */
-	Object getUserId();
+	long getUserId();
 
 	/**
 	 * @param recordName
@@ -65,8 +53,7 @@ public interface UserContext {
 
 	/**
 	 * @param formName
-	 * @return id with which this form is over-ridden. null if it is not
-	 *         overridden
+	 * @return id with which this form is over-ridden. null if it is not overridden
 	 */
 	String getFormOverrideId(String formName);
 

@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 package org.simplity.fm.core;
 
+import java.io.Reader;
+import java.io.Writer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.data.OverrideUtil;
@@ -16,7 +21,8 @@ import org.simplity.fm.core.data.RecordOverride;
  * @author simplity.org
  *
  */
-public class DefaultUserContext {
+public class DefaultUserContext implements UserContext {
+	protected final Map<String, Object> values = new HashMap<>();
 
 	/**
 	 * userId for whom this context is created. not-null non-empty. If this is for a
@@ -58,6 +64,7 @@ public class DefaultUserContext {
 	 *
 	 * @return the ID of the user to whom this session belongs to
 	 */
+	@Override
 	public long getUserId() {
 		return this.userId;
 	}
@@ -89,14 +96,10 @@ public class DefaultUserContext {
 
 		this.overrideId = id;
 		this.formOverrides = new HashSet<>();
-		for (final String s : overs.forms) {
-			this.formOverrides.add(s);
-		}
+		Collections.addAll(this.formOverrides, overs.forms);
 
 		this.recordOverrides = new HashSet<>();
-		for (final String s : overs.records) {
-			this.recordOverrides.add(s);
-		}
+		Collections.addAll(this.recordOverrides, overs.records);
 	}
 
 	/**
@@ -106,6 +109,7 @@ public class DefaultUserContext {
 	 *         if present.
 	 *
 	 */
+	@Override
 	public String getRecordOverrideId(final String recordName) {
 		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
 			return this.overrideId;
@@ -118,6 +122,7 @@ public class DefaultUserContext {
 	 * @param formName
 	 * @return id with which this form is overridden. null if it is not overridden.
 	 */
+	@Override
 	public String getFormOverrideId(final String formName) {
 		if (this.formOverrides != null && this.formOverrides.contains(formName)) {
 			return this.overrideId;
@@ -131,6 +136,7 @@ public class DefaultUserContext {
 	 * @param recordName
 	 * @return record override, or null if it is not found
 	 */
+	@Override
 	public RecordOverride getRecordOverride(final String recordName) {
 		return OverrideUtil.getRecord(this.overrideId, recordName);
 	}
@@ -140,6 +146,7 @@ public class DefaultUserContext {
 	 *
 	 * @param jobId must be a valid jobId returned by the JobManager
 	 */
+	@Override
 	public void addJob(final String jobId) {
 		if (this.jobs == null) {
 			this.jobs = new HashSet<>();
@@ -152,9 +159,37 @@ public class DefaultUserContext {
 	 *
 	 * @param jobId
 	 */
+	@Override
 	public void removeJob(final String jobId) {
 		if (this.jobs != null) {
 			this.jobs.remove(jobId);
 		}
+	}
+
+	@Override
+	public Object getValue(String key) {
+		return this.values.get(key);
+	}
+
+	@Override
+	public void setValue(String key, Object value) {
+		if (value == null) {
+			this.values.remove(key);
+		} else {
+			this.values.put(key, value);
+		}
+
+	}
+
+	@Override
+	public void persist(Writer writer) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean load(Reader reader) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

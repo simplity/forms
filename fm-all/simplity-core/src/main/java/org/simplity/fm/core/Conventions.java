@@ -502,7 +502,7 @@ public class Conventions {
 	 *
 	 *
 	 */
-	public class Db {
+	public static class Db {
 		/**
 		 * We strongly recommend treating null in db as empty string in the programming
 		 * world, there by reducing possible null-pointer exceptions.
